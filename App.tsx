@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard } from './src/components';
+import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen } from './src/components';
 import { useAppStore, useLifeScore, useNextBestAction } from './src/stores/appStore';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
@@ -81,16 +81,7 @@ function TriHabitApp() {
   if (currentScreen === 'coach') {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
-        <LinearGradient
-          colors={['#047857', '#065f46', '#1f2937']}
-          style={styles.gradient}
-        >
-          <View style={styles.placeholderScreen}>
-            <Text style={styles.placeholderTitle}>AI Coach</Text>
-            <Text style={styles.placeholderText}>Coming Soon</Text>
-          </View>
-        </LinearGradient>
+        <CoachScreen />
         <BottomNavigation 
           currentScreen={currentScreen} 
           onScreenChange={setCurrentScreen} 

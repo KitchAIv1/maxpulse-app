@@ -14,10 +14,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onScreenChange,
 }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Home', icon: '🏠' },
-    { id: 'coach', label: 'Coach', icon: '🤖' },
-    { id: 'rewards', label: 'Rewards', icon: '🏆' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
+    { id: 'dashboard', label: 'Home', icon: '⌂' },
+    { id: 'coach', label: 'Coach', icon: '◉' },
+    { id: 'rewards', label: 'Rewards', icon: '♦' },
+    { id: 'settings', label: 'Profile', icon: '◐' },
   ] as const;
 
   return (
@@ -71,12 +71,14 @@ const styles = StyleSheet.create({
     // Active tab styling handled by text colors
   },
   tabIcon: {
-    fontSize: 20,
+    fontSize: 24, // Increased from 20 for better visibility
     marginBottom: 4,
     opacity: 0.6,
+    color: 'rgba(255, 255, 255, 0.6)', // Ensure white color for visibility
   },
   activeTabIcon: {
     opacity: 1,
+    color: 'white', // Full white for active state
   },
   tabLabel: {
     fontSize: 12,

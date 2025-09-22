@@ -9,7 +9,6 @@ import {
   ScrollView,
   TouchableOpacity,
   StyleSheet,
-  SafeAreaView,
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -113,7 +112,10 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
   };
 
   const handleAskCoach = () => {
-    // TODO: Implement coach integration
+    // Close wellbeing dashboard and open coach with context
+    onClose();
+    // In a real implementation, this would navigate to coach with preloaded context
+    // For now, we'll just close the dashboard - the user can tap Coach tab
     console.log('Opening AI Coach with Life Score context...');
   };
 
@@ -124,8 +126,8 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView style={styles.container}>
-        <StatusBar barStyle="light-content" />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
         <LinearGradient
           colors={['#047857', '#065f46', '#1f2937']}
           style={styles.gradient}
@@ -276,7 +278,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
             <View style={styles.bottomSpacer} />
           </ScrollView>
         </LinearGradient>
-      </SafeAreaView>
+      </View>
     </Modal>
   );
 };
@@ -325,7 +327,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 20,
-    paddingTop: 20,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 20, // Add bottom padding
   },
   section: {
     marginBottom: 32,

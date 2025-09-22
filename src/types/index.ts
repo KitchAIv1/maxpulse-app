@@ -148,3 +148,6 @@ export interface BarProps {
 
 // Export wellbeing types
 export * from './wellbeing';
+
+// Export coach types  
+export * from './coach';

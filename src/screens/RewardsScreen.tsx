@@ -8,7 +8,6 @@ import {
   View,
   ScrollView,
   TouchableOpacity,
-  SafeAreaView,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, Bar } from '../components';
@@ -46,11 +45,10 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
   const allTargetsMet = stepsPct >= 1 && waterPct >= 1 && sleepPct >= 1;
 
   return (
-    <SafeAreaView style={styles.container}>
-      <LinearGradient
-        colors={['#047857', '#065f46', '#1f2937']}
-        style={styles.gradient}
-      >
+    <LinearGradient
+      colors={['#047857', '#065f46', '#1f2937']}
+      style={styles.gradient}
+    >
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -188,14 +186,10 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
           <View style={styles.bottomSpacer} />
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
   gradient: {
     flex: 1,
   },
