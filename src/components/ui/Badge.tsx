@@ -44,14 +44,17 @@ export const Badge: React.FC<BadgeProps> = ({ label, variant = 'default' }) => {
 
 const styles = StyleSheet.create({
   badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 12,
+    paddingHorizontal: 6, // Reduced from 8
+    paddingVertical: 3, // Reduced from 4
+    borderRadius: 10, // Reduced from 12
     borderWidth: 1,
+    minWidth: 40, // Ensure consistent minimum width
+    alignItems: 'center', // Center the text
   },
   text: {
-    fontSize: 12,
+    fontSize: 11, // Reduced from 12
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
+    textAlign: 'center', // Center align text
   },
 });

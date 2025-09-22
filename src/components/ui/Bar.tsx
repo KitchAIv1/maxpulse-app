@@ -39,8 +39,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 4,
     overflow: 'hidden',
+    position: 'relative', // Ensure proper positioning
   },
   fill: {
     borderRadius: 4,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    maxWidth: '100%', // Ensure it never exceeds container width
   },
 });

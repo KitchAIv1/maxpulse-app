@@ -3,7 +3,7 @@
 // with Life Score in the center
 
 import React, { useMemo } from 'react';
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Svg, { Circle, Defs, Filter, FeGaussianBlur, FeMerge, FeMergeNode } from 'react-native-svg';
 import { computeLifeScore, ringDasharray } from '../../utils';
 
@@ -11,20 +11,22 @@ interface TriRingsProps {
   stepsPct: number;
   waterPct: number;
   sleepPct: number;
+  onLifeScorePress?: () => void;
 }
 
 export const TriRings: React.FC<TriRingsProps> = ({
   stepsPct,
   waterPct,
   sleepPct,
+  onLifeScorePress,
 }) => {
-  const size = 260;
+  const size = 320; // Increased from 260 to 320
   const center = size / 2;
   
   const rings = [
-    { r: 110, pct: stepsPct, color: '#ffffff' }, // Steps (outer)
-    { r: 90, pct: waterPct, color: '#A3E635' },   // Hydration (middle) - lime-400
-    { r: 70, pct: sleepPct, color: '#22D3EE' },   // Sleep (inner) - cyan-400
+    { r: 140, pct: stepsPct, color: '#ffffff' }, // Steps (outer) - white
+    { r: 115, pct: waterPct, color: '#00ff88' },   // Hydration (middle) - neon green
+    { r: 85, pct: sleepPct, color: '#3b82f6' },   // Sleep (inner) - blue (reduced from 90 to give more center space)
   ];
 
   const lifeScore = useMemo(
@@ -76,14 +78,22 @@ export const TriRings: React.FC<TriRingsProps> = ({
         ))}
       </Svg>
 
-      {/* Center content */}
-      <View style={styles.centerContent}>
+      {/* Center content - Clickable */}
+      <TouchableOpacity 
+        style={styles.centerContent}
+        onPress={onLifeScorePress}
+        activeOpacity={0.8}
+        disabled={!onLifeScorePress}
+      >
         <Text style={styles.lifeScoreLabel}>Life Score</Text>
         <Text style={styles.lifeScoreValue}>{lifeScore}</Text>
         <Text style={styles.lifeScoreDescription}>
           Personalized from steps • water • sleep
         </Text>
-      </View>
+        {onLifeScorePress && (
+          <Text style={styles.tapHint}>Tap for insights</Text>
+        )}
+      </TouchableOpacity>
     </View>
   );
 };
@@ -100,24 +110,32 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   lifeScoreLabel: {
-    fontSize: 12,
+    fontSize: 12, // Reduced back to 12 to prevent overlap
     color: 'rgba(255, 255, 255, 0.8)',
     fontWeight: '500',
     textTransform: 'uppercase',
     letterSpacing: 1.5,
-    marginBottom: 4,
+    marginBottom: 4, // Reduced to 4
   },
   lifeScoreValue: {
-    fontSize: 48,
+    fontSize: 52, // Reduced from 56 to 52
     fontWeight: '600',
     color: 'white',
-    lineHeight: 52,
-    marginBottom: 4,
+    lineHeight: 56, // Reduced from 60
+    marginBottom: 4, // Reduced to 4
   },
   lifeScoreDescription: {
-    fontSize: 12,
+    fontSize: 9, // Further reduced from 11 to 9 to prevent overlap
     color: 'rgba(255, 255, 255, 0.8)',
     textAlign: 'center',
-    maxWidth: 140,
+    maxWidth: 120, // Further reduced from 140 to 120
+    lineHeight: 12, // Further reduced line height
+  },
+  tapHint: {
+    fontSize: 8,
+    color: 'rgba(255, 255, 255, 0.6)',
+    fontStyle: 'italic',
+    marginTop: 4,
+    textAlign: 'center',
   },
 });

@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, TriRings } from './src/components';
+import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard } from './src/components';
 import { useAppStore, useLifeScore, useNextBestAction } from './src/stores/appStore';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
@@ -20,7 +20,8 @@ import { RewardsScreen } from './src/screens/RewardsScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
 
 function TriHabitApp() {
-  const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'rewards'>('dashboard');
+  const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'coach' | 'rewards' | 'settings'>('dashboard');
+  const [wellbeingDashboardVisible, setWellbeingDashboardVisible] = useState(false);
   
   const {
     currentState,
@@ -39,18 +40,83 @@ function TriHabitApp() {
   const displayStepTarget = stepTrackingAvailable ? stepTarget : targets.steps;
   const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / targets.steps);
 
-  const { score: lifeScore, waterPct, sleepPct } = useLifeScore();
+  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct } = useLifeScore();
   const nextAction = useNextBestAction();
+
+  // Handle wellbeing dashboard navigation
+  const handleLifeScorePress = () => {
+    setWellbeingDashboardVisible(true);
+  };
+
+  const handleWellbeingDashboardClose = () => {
+    setWellbeingDashboardVisible(false);
+  };
+
+  const handleNavigateToModule = (module: 'steps' | 'hydration' | 'sleep' | 'mood') => {
+    // For now, just close the dashboard and show a message
+    // In the future, this could navigate to specific module screens
+    console.log(`Navigating to ${module} module...`);
+    setWellbeingDashboardVisible(false);
+  };
 
   // Initialize targets on app start
   useEffect(() => {
     initializeTargets();
   }, [initializeTargets]);
 
-  // Show Rewards screen if selected
+  // Handle different screens
   if (currentScreen === 'rewards') {
     return (
-      <RewardsScreen onBack={() => setCurrentScreen('dashboard')} />
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <RewardsScreen onBack={() => setCurrentScreen('dashboard')} />
+        <BottomNavigation 
+          currentScreen={currentScreen} 
+          onScreenChange={setCurrentScreen} 
+        />
+      </View>
+    );
+  }
+
+  if (currentScreen === 'coach') {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <LinearGradient
+          colors={['#047857', '#065f46', '#1f2937']}
+          style={styles.gradient}
+        >
+          <View style={styles.placeholderScreen}>
+            <Text style={styles.placeholderTitle}>AI Coach</Text>
+            <Text style={styles.placeholderText}>Coming Soon</Text>
+          </View>
+        </LinearGradient>
+        <BottomNavigation 
+          currentScreen={currentScreen} 
+          onScreenChange={setCurrentScreen} 
+        />
+      </View>
+    );
+  }
+
+  if (currentScreen === 'settings') {
+    return (
+      <View style={styles.container}>
+        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <LinearGradient
+          colors={['#047857', '#065f46', '#1f2937']}
+          style={styles.gradient}
+        >
+          <View style={styles.placeholderScreen}>
+            <Text style={styles.placeholderTitle}>Settings</Text>
+            <Text style={styles.placeholderText}>Coming Soon</Text>
+          </View>
+        </LinearGradient>
+        <BottomNavigation 
+          currentScreen={currentScreen} 
+          onScreenChange={setCurrentScreen} 
+        />
+      </View>
     );
   }
 
@@ -63,8 +129,8 @@ function TriHabitApp() {
   });
 
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
       <LinearGradient
         colors={['#047857', '#065f46', '#1f2937']} // emerald-700 to emerald-800 to gray-900
         style={styles.gradient}
@@ -81,37 +147,35 @@ function TriHabitApp() {
               <Text style={styles.titleText}>Your Daily Health</Text>
             </View>
             <View style={styles.headerBadges}>
-              <Badge label="AI Coach" />
-              <Badge label="Pedometer" />
               <TouchableOpacity 
                 style={styles.rewardsButton}
                 onPress={() => setCurrentScreen('rewards')}
               >
-                <Text style={styles.rewardsButtonText}>🏆</Text>
+                <Text style={styles.rewardsPointsText}>🏆 1,247 pts</Text>
               </TouchableOpacity>
-              <View style={styles.avatar} />
             </View>
           </View>
 
-          {/* TriRings */}
-          <View style={styles.ringsContainer}>
-          <TriRings 
-            stepsPct={displayStepsPct} 
-            waterPct={waterPct} 
-            sleepPct={sleepPct} 
-          />
-          </View>
+                 {/* TriRings */}
+                 <View style={styles.ringsContainer}>
+                 <TriRings
+                   stepsPct={displayStepsPct}
+                   waterPct={waterPct}
+                   sleepPct={sleepPct}
+                   onLifeScorePress={handleLifeScorePress}
+                 />
+                 </View>
 
           {/* Quick Actions */}
           <View style={styles.quickActions}>
             <TouchableOpacity
-              style={styles.actionButton}
+              style={[styles.actionButton, styles.hydrationButton]}
               onPress={() => addHydration(8)}
             >
               <Text style={styles.actionButtonText}>+8 oz water</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.actionButton}
+              style={[styles.actionButton, styles.sleepButton]}
               onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
             >
               <Text style={styles.actionButtonText}>+15m sleep</Text>
@@ -119,12 +183,7 @@ function TriHabitApp() {
           </View>
 
           {/* KPI Cards */}
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false}
-            style={styles.kpiScroll}
-            contentContainerStyle={styles.kpiContainer}
-          >
+          <View style={styles.kpiContainer}>
             <KPICard
               title="Steps"
               value={`${displaySteps.toLocaleString()} / ${displayStepTarget.toLocaleString()}`}
@@ -139,18 +198,14 @@ function TriHabitApp() {
               value={`${currentState.waterOz} / ${targets.waterOz} oz`}
               sub="Personalized by weight & climate"
               percent={waterPct}
-              onAdd={() => addHydration(12)}
-              addLabel="+12 oz"
             />
             <KPICard
               title="Sleep"
               value={`${formatSleepDuration(currentState.sleepHr)} / ${formatSleepDuration(targets.sleepHr)}`}
               sub="Chronotype & recovery‑aware"
               percent={sleepPct}
-              onAdd={() => updateSleep(Math.min(currentState.sleepHr + 0.5, targets.sleepHr))}
-              addLabel="+30 min"
             />
-          </ScrollView>
+          </View>
 
           {/* Next Best Action Card */}
           <View style={styles.coachCard}>
@@ -207,7 +262,24 @@ function TriHabitApp() {
           <View style={styles.bottomSpacer} />
         </ScrollView>
       </LinearGradient>
-    </SafeAreaView>
+      <BottomNavigation 
+        currentScreen={currentScreen} 
+        onScreenChange={setCurrentScreen} 
+      />
+
+      {/* Wellbeing Dashboard Modal */}
+      <WellbeingDashboard
+        visible={wellbeingDashboardVisible}
+        onClose={handleWellbeingDashboardClose}
+        currentScore={lifeScore}
+        breakdown={{
+          steps: lifeScoreStepsPct,
+          hydration: waterPct,
+          sleep: sleepPct,
+        }}
+        onNavigateToModule={handleNavigateToModule}
+      />
+    </View>
   );
 }
 
@@ -223,13 +295,15 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 100, // Account for bottom navigation
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 16,
+    paddingTop: 8,
   },
   dateText: {
     fontSize: 12,
@@ -247,25 +321,24 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rewardsButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
+    paddingHorizontal: 16, // Increased from 12
+    paddingVertical: 10, // Increased from 8
+    borderRadius: 20, // Increased from 18
+    backgroundColor: 'rgba(255, 215, 0, 0.2)', // Changed to golden background
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: 'rgba(255, 215, 0, 0.4)', // Golden border
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: 'rgba(255, 215, 0, 0.3)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 4,
+    elevation: 4, // Android shadow
   },
-  rewardsButtonText: {
-    fontSize: 18,
-  },
-  avatar: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+  rewardsPointsText: {
+    fontSize: 14, // Increased from 12
+    fontWeight: '700', // Increased from 600
+    color: '#FFD700', // Golden color
   },
   ringsContainer: {
     alignItems: 'center',
@@ -283,16 +356,21 @@ const styles = StyleSheet.create({
     backgroundColor: 'white',
     alignItems: 'center',
   },
+  hydrationButton: {
+    backgroundColor: '#00ff88', // neon green for hydration
+  },
+  sleepButton: {
+    backgroundColor: '#3b82f6', // blue for sleep
+  },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1f2937',
   },
-  kpiScroll: {
-    marginBottom: 20,
-  },
   kpiContainer: {
-    paddingRight: 16,
+    flexDirection: 'row',
+    marginBottom: 20,
+    marginHorizontal: -4, // Negative margin to account for card spacing
   },
   coachCard: {
     borderRadius: 16,
@@ -385,6 +463,25 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 24,
+  },
+  placeholderScreen: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 100, // Account for bottom navigation
+  },
+  placeholderTitle: {
+    fontSize: 32,
+    fontWeight: '700',
+    color: 'white',
+    marginBottom: 16,
+  },
+  placeholderText: {
+    fontSize: 18,
+    color: 'rgba(255, 255, 255, 0.8)',
+    textAlign: 'center',
   },
 });
 

@@ -145,3 +145,6 @@ export interface BarProps {
   percent: number;
   color?: string;
 }
+
+// Export wellbeing types
+export * from './wellbeing';

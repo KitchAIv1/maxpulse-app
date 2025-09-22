@@ -39,43 +39,34 @@ export const KPICard: React.FC<KPICardProps> = ({
         <Bar percent={percent} />
       </View>
       
-      <View style={styles.actions}>
-        {onAdd && (
-          <TouchableOpacity style={styles.primaryButton} onPress={onAdd}>
-            <Text style={styles.primaryButtonText}>{addLabel}</Text>
-          </TouchableOpacity>
-        )}
-        {onLog && (
-          <TouchableOpacity style={styles.secondaryButton} onPress={onLog}>
-            <Text style={styles.secondaryButtonText}>Log</Text>
-          </TouchableOpacity>
-        )}
-      </View>
+      {/* Removed redundant action buttons as requested */}
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   card: {
-    minWidth: 220,
-    maxWidth: 280,
+    flex: 1,
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginRight: 12,
+    marginHorizontal: 4, // Small horizontal margin for spacing
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
     marginBottom: 8,
+    overflow: 'hidden', // Prevent overflow
   },
   title: {
     fontSize: 14,
     color: 'rgba(255, 255, 255, 0.9)',
     fontWeight: '500',
+    flex: 1, // Allow title to take available space
+    marginRight: 8, // Add space between title and badge
   },
   value: {
     fontSize: 24,
@@ -90,6 +81,8 @@ const styles = StyleSheet.create({
   },
   progressContainer: {
     marginBottom: 12,
+    width: '100%', // Ensure container takes full width
+    overflow: 'hidden', // Prevent any overflow
   },
   actions: {
     flexDirection: 'row',

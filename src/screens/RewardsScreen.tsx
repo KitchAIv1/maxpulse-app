@@ -204,7 +204,8 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 16,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 100, // Account for bottom navigation
   },
   header: {
     flexDirection: 'row',
