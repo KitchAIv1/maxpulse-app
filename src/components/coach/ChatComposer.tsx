@@ -16,7 +16,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
   onSendMessage,
   onQuickAction,
   isLoading = false,
-  placeholder = "Message Coach...",
+  placeholder = "Describe how you're feeling, ask questions, or share symptoms...",
 }) => {
   const [message, setMessage] = useState('');
 

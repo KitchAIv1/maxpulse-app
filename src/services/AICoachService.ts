@@ -226,10 +226,14 @@ class AICoachService {
       return this.handleSleepInquiry(healthContext);
     }
     
-    // Wellness check related
+    // Wellness check related - detect symptom descriptions
     if (message.includes('feel') || message.includes('symptom') || message.includes('wellness') || 
-        message.includes('sick') || message.includes('mood') || message.includes('energy')) {
-      return this.handleWellnessCheck(healthContext);
+        message.includes('sick') || message.includes('mood') || message.includes('energy') ||
+        message.includes('tired') || message.includes('stress') || message.includes('pain') ||
+        message.includes('headache') || message.includes('nausea') || message.includes('dizzy') ||
+        message.includes('anxious') || message.includes('sad') || message.includes('depressed') ||
+        message.includes('hurt') || message.includes('ache') || message.includes('sore')) {
+      return this.handleSymptomDescription(userMessage, healthContext);
     }
     
     // General encouragement
@@ -465,13 +469,13 @@ class AICoachService {
   private handleWellnessCheck(healthContext: HealthContextData): CoachResponse {
     const disclaimer = "I'm not a medical professional, but I can help you reflect on what you're feeling and suggest lifestyle support. For diagnosis or treatment, please consult your healthcare provider.";
     
-    const message = `${disclaimer}\n\n🌟 Tell me how you're feeling — any symptoms, energy changes, or moods you want to note today?\n\nI'll help connect what you're experiencing to your wellness habits and suggest supportive actions.`;
+    const message = `${disclaimer}\n\n🌟 **Tell me how you're feeling** — describe any symptoms, energy changes, or moods you're experiencing today.\n\nYou can type freely about what you're noticing, or use the quick options below. I'll help connect what you're experiencing to your wellness habits.`;
 
     const quickActions: QuickAction[] = [
-      { id: 'mood_check', label: 'Log mood', action: 'symptom_log', params: { type: 'mood' }, icon: '😊' },
-      { id: 'energy_check', label: 'Log energy', action: 'symptom_log', params: { type: 'energy' }, icon: '⚡' },
-      { id: 'stress_check', label: 'Log stress', action: 'symptom_log', params: { type: 'stress' }, icon: '😌' },
-      { id: 'symptom_check', label: 'Log symptoms', action: 'symptom_log', params: { type: 'symptom' }, icon: '🩺' },
+      { id: 'feeling_tired', label: "I'm feeling tired", action: 'symptom_log', params: { type: 'energy', level: 'low' }, icon: '😴' },
+      { id: 'feeling_stressed', label: "I'm stressed", action: 'symptom_log', params: { type: 'stress', level: 'high' }, icon: '😰' },
+      { id: 'feeling_low', label: "Mood is low", action: 'symptom_log', params: { type: 'mood', level: 'low' }, icon: '😔' },
+      { id: 'physical_symptoms', label: "Physical symptoms", action: 'symptom_log', params: { type: 'physical' }, icon: '🩺' },
     ];
 
     return {
@@ -483,7 +487,86 @@ class AICoachService {
   }
 
   /**
-   * Handle symptom logging
+   * Handle natural language symptom descriptions
+   */
+  private handleSymptomDescription(userMessage: string, healthContext: HealthContextData): CoachResponse {
+    const message = userMessage.toLowerCase();
+    
+    // Acknowledge what they shared
+    let response = "Thank you for sharing what you're experiencing. 💙 I hear that you're ";
+    
+    // Parse their description and reflect it back
+    if (message.includes('tired') || message.includes('exhausted') || message.includes('fatigue')) {
+      response += "feeling tired or low on energy. ";
+    } else if (message.includes('stress') || message.includes('anxious') || message.includes('overwhelm')) {
+      response += "feeling stressed or anxious. ";
+    } else if (message.includes('sad') || message.includes('down') || message.includes('depressed')) {
+      response += "experiencing low mood. ";
+    } else if (message.includes('pain') || message.includes('hurt') || message.includes('ache') || message.includes('sore')) {
+      response += "experiencing physical discomfort. ";
+    } else if (message.includes('headache') || message.includes('head')) {
+      response += "dealing with head pain. ";
+    } else if (message.includes('nausea') || message.includes('sick') || message.includes('stomach')) {
+      response += "feeling nauseous or having stomach issues. ";
+    } else {
+      response += "not feeling your best. ";
+    }
+    
+    response += "\n\nLet me look at your wellness patterns to see if there might be connections:\n\n";
+    
+    // Analyze health context for correlations
+    const correlations: string[] = [];
+    
+    if (healthContext.hydration && healthContext.hydration.current < healthContext.hydration.target * 0.7) {
+      correlations.push("💧 **Hydration**: You're at " + Math.round((healthContext.hydration.current / healthContext.hydration.target) * 100) + "% of your goal. Dehydration can cause fatigue, headaches, and mood changes.");
+    }
+    
+    if (healthContext.sleep && healthContext.sleep.current < healthContext.sleep.target * 0.8) {
+      correlations.push("😴 **Sleep**: You had " + healthContext.sleep.current + "h vs " + healthContext.sleep.target + "h target. Poor sleep affects energy, mood, and physical wellbeing.");
+    }
+    
+    if (healthContext.steps && healthContext.steps.current < healthContext.steps.target * 0.4) {
+      correlations.push("🚶‍♂️ **Movement**: Lower activity today (" + Math.round((healthContext.steps.current / healthContext.steps.target) * 100) + "% of goal). Movement helps with energy and stress.");
+    }
+
+    if (correlations.length > 0) {
+      response += correlations.join('\n\n') + "\n\n";
+      response += "These patterns might be connected to how you're feeling. Would you like to try some gentle supportive actions?";
+    } else {
+      response += "Your wellness metrics look good, which suggests this might be:\n• A normal fluctuation in how you feel\n• Something not captured by these metrics\n• A sign to rest and be gentle with yourself\n\nSometimes our bodies need extra care even when the numbers look good.";
+    }
+
+    // Add follow-up questions to encourage more sharing
+    response += "\n\n**Tell me more**: How long have you been feeling this way? Is there anything specific that might have triggered it?";
+
+    const quickActions: QuickAction[] = [];
+    
+    // Add contextual actions based on correlations
+    if (healthContext.hydration && healthContext.hydration.current < healthContext.hydration.target) {
+      quickActions.push({
+        id: 'hydrate_for_symptoms',
+        label: 'Drink water now',
+        action: 'log_hydration',
+        params: { amount: 16 },
+        icon: '💧'
+      });
+    }
+    
+    quickActions.push(
+      { id: 'gentle_care', label: 'Self-care tips', action: 'plan_tomorrow', params: { focus: 'selfcare' }, icon: '🤗' },
+      { id: 'track_more', label: 'Tell me more', action: 'wellness_check', icon: '💬' }
+    );
+
+    return {
+      message: response,
+      contextData: healthContext,
+      quickActions,
+      messageType: 'suggestion',
+    };
+  }
+
+  /**
+   * Handle symptom logging (from quick actions)
    */
   private handleSymptomLog(healthContext: HealthContextData): CoachResponse {
     const logType = 'general'; // This would be determined by params in real implementation

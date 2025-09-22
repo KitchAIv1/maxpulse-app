@@ -15,6 +15,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
+import { WellnessPrompts } from './WellnessPrompts';
 import { CoachScreenProps, ChatMessage as ChatMessageType, QuickAction, HealthContextData } from '../../types/coach';
 import AICoachService from '../../services/AICoachService';
 import { useAppStore, useLifeScore } from '../../stores/appStore';
@@ -27,6 +28,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [showWellnessPrompts, setShowWellnessPrompts] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const coachService = AICoachService.getInstance();
 
@@ -158,9 +160,16 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
   const handleQuickAction = async (action: QuickAction) => {
     if (isLoading) return;
 
+    // Hide wellness prompts when user takes action
+    setShowWellnessPrompts(false);
     setIsLoading(true);
 
     try {
+      // Show wellness prompts if this is a wellness check
+      if (action.action === 'wellness_check') {
+        setShowWellnessPrompts(true);
+      }
+
       // Process the quick action
       const response = await coachService.processQuickAction(action, healthContext);
       const aiMessage: ChatMessageType = {
@@ -185,6 +194,11 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleWellnessPrompt = (prompt: string) => {
+    setShowWellnessPrompts(false);
+    handleSendMessage(prompt);
   };
 
   const handleClearChat = () => {
@@ -272,6 +286,14 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
                 isLatest={index === messages.length - 1}
               />
             ))}
+            
+            {/* Wellness Prompts */}
+            {showWellnessPrompts && (
+              <WellnessPrompts 
+                onPromptPress={handleWellnessPrompt}
+                visible={showWellnessPrompts}
+              />
+            )}
             
             {isLoading && (
               <View style={styles.typingIndicator}>
