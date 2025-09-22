@@ -5,3 +5,4 @@ export { ChatMessage } from './ChatMessage';
 export { MessageBubble } from './MessageBubble';
 export { QuickActionChips } from './QuickActionChips';
 export { ChatComposer } from './ChatComposer';
+export { WellnessIndicators } from './WellnessIndicators';

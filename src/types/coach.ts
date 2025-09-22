@@ -22,7 +22,7 @@ export interface HealthContextData {
 export interface QuickAction {
   id: string;
   label: string;
-  action: 'log_hydration' | 'log_steps' | 'adjust_target' | 'plan_tomorrow' | 'check_score' | 'boost_score';
+  action: 'log_hydration' | 'log_steps' | 'adjust_target' | 'plan_tomorrow' | 'check_score' | 'boost_score' | 'wellness_check' | 'symptom_log';
   params?: Record<string, any>;
   icon?: string;
 }
@@ -108,15 +108,65 @@ export interface CoachEntryContext {
   suggestedActions?: QuickAction[];
 }
 
+// Wellness Check & Symptom Logging
+export interface WellnessCheckData {
+  id: string;
+  userId: string;
+  timestamp: string;
+  mood: MoodLevel;
+  energy: EnergyLevel;
+  stress: StressLevel;
+  symptoms: Symptom[];
+  notes?: string;
+  lifeScoreImpact?: number; // Estimated impact on Life Score
+}
+
+export type MoodLevel = 'excellent' | 'good' | 'neutral' | 'low' | 'poor';
+export type EnergyLevel = 'high' | 'good' | 'moderate' | 'low' | 'exhausted';
+export type StressLevel = 'minimal' | 'low' | 'moderate' | 'high' | 'overwhelming';
+
+export interface Symptom {
+  id: string;
+  name: string;
+  severity: 'mild' | 'moderate' | 'severe';
+  category: 'physical' | 'mental' | 'sleep' | 'digestive' | 'other';
+  duration?: string; // "2 hours", "all day", etc.
+  notes?: string;
+}
+
+export interface WellnessCheckResponse {
+  disclaimer: string;
+  followUpQuestions: WellnessQuestion[];
+  lifestyleSuggestions: LifestyleSuggestion[];
+  recommendSeekCare?: boolean;
+}
+
+export interface WellnessQuestion {
+  id: string;
+  question: string;
+  type: 'mood' | 'energy' | 'stress' | 'symptom' | 'sleep' | 'hydration' | 'open';
+  options?: string[];
+  required?: boolean;
+}
+
+export interface LifestyleSuggestion {
+  category: 'hydration' | 'sleep' | 'activity' | 'stress' | 'nutrition';
+  suggestion: string;
+  reasoning: string;
+  actionable: boolean;
+  quickAction?: QuickAction;
+}
+
 // Coach Analytics & Insights
 export interface CoachInsight {
-  type: 'trend' | 'achievement' | 'suggestion' | 'warning';
+  type: 'trend' | 'achievement' | 'suggestion' | 'warning' | 'wellness';
   title: string;
   description: string;
   data: HealthContextData;
   confidence: number; // 0-1 confidence in the insight
   actionable: boolean;
   suggestedActions?: QuickAction[];
+  wellnessData?: WellnessCheckData;
 }
 
 export interface CoachAnalytics {

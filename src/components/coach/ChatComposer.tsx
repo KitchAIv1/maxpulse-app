@@ -30,6 +30,12 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
   // Default quick actions always available
   const defaultQuickActions: QuickAction[] = [
     {
+      id: 'wellness_check',
+      label: 'Wellness Check',
+      action: 'wellness_check',
+      icon: '🩺'
+    },
+    {
       id: 'check_score',
       label: 'Check my Life Score',
       action: 'check_score',
@@ -46,12 +52,6 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
       label: 'Plan week',
       action: 'plan_tomorrow',
       icon: '📅'
-    },
-    {
-      id: 'why_low',
-      label: 'Why am I low today?',
-      action: 'check_score',
-      icon: '🤔'
     },
     {
       id: 'log_water',

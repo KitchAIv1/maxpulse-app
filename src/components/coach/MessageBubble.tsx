@@ -5,6 +5,7 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MessageBubbleProps } from '../../types/coach';
+import { WellnessIndicators } from './WellnessIndicators';
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   content,
@@ -80,6 +81,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                     😴 {contextData.sleep.current}h/{contextData.sleep.target}h
                   </Text>
                 )}
+              </View>
+            )}
+
+            {/* Wellness Indicators for wellness-related messages */}
+            {messageType === 'insight' && content.includes('feeling') && (
+              <View style={styles.wellnessContainer}>
+                <WellnessIndicators 
+                  mood="neutral" 
+                  energy="moderate" 
+                  stress="low"
+                  showLabels={false}
+                />
               </View>
             )}
           </LinearGradient>
@@ -163,6 +176,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.2)',
+  },
+  wellnessContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(16, 185, 129, 0.1)',
   },
 
   // User message styles

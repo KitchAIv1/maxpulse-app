@@ -8,7 +8,15 @@ import {
   QuickAction, 
   CoachInsight,
   CoachConfig,
-  CoachPersonality 
+  CoachPersonality,
+  WellnessCheckData,
+  WellnessCheckResponse,
+  WellnessQuestion,
+  LifestyleSuggestion,
+  MoodLevel,
+  EnergyLevel,
+  StressLevel,
+  Symptom
 } from '../types/coach';
 
 class AICoachService {
@@ -110,6 +118,12 @@ class AICoachService {
       case 'adjust_target':
         return this.handleAdjustTarget(action.params, healthContext);
       
+      case 'wellness_check':
+        return this.handleWellnessCheck(healthContext);
+      
+      case 'symptom_log':
+        return this.handleSymptomLog(healthContext);
+      
       default:
         return {
           message: "I'll help you with that! Let me know what specific action you'd like to take.",
@@ -210,6 +224,12 @@ class AICoachService {
     // Sleep related
     if (message.includes('sleep') || message.includes('tired') || message.includes('rest')) {
       return this.handleSleepInquiry(healthContext);
+    }
+    
+    // Wellness check related
+    if (message.includes('feel') || message.includes('symptom') || message.includes('wellness') || 
+        message.includes('sick') || message.includes('mood') || message.includes('energy')) {
+      return this.handleWellnessCheck(healthContext);
     }
     
     // General encouragement
@@ -439,9 +459,151 @@ class AICoachService {
     };
   }
 
+  /**
+   * Handle wellness check initiation
+   */
+  private handleWellnessCheck(healthContext: HealthContextData): CoachResponse {
+    const disclaimer = "I'm not a medical professional, but I can help you reflect on what you're feeling and suggest lifestyle support. For diagnosis or treatment, please consult your healthcare provider.";
+    
+    const message = `${disclaimer}\n\n🌟 Tell me how you're feeling — any symptoms, energy changes, or moods you want to note today?\n\nI'll help connect what you're experiencing to your wellness habits and suggest supportive actions.`;
+
+    const quickActions: QuickAction[] = [
+      { id: 'mood_check', label: 'Log mood', action: 'symptom_log', params: { type: 'mood' }, icon: '😊' },
+      { id: 'energy_check', label: 'Log energy', action: 'symptom_log', params: { type: 'energy' }, icon: '⚡' },
+      { id: 'stress_check', label: 'Log stress', action: 'symptom_log', params: { type: 'stress' }, icon: '😌' },
+      { id: 'symptom_check', label: 'Log symptoms', action: 'symptom_log', params: { type: 'symptom' }, icon: '🩺' },
+    ];
+
+    return {
+      message,
+      contextData: healthContext,
+      quickActions,
+      messageType: 'insight',
+    };
+  }
+
+  /**
+   * Handle symptom logging
+   */
+  private handleSymptomLog(healthContext: HealthContextData): CoachResponse {
+    const logType = 'general'; // This would be determined by params in real implementation
+    
+    let message = "Thanks for sharing how you're feeling! 💙\n\n";
+    
+    // Simulate analysis based on health context
+    const suggestions: string[] = [];
+    
+    if (healthContext.hydration && healthContext.hydration.current < healthContext.hydration.target * 0.7) {
+      suggestions.push("💧 Your hydration is low today - dehydration can affect energy and mood");
+    }
+    
+    if (healthContext.sleep && healthContext.sleep.current < healthContext.sleep.target * 0.8) {
+      suggestions.push("😴 You had less sleep than usual - this often impacts how we feel");
+    }
+    
+    if (healthContext.steps && healthContext.steps.current < healthContext.steps.target * 0.5) {
+      suggestions.push("🚶‍♂️ Light movement can help boost energy and mood");
+    }
+
+    if (suggestions.length > 0) {
+      message += "Based on your wellness data, I notice:\n\n" + suggestions.join('\n') + "\n\n";
+      message += "These lifestyle factors might be connected to how you're feeling. Small adjustments often make a big difference!";
+    } else {
+      message += "Your wellness metrics look good today! Sometimes we have off days despite good habits - that's completely normal.\n\nFocus on gentle self-care and listen to your body.";
+    }
+
+    const quickActions: QuickAction[] = [];
+    
+    // Add relevant actions based on analysis
+    if (healthContext.hydration && healthContext.hydration.current < healthContext.hydration.target) {
+      quickActions.push({
+        id: 'hydrate_for_wellness',
+        label: 'Drink water',
+        action: 'log_hydration',
+        params: { amount: 12 },
+        icon: '💧'
+      });
+    }
+    
+    quickActions.push(
+      { id: 'gentle_movement', label: 'Light activity', action: 'boost_score', params: { focus: 'gentle' }, icon: '🧘‍♀️' },
+      { id: 'rest_suggestion', label: 'Rest tips', action: 'plan_tomorrow', params: { focus: 'recovery' }, icon: '😴' }
+    );
+
+    return {
+      message,
+      contextData: healthContext,
+      quickActions,
+      messageType: 'suggestion',
+    };
+  }
+
+  /**
+   * Generate wellness-focused insights
+   */
+  private generateWellnessInsights(wellnessData: WellnessCheckData, healthContext: HealthContextData): LifestyleSuggestion[] {
+    const suggestions: LifestyleSuggestion[] = [];
+    
+    // Hydration suggestions based on mood/energy
+    if ((wellnessData.mood === 'low' || wellnessData.energy === 'low') && 
+        healthContext.hydration && healthContext.hydration.current < healthContext.hydration.target * 0.8) {
+      suggestions.push({
+        category: 'hydration',
+        suggestion: 'Increase water intake - dehydration often affects mood and energy',
+        reasoning: 'Your hydration is below optimal and you\'re experiencing low mood/energy',
+        actionable: true,
+        quickAction: {
+          id: 'wellness_hydrate',
+          label: 'Drink 16oz water',
+          action: 'log_hydration',
+          params: { amount: 16 },
+          icon: '💧'
+        }
+      });
+    }
+
+    // Sleep suggestions based on energy/stress
+    if ((wellnessData.energy === 'low' || wellnessData.stress === 'high') &&
+        healthContext.sleep && healthContext.sleep.current < healthContext.sleep.target * 0.9) {
+      suggestions.push({
+        category: 'sleep',
+        suggestion: 'Prioritize sleep tonight - rest helps with energy and stress management',
+        reasoning: 'Your recent sleep and current energy/stress levels suggest you need recovery',
+        actionable: true,
+        quickAction: {
+          id: 'plan_better_sleep',
+          label: 'Plan early bedtime',
+          action: 'plan_tomorrow',
+          params: { focus: 'sleep' },
+          icon: '😴'
+        }
+      });
+    }
+
+    // Activity suggestions for mood
+    if (wellnessData.mood === 'low' || wellnessData.stress === 'high') {
+      suggestions.push({
+        category: 'activity',
+        suggestion: 'Light movement can help improve mood and reduce stress',
+        reasoning: 'Physical activity releases endorphins and helps manage stress',
+        actionable: true,
+        quickAction: {
+          id: 'gentle_activity',
+          label: '5-min walk',
+          action: 'boost_score',
+          params: { focus: 'mood' },
+          icon: '🚶‍♀️'
+        }
+      });
+    }
+
+    return suggestions;
+  }
+
   private generateContextualActions(healthContext: HealthContextData): QuickAction[] {
     const actions: QuickAction[] = [
       { id: 'check_score', label: 'Check my Life Score', action: 'check_score', icon: '🔋' },
+      { id: 'wellness_check', label: 'Wellness Check', action: 'wellness_check', icon: '🩺' },
     ];
 
     // Add hydration action if not complete
