@@ -6,17 +6,39 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "build": "expo build",
+    "build:android": "expo build:android",
+    "build:ios": "expo build:ios",
+    "tsc": "tsc --noEmit",
+    "lint": "eslint . --ext .ts,.tsx",
+    "test": "jest"
   },
   "dependencies": {
+    "@react-native-async-storage/async-storage": "^2.2.0",
+    "@supabase/supabase-js": "^2.57.2",
     "expo": "~53.0.22",
+    "expo-dev-client": "^5.2.4",
+    "expo-device": "^7.1.4",
+    "expo-haptics": "^14.1.4",
+    "expo-linear-gradient": "^14.1.5",
+    "expo-notifications": "^0.31.4",
+    "expo-secure-store": "^14.2.3",
+    "expo-sensors": "^14.1.4",
     "expo-status-bar": "~2.2.3",
+    "nativewind": "^4.1.23",
     "react": "19.0.0",
-    "react-native": "0.79.6"
+    "react-native": "0.79.6",
+    "react-native-google-fit": "^0.21.0",
+    "react-native-health": "^1.19.0",
+    "react-native-permissions": "^5.4.2",
+    "react-native-svg": "^15.12.1",
+    "zustand": "^5.0.8"
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
     "@types/react": "~19.0.10",
+    "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"
   },
   "private": true

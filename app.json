@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "MaxApp",
-    "slug": "MaxApp",
+    "name": "TriHabit",
+    "slug": "trihabit",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -10,20 +10,34 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#047857"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSMotionUsageDescription": "TriHabit uses motion data to automatically track your daily steps and activity levels.",
+        "NSHealthShareUsageDescription": "TriHabit reads your health data to track sleep patterns and hydration levels for personalized health insights."
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#ffffff"
+        "backgroundColor": "#047857"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACTIVITY_RECOGNITION",
+        "android.permission.ACTIVITY_RECOGNITION"
+      ]
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-sensors",
+      "expo-notifications",
+      "expo-secure-store",
+      "expo-dev-client"
+    ]
   }
 }
