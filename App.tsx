@@ -12,23 +12,25 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen } from './src/components';
+import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal } from './src/components';
 import { useAppStore, useLifeScore, useNextBestAction } from './src/stores/appStore';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
-import { formatSleepDuration, formatMoodLevel, getMoodEmoji } from './src/utils';
+import { formatSleepDuration } from './src/utils';
 import { RewardsScreen } from './src/screens/RewardsScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
 
 function TriHabitApp() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'coach' | 'rewards' | 'settings'>('dashboard');
   const [wellbeingDashboardVisible, setWellbeingDashboardVisible] = useState(false);
+  const [moodCheckInVisible, setMoodCheckInVisible] = useState(false);
   
   const {
     currentState,
     targets,
+    moodCheckInFrequency,
     addHydration,
     updateSleep,
-    updateMood,
+    addMoodCheckIn,
     initializeTargets,
   } = useAppStore();
 
@@ -41,7 +43,7 @@ function TriHabitApp() {
   const displayStepTarget = stepTrackingAvailable ? stepTarget : targets.steps;
   const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / targets.steps);
 
-  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodPct } = useLifeScore();
+  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
   const nextAction = useNextBestAction();
 
   // Handle wellbeing dashboard navigation
@@ -58,6 +60,15 @@ function TriHabitApp() {
     // In the future, this could navigate to specific module screens
     console.log(`Navigating to ${module} module...`);
     setWellbeingDashboardVisible(false);
+  };
+
+  const handleMoodCheckIn = () => {
+    setMoodCheckInVisible(true);
+  };
+
+  const handleMoodCheckInSubmit = (checkIn: any) => {
+    addMoodCheckIn(checkIn);
+    setMoodCheckInVisible(false);
   };
 
   // Initialize targets on app start
@@ -155,7 +166,6 @@ function TriHabitApp() {
                    stepsPct={displayStepsPct}
                    waterPct={waterPct}
                    sleepPct={sleepPct}
-                   moodPct={moodPct}
                    onLifeScorePress={handleLifeScorePress}
                  />
                  </View>
@@ -175,47 +185,66 @@ function TriHabitApp() {
               <Text style={styles.actionButtonText}>+15m sleep</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionButton, styles.moodButton]}
-              onPress={() => updateMood(Math.min(currentState.moodLevel + 1, targets.moodLevel))}
+              style={[styles.actionButton, styles.moodCheckInButton]}
+              onPress={handleMoodCheckIn}
             >
-              <Text style={styles.actionButtonText}>+1 mood</Text>
+              <Text style={styles.actionButtonText}>Mood Check-In</Text>
             </TouchableOpacity>
           </View>
 
-          {/* KPI Cards - 2x2 Grid */}
-          <View style={styles.kpiGrid}>
-            <View style={styles.kpiRow}>
-              <KPICard
-                title="Steps"
-                value={`${displaySteps.toLocaleString()} / ${displayStepTarget.toLocaleString()}`}
-                sub={stepTrackingAvailable 
-                  ? (isTracking ? "Live tracking active" : "Tracking available") 
-                  : "Auto from phone pedometer"
-                }
-                percent={displayStepsPct}
-              />
-              <KPICard
-                title="Hydration"
-                value={`${currentState.waterOz} / ${targets.waterOz} oz`}
-                sub="Personalized by weight & climate"
-                percent={waterPct}
+          {/* KPI Cards - Back to 3 Cards */}
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.kpiScroll}
+            contentContainerStyle={styles.kpiContainer}
+          >
+            <KPICard
+              title="Steps"
+              value={`${displaySteps.toLocaleString()} / ${displayStepTarget.toLocaleString()}`}
+              sub={stepTrackingAvailable 
+                ? (isTracking ? "Live tracking active" : "Tracking available") 
+                : "Auto from phone pedometer"
+              }
+              percent={displayStepsPct}
+            />
+            <KPICard
+              title="Hydration"
+              value={`${currentState.waterOz} / ${targets.waterOz} oz`}
+              sub="Personalized by weight & climate"
+              percent={waterPct}
+            />
+            <KPICard
+              title="Sleep"
+              value={`${formatSleepDuration(currentState.sleepHr)} / ${formatSleepDuration(targets.sleepHr)}`}
+              sub="Chronotype & recovery‑aware"
+              percent={sleepPct}
+            />
+          </ScrollView>
+
+          {/* Mood Check-In Card */}
+          <TouchableOpacity style={styles.moodCheckInCard} onPress={handleMoodCheckIn}>
+            <View style={styles.moodCheckInContent}>
+              <View style={styles.moodCheckInLeft}>
+                <Text style={styles.moodCheckInTitle}>Emotional Wellness</Text>
+                <Text style={styles.moodCheckInSubtitle}>
+                  {moodCheckInFrequency.total_checkins}/{moodCheckInFrequency.target_checkins} check-ins this week
+                </Text>
+                <Text style={styles.moodCheckInProgress}>
+                  {Math.round(moodCheckInPct * 100)}% complete
+                </Text>
+              </View>
+              <View style={styles.moodCheckInRight}>
+                <Text style={styles.moodCheckInEmoji}>🧠</Text>
+                <Text style={styles.moodCheckInAction}>Tap to reflect</Text>
+              </View>
+            </View>
+            <View style={styles.moodProgressBar}>
+              <View 
+                style={[styles.moodProgressFill, { width: `${moodCheckInPct * 100}%` }]} 
               />
             </View>
-            <View style={styles.kpiRow}>
-              <KPICard
-                title="Sleep"
-                value={`${formatSleepDuration(currentState.sleepHr)} / ${formatSleepDuration(targets.sleepHr)}`}
-                sub="Chronotype & recovery‑aware"
-                percent={sleepPct}
-              />
-              <KPICard
-                title="Mood"
-                value={`${getMoodEmoji(currentState.moodLevel)} ${formatMoodLevel(currentState.moodLevel)}`}
-                sub="Daily emotional wellbeing"
-                percent={moodPct}
-              />
-            </View>
-          </View>
+          </TouchableOpacity>
 
           {/* Next Best Action Card */}
           <View style={styles.coachCard}>
@@ -286,9 +315,21 @@ function TriHabitApp() {
                steps: lifeScoreStepsPct,
                hydration: waterPct,
                sleep: sleepPct,
-               mood: moodPct,
+               mood: moodCheckInPct,
              }}
         onNavigateToModule={handleNavigateToModule}
+      />
+
+      {/* Mood Check-In Modal */}
+      <MoodCheckInModal
+        visible={moodCheckInVisible}
+        onClose={() => setMoodCheckInVisible(false)}
+        onSubmit={handleMoodCheckInSubmit}
+        healthContext={{
+          sleepHours: currentState.sleepHr,
+          hydrationOz: currentState.waterOz,
+          stepsCount: displaySteps,
+        }}
       />
     </View>
   );
@@ -374,26 +415,71 @@ const styles = StyleSheet.create({
   sleepButton: {
     backgroundColor: '#3b82f6', // blue for sleep
   },
-  moodButton: {
-    backgroundColor: '#f59e0b', // amber for mood
+  moodCheckInButton: {
+    backgroundColor: '#8b5cf6', // purple for mood check-in
   },
   actionButtonText: {
     fontSize: 14,
     fontWeight: '500',
     color: '#1f2937',
   },
-  kpiGrid: {
+  kpiContainer: {
+    paddingRight: 16,
+  },
+  moodCheckInCard: {
+    borderRadius: 16,
+    padding: 16,
+    backgroundColor: 'rgba(139, 92, 246, 0.15)', // purple tint
+    borderWidth: 1,
+    borderColor: 'rgba(139, 92, 246, 0.3)',
     marginBottom: 20,
   },
-  kpiRow: {
+  moodCheckInContent: {
     flexDirection: 'row',
-    gap: 12,
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
-  kpiContainer: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    marginHorizontal: -4, // Negative margin to account for card spacing
+  moodCheckInLeft: {
+    flex: 1,
+  },
+  moodCheckInTitle: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: 'white',
+    marginBottom: 4,
+  },
+  moodCheckInSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255, 255, 255, 0.8)',
+    marginBottom: 4,
+  },
+  moodCheckInProgress: {
+    fontSize: 12,
+    color: 'rgba(139, 92, 246, 0.9)',
+    fontWeight: '500',
+  },
+  moodCheckInRight: {
+    alignItems: 'center',
+  },
+  moodCheckInEmoji: {
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  moodCheckInAction: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.7)',
+  },
+  moodProgressBar: {
+    height: 4,
+    backgroundColor: 'rgba(139, 92, 246, 0.2)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  moodProgressFill: {
+    height: '100%',
+    backgroundColor: '#8b5cf6',
+    borderRadius: 2,
   },
   coachCard: {
     borderRadius: 16,

@@ -7,22 +7,23 @@
 export const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
 /**
- * Compute Life Score from step, water, sleep, and mood percentages
- * Uses equal weights: steps 25%, water 25%, sleep 25%, mood 25%
+ * Compute Life Score from step, water, sleep percentages + mood check-in frequency
+ * Physical Health (75%): steps 25%, water 25%, sleep 25%
+ * Emotional Wellness (25%): mood check-in consistency 25%
  */
 export function computeLifeScore(
   stepsPct: number,
   waterPct: number,
   sleepPct: number,
-  moodPct?: number
+  moodCheckInPct?: number
 ): number {
   const s = clamp01(stepsPct);
   const w = clamp01(waterPct);
   const sl = clamp01(sleepPct);
   
-  // If mood is provided, use 4-way split, otherwise use legacy 3-way
-  if (moodPct !== undefined) {
-    const m = clamp01(moodPct);
+  // If mood check-in frequency is provided, use new 4-component model
+  if (moodCheckInPct !== undefined) {
+    const m = clamp01(moodCheckInPct);
     const raw = s * 0.25 + w * 0.25 + sl * 0.25 + m * 0.25;
     return Math.round(raw * 100);
   } else {
@@ -124,14 +125,22 @@ export const getMoodEmoji = (level: number): string => {
 };
 
 /**
+ * Calculate mood check-in frequency percentage
+ */
+export const calculateMoodCheckInPct = (frequency: { total_checkins: number; target_checkins: number }): number => {
+  if (frequency.target_checkins === 0) return 0;
+  return Math.min(1, frequency.total_checkins / frequency.target_checkins);
+};
+
+/**
  * Determine next best action based on current percentages
  */
 export function getNextBestAction(
   stepsPct: number,
   waterPct: number,
   sleepPct: number,
-  moodPct?: number
-): { key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood'; pct: number; tip: string } {
+  moodCheckInPct?: number
+): { key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood Check-In'; pct: number; tip: string } {
   const actions = [
     {
       key: 'Steps' as const,
@@ -150,12 +159,12 @@ export function getNextBestAction(
     },
   ];
 
-  // Add mood action if provided
-  if (moodPct !== undefined) {
+  // Add mood check-in action if provided
+  if (moodCheckInPct !== undefined) {
     actions.push({
-      key: 'Mood' as const,
-      pct: moodPct,
-      tip: 'Take 5 minutes for mindfulness or gratitude.',
+      key: 'Mood Check-In' as const,
+      pct: moodCheckInPct,
+      tip: 'Take a moment to reflect on your emotional state.',
     });
   }
 
@@ -173,12 +182,11 @@ export function generateTargets(profile?: {
   height?: number;
   activityLevel?: 'low' | 'moderate' | 'high';
   climate?: 'cold' | 'moderate' | 'hot';
-}): { steps: number; waterOz: number; sleepHr: number; moodLevel: number } {
+}): { steps: number; waterOz: number; sleepHr: number } {
   // Default targets from PRD
   let steps = 8000;
   let waterOz = 80;
   let sleepHr = 8;
-  let moodLevel = 4; // Target: Good mood (4/5)
 
   if (profile) {
     // Adjust based on activity level
@@ -206,7 +214,7 @@ export function generateTargets(profile?: {
     }
   }
 
-  return { steps, waterOz, sleepHr, moodLevel };
+  return { steps, waterOz, sleepHr };
 }
 
 /**
