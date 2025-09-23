@@ -64,13 +64,6 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Quick Actions Row */}
-      <QuickActionChips
-        actions={defaultQuickActions}
-        onActionPress={onQuickAction}
-        maxVisible={5}
-      />
-
       {/* Input Row */}
       <View style={styles.inputContainer}>
         <View style={styles.inputWrapper}>
@@ -112,13 +105,19 @@ const styles = StyleSheet.create({
   container: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     paddingTop: 12,
-    paddingBottom: 8,
+    paddingBottom: 12, // Add breathing room between input and nav bar
+    position: 'absolute',
+    bottom: 99, // Position above bottom navigation (1+8+8+24+4+12+8+34)
+    left: 0,
+    right: 0,
+    zIndex: 999, // Below bottom navigation (1000) but above content
   },
   inputContainer: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     paddingHorizontal: 16,
     paddingTop: 8,
+    paddingBottom: 12, // Add bottom padding to input container for proper spacing
     gap: 12,
   },
   inputWrapper: {

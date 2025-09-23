@@ -1,5 +1,5 @@
-// TriRings Component for TriHabit
-// Three concentric rings showing Steps, Hydration, and Sleep progress
+// QuadRings Component for TriHabit
+// Four concentric rings showing Steps, Hydration, Sleep, and Mood progress
 // with Life Score in the center
 
 import React, { useMemo } from 'react';
@@ -11,6 +11,7 @@ interface TriRingsProps {
   stepsPct: number;
   waterPct: number;
   sleepPct: number;
+  moodPct: number;
   onLifeScorePress?: () => void;
 }
 
@@ -18,20 +19,22 @@ export const TriRings: React.FC<TriRingsProps> = ({
   stepsPct,
   waterPct,
   sleepPct,
+  moodPct,
   onLifeScorePress,
 }) => {
-  const size = 320; // Increased from 260 to 320
+  const size = 340; // Increased to accommodate 4th ring
   const center = size / 2;
   
   const rings = [
-    { r: 140, pct: stepsPct, color: '#ffffff' }, // Steps (outer) - white
-    { r: 115, pct: waterPct, color: '#00ff88' },   // Hydration (middle) - neon green
-    { r: 85, pct: sleepPct, color: '#3b82f6' },   // Sleep (inner) - blue (reduced from 90 to give more center space)
+    { r: 150, pct: stepsPct, color: '#ffffff' }, // Steps (outermost) - white
+    { r: 125, pct: waterPct, color: '#00ff88' }, // Hydration - neon green
+    { r: 100, pct: sleepPct, color: '#3b82f6' }, // Sleep - blue
+    { r: 75, pct: moodPct, color: '#f59e0b' },   // Mood (innermost) - amber
   ];
 
   const lifeScore = useMemo(
-    () => computeLifeScore(stepsPct, waterPct, sleepPct),
-    [stepsPct, waterPct, sleepPct]
+    () => computeLifeScore(stepsPct, waterPct, sleepPct, moodPct),
+    [stepsPct, waterPct, sleepPct, moodPct]
   );
 
   return (
@@ -88,7 +91,7 @@ export const TriRings: React.FC<TriRingsProps> = ({
         <Text style={styles.lifeScoreLabel}>Life Score</Text>
         <Text style={styles.lifeScoreValue}>{lifeScore}</Text>
         <Text style={styles.lifeScoreDescription}>
-          Personalized from steps • water • sleep
+          Personalized from steps • water • sleep • mood
         </Text>
         {onLifeScorePress && (
           <Text style={styles.tapHint}>Tap for insights</Text>

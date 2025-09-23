@@ -9,8 +9,6 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
-  KeyboardAvoidingView,
-  Platform,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage } from './ChatMessage';
@@ -256,11 +254,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         </View>
 
         {/* Chat Messages */}
-        <KeyboardAvoidingView 
-          style={styles.chatContainer}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
-        >
+        <View style={styles.chatContainer}>
           <ScrollView
             ref={scrollViewRef}
             style={styles.messagesContainer}
@@ -309,14 +303,16 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
             )}
           </ScrollView>
 
-          {/* Chat Composer */}
-          <ChatComposer
-            onSendMessage={handleSendMessage}
-            onQuickAction={handleQuickAction}
-            isLoading={isLoading}
-          />
-        </KeyboardAvoidingView>
+        </View>
+
       </LinearGradient>
+      
+      {/* Chat Composer - Positioned outside gradient to align with bottom nav */}
+      <ChatComposer
+        onSendMessage={handleSendMessage}
+        onQuickAction={handleQuickAction}
+        isLoading={isLoading}
+      />
     </View>
   );
 };
@@ -389,7 +385,7 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     paddingTop: 16,
-    paddingBottom: 16,
+    paddingBottom: 183, // Account for ChatComposer height + spacing + bottom nav (12+8+40+12+12+99)
   },
   emptyState: {
     flex: 1,

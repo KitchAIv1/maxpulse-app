@@ -14,6 +14,7 @@ interface AppStore extends AppState {
   addHydration: (amount: number) => void;
   updateSteps: (steps: number) => void;
   updateSleep: (hours: number) => void;
+  updateMood: (level: number) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   initializeTargets: (profile?: any) => void;
@@ -27,11 +28,13 @@ const initialState: AppState = {
     steps: 8000,
     waterOz: 80,
     sleepHr: 8,
+    moodLevel: 4, // Target: Good mood (4/5)
   },
   currentState: {
     steps: 4200, // Mock data for demo
     waterOz: 48,
     sleepHr: 6.5,
+    moodLevel: 3, // Current: Neutral mood (3/5)
   },
   isLoading: false,
   error: null,
@@ -52,11 +55,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
           steps: dailyMetrics.steps_actual,
           waterOz: dailyMetrics.water_oz_actual,
           sleepHr: dailyMetrics.sleep_hr_actual,
+          moodLevel: dailyMetrics.mood_level_actual,
         },
         targets: {
           steps: dailyMetrics.steps_target,
           waterOz: dailyMetrics.water_oz_target,
           sleepHr: dailyMetrics.sleep_hr_target,
+          moodLevel: dailyMetrics.mood_level_target,
         },
       });
     }
@@ -86,6 +91,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
       currentState: { ...state.currentState, sleepHr: hours },
     })),
 
+  updateMood: (level) =>
+    set((state) => ({
+      currentState: { ...state.currentState, moodLevel: Math.max(1, Math.min(5, level)) },
+    })),
+
   setLoading: (isLoading) => set({ isLoading }),
 
   setError: (error) => set({ error }),
@@ -104,24 +114,27 @@ export const useLifeScore = () => {
   const stepsPct = currentState.steps / targets.steps;
   const waterPct = currentState.waterOz / targets.waterOz;
   const sleepPct = currentState.sleepHr / targets.sleepHr;
+  const moodPct = currentState.moodLevel / targets.moodLevel;
   
   // Import computeLifeScore here to avoid circular dependency
   const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
   const s = clamp01(stepsPct);
   const w = clamp01(waterPct);
   const sl = clamp01(sleepPct);
-  const score = s * 0.33 + w * 0.34 + sl * 0.33;
+  const m = clamp01(moodPct);
+  const score = s * 0.25 + w * 0.25 + sl * 0.25 + m * 0.25;
   
   return {
     score: Math.round(score * 100),
     stepsPct,
     waterPct,
     sleepPct,
+    moodPct,
   };
 };
 
 export const useNextBestAction = () => {
-  const { score, stepsPct, waterPct, sleepPct } = useLifeScore();
+  const { score, stepsPct, waterPct, sleepPct, moodPct } = useLifeScore();
   
   const actions = [
     {
@@ -138,6 +151,11 @@ export const useNextBestAction = () => {
       key: 'Sleep' as const,
       pct: sleepPct,
       tip: 'Plan a wind‑down alarm 30 min earlier tonight.',
+    },
+    {
+      key: 'Mood' as const,
+      pct: moodPct,
+      tip: 'Take 5 minutes for mindfulness or gratitude.',
     },
   ];
 

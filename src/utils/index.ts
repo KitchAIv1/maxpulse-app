@@ -7,19 +7,29 @@
 export const clamp01 = (x: number): number => Math.max(0, Math.min(1, x));
 
 /**
- * Compute Life Score from step, water, and sleep percentages
- * Uses weights from PRD: steps 33%, water 34%, sleep 33%
+ * Compute Life Score from step, water, sleep, and mood percentages
+ * Uses equal weights: steps 25%, water 25%, sleep 25%, mood 25%
  */
 export function computeLifeScore(
   stepsPct: number,
   waterPct: number,
-  sleepPct: number
+  sleepPct: number,
+  moodPct?: number
 ): number {
   const s = clamp01(stepsPct);
   const w = clamp01(waterPct);
   const sl = clamp01(sleepPct);
-  const raw = s * 0.33 + w * 0.34 + sl * 0.33;
-  return Math.round(raw * 100);
+  
+  // If mood is provided, use 4-way split, otherwise use legacy 3-way
+  if (moodPct !== undefined) {
+    const m = clamp01(moodPct);
+    const raw = s * 0.25 + w * 0.25 + sl * 0.25 + m * 0.25;
+    return Math.round(raw * 100);
+  } else {
+    // Legacy 3-way calculation for backward compatibility
+    const raw = s * 0.33 + w * 0.34 + sl * 0.33;
+    return Math.round(raw * 100);
+  }
 }
 
 /**
@@ -86,13 +96,42 @@ export function calculateSleepPoints(
 }
 
 /**
+ * Format mood level to human-readable string
+ */
+export const formatMoodLevel = (level: number): string => {
+  const moodLabels = {
+    1: 'Poor',
+    2: 'Low', 
+    3: 'Neutral',
+    4: 'Good',
+    5: 'Excellent'
+  };
+  return moodLabels[Math.round(level) as keyof typeof moodLabels] || 'Unknown';
+};
+
+/**
+ * Get mood emoji for level
+ */
+export const getMoodEmoji = (level: number): string => {
+  const moodEmojis = {
+    1: '😢',
+    2: '😔',
+    3: '😐',
+    4: '😊',
+    5: '😄'
+  };
+  return moodEmojis[Math.round(level) as keyof typeof moodEmojis] || '😐';
+};
+
+/**
  * Determine next best action based on current percentages
  */
 export function getNextBestAction(
   stepsPct: number,
   waterPct: number,
-  sleepPct: number
-): { key: 'Steps' | 'Hydration' | 'Sleep'; pct: number; tip: string } {
+  sleepPct: number,
+  moodPct?: number
+): { key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood'; pct: number; tip: string } {
   const actions = [
     {
       key: 'Steps' as const,
@@ -111,6 +150,15 @@ export function getNextBestAction(
     },
   ];
 
+  // Add mood action if provided
+  if (moodPct !== undefined) {
+    actions.push({
+      key: 'Mood' as const,
+      pct: moodPct,
+      tip: 'Take 5 minutes for mindfulness or gratitude.',
+    });
+  }
+
   // Return the action with the lowest percentage (most needed)
   return actions.sort((a, b) => a.pct - b.pct)[0];
 }
@@ -125,11 +173,12 @@ export function generateTargets(profile?: {
   height?: number;
   activityLevel?: 'low' | 'moderate' | 'high';
   climate?: 'cold' | 'moderate' | 'hot';
-}): { steps: number; waterOz: number; sleepHr: number } {
+}): { steps: number; waterOz: number; sleepHr: number; moodLevel: number } {
   // Default targets from PRD
   let steps = 8000;
   let waterOz = 80;
   let sleepHr = 8;
+  let moodLevel = 4; // Target: Good mood (4/5)
 
   if (profile) {
     // Adjust based on activity level
@@ -157,7 +206,7 @@ export function generateTargets(profile?: {
     }
   }
 
-  return { steps, waterOz, sleepHr };
+  return { steps, waterOz, sleepHr, moodLevel };
 }
 
 /**

@@ -17,6 +17,8 @@ export interface DailyMetrics {
   water_oz_target: number;
   sleep_hr_actual: number;
   sleep_hr_target: number;
+  mood_level_actual: number; // 1-5 scale
+  mood_level_target: number; // Target mood level
   life_score: number;
   finalized: boolean;
 }
@@ -72,6 +74,18 @@ export interface DeviceConnection {
   last_sync_at?: string; // ISO timestamp
 }
 
+// Mood Tracking Types
+export type MoodLevel = 1 | 2 | 3 | 4 | 5; // 1=Poor, 2=Low, 3=Neutral, 4=Good, 5=Excellent
+
+export interface MoodEntry {
+  id: string;
+  user_id: string;
+  timestamp: string;
+  level: MoodLevel;
+  notes?: string;
+  tags?: string[]; // e.g., ['work', 'family', 'health']
+}
+
 // UI State Types
 export interface AppState {
   user: User | null;
@@ -80,11 +94,13 @@ export interface AppState {
     steps: number;
     waterOz: number;
     sleepHr: number;
+    moodLevel: number; // Target mood level (1-5, default 4)
   };
   currentState: {
     steps: number;
     waterOz: number;
     sleepHr: number;
+    moodLevel: number; // Current mood level (1-5)
   };
   isLoading: boolean;
   error: string | null;
@@ -124,6 +140,7 @@ export interface TriRingsProps {
   stepsPct: number;
   waterPct: number;
   sleepPct: number;
+  moodPct: number;
 }
 
 export interface KPICardProps {

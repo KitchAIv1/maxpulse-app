@@ -55,12 +55,13 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.9)',
     borderTopWidth: 1,
     borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: 34, // Account for safe area (home indicator)
+    paddingBottom: 34, // Restore full padding to cover system UI
     paddingTop: 8,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
+    zIndex: 1000, // Ensure it's above everything
   },
   tab: {
     flex: 1,
