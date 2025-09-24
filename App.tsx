@@ -80,7 +80,7 @@ function TriHabitApp() {
   if (currentScreen === 'rewards') {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
         <RewardsScreen onBack={() => setCurrentScreen('dashboard')} />
         <BottomNavigation 
           currentScreen={currentScreen} 
@@ -93,7 +93,7 @@ function TriHabitApp() {
   if (currentScreen === 'coach') {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
         <CoachScreen />
         <BottomNavigation 
           currentScreen={currentScreen} 
@@ -106,9 +106,9 @@ function TriHabitApp() {
   if (currentScreen === 'settings') {
     return (
       <View style={styles.container}>
-        <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+        <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
         <LinearGradient
-          colors={['#047857', '#065f46', '#1f2937']}
+          colors={['#7f1d1d', '#991b1b', '#1f2937']}
           style={styles.gradient}
         >
           <View style={styles.placeholderScreen}>
@@ -134,9 +134,9 @@ function TriHabitApp() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
+      <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
       <LinearGradient
-        colors={['#047857', '#065f46', '#1f2937']} // emerald-700 to emerald-800 to gray-900
+        colors={['#7f1d1d', '#991b1b', '#1f2937']} // red-900 to red-800 to gray-900 - matte deep red
         style={styles.gradient}
       >
         <ScrollView 
@@ -152,8 +152,9 @@ function TriHabitApp() {
             </View>
           </View>
 
-          {/* Four-Quadrant KPI Layout Around Rings */}
-          <View style={styles.kpiQuadrantLayout}>
+          {/* Glassmorphism Container for Rings and KPIs */}
+          <View style={styles.glassContainer}>
+            <View style={styles.kpiQuadrantLayout}>
              {/* Upper Left - Steps */}
              <View style={styles.upperLeft}>
                <Text style={styles.kpiTitle}>Steps</Text>
@@ -182,7 +183,6 @@ function TriHabitApp() {
                 style={styles.rewardsKPI}
                 onPress={() => setCurrentScreen('rewards')}
               >
-                <Text style={styles.rewardsIcon}>🏆</Text>
                 <Text style={styles.rewardsPoints}>1,247 pts</Text>
                 <Text style={styles.rewardsLabel}>Rewards</Text>
               </TouchableOpacity>
@@ -242,6 +242,7 @@ function TriHabitApp() {
               />
             </View>
           </View>
+          </View>
 
           {/* Quick Actions - Below the quadrant layout */}
           <View style={styles.quickActions}>
@@ -249,19 +250,19 @@ function TriHabitApp() {
               style={[styles.actionButton, styles.hydrationButton]}
               onPress={() => addHydration(8)}
             >
-              <Text style={styles.actionButtonText}>+8 oz water</Text>
+              <Text style={styles.actionButtonText}>+8oz Water</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionButton, styles.sleepButton]}
               onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
             >
-              <Text style={styles.actionButtonText}>+15m sleep</Text>
+              <Text style={styles.actionButtonText}>+15m Sleep</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.actionButton, styles.moodCheckInButton]}
+              style={[styles.actionButton, styles.stepsButton]}
               onPress={handleMoodCheckIn}
             >
-              <Text style={styles.actionButtonText}>Mood Check-In</Text>
+              <Text style={styles.actionButtonText}>Log Steps</Text>
             </TouchableOpacity>
           </View>
 
@@ -381,7 +382,7 @@ function TriHabitApp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#047857', // Ensure no white background shows through
+    backgroundColor: '#7f1d1d', // Matte deep red - ensure no white background shows through
   },
   gradient: {
     flex: 1,
@@ -398,7 +399,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20, // Increased spacing to glass container
     paddingTop: 8,
   },
   dateText: {
@@ -446,34 +447,64 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 20,
+    gap: 12, // Increased gap for better spacing
+    marginBottom: 24, // Increased spacing to next section
+    marginTop: 0, // Remove top margin since glass container has bottom margin
+    paddingHorizontal: 16, // Align with glass container margins
   },
   actionButton: {
     flex: 1,
-    borderRadius: 12,
-    padding: 12,
-    backgroundColor: 'white',
+    borderRadius: 16, // Increased for modern look
+    paddingVertical: 16, // Better touch target
+    paddingHorizontal: 12,
     alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 48, // Ensure good touch target
+    // Base glassmorphism effects
+    borderWidth: 1,
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4, // Android shadow
   },
   hydrationButton: {
-    backgroundColor: '#00ff88', // neon green for hydration
+    backgroundColor: 'rgba(0, 255, 136, 0.10)', // Decreased opacity for subtler look
+    borderColor: 'rgba(0, 255, 136, 0.18)', // Decreased border opacity
   },
   sleepButton: {
-    backgroundColor: '#3b82f6', // blue for sleep
+    backgroundColor: 'rgba(59, 130, 246, 0.10)', // Decreased opacity for subtler look
+    borderColor: 'rgba(59, 130, 246, 0.18)', // Decreased border opacity
   },
-  moodCheckInButton: {
-    backgroundColor: '#8b5cf6', // purple for mood check-in
+  stepsButton: {
+    backgroundColor: 'rgba(255, 255, 255, 0.15)', // White ring color with opacity
+    borderColor: 'rgba(255, 255, 255, 0.25)', // Slightly more opaque border
   },
   actionButtonText: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#1f2937',
+    fontSize: 16, // Increased for better readability
+    fontWeight: '600', // Bolder for glass backgrounds
+    color: 'white', // White text for better contrast on glass
+    textAlign: 'center',
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)', // Semi-transparent white overlay
+    borderRadius: 24, // Rounded corners for modern look
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)', // Subtle glass border
+    marginHorizontal: 16, // Side margins
+    marginBottom: 24, // Increased spacing to action buttons
+    marginTop: 8, // Add small top margin from header
+    padding: 16, // Inner padding
+    // Simulate backdrop blur with layered transparency
+    shadowColor: 'rgba(0, 0, 0, 0.1)',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8, // Android shadow
   },
   kpiQuadrantLayout: {
     position: 'relative',
     height: 400, // Increased height for more vertical spacing
-    marginBottom: 20,
   },
    upperLeft: {
      position: 'absolute',
