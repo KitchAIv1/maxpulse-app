@@ -174,18 +174,6 @@ function TriHabitApp() {
                    `${Math.round(displayStepsPct * 100)}%`
                  )}
                </Text>
-               <View style={styles.kpiProgressBar}>
-                 <View style={[
-                   styles.kpiProgressFill, 
-                   { 
-                     width: `${Math.min(displayStepsPct * 100, 100)}%`, 
-                     backgroundColor: displaySteps >= displayStepTarget ? '#10B981' : '#10B981'
-                   }
-                 ]} />
-                 {displaySteps >= displayStepTarget && (
-                   <View style={styles.goalAchievedGlow} />
-                 )}
-               </View>
              </View>
 
             {/* Upper Right - Rewards */}
@@ -220,18 +208,6 @@ function TriHabitApp() {
                    `${Math.round(waterPct * 100)}%`
                  )}
                </Text>
-               <View style={styles.kpiProgressBar}>
-                 <View style={[
-                   styles.kpiProgressFill, 
-                   { 
-                     width: `${Math.min(waterPct * 100, 100)}%`, 
-                     backgroundColor: '#06B6D4'
-                   }
-                 ]} />
-                 {currentState.waterOz >= targets.waterOz && (
-                   <View style={[styles.goalAchievedGlow, { backgroundColor: '#06B6D4' }]} />
-                 )}
-               </View>
              </View>
 
              {/* Lower Right - Sleep */}
@@ -254,18 +230,6 @@ function TriHabitApp() {
                    `${Math.round(sleepPct * 100)}%`
                  )}
                </Text>
-               <View style={styles.kpiProgressBar}>
-                 <View style={[
-                   styles.kpiProgressFill, 
-                   { 
-                     width: `${Math.min(sleepPct * 100, 100)}%`, 
-                     backgroundColor: '#8B5CF6'
-                   }
-                 ]} />
-                 {currentState.sleepHr >= targets.sleepHr && (
-                   <View style={[styles.goalAchievedGlow, { backgroundColor: '#8B5CF6' }]} />
-                 )}
-               </View>
              </View>
 
             {/* TriRings - Precisely centered based on outermost ring */}
@@ -511,32 +475,32 @@ const styles = StyleSheet.create({
     height: 400, // Increased height for more vertical spacing
     marginBottom: 20,
   },
-  upperLeft: {
-    position: 'absolute',
-    top: 10, // Moved closer to top edge
-    left: 16, // 16px from left edge
-    width: 110,
-  },
-  upperRight: {
-    position: 'absolute',
-    top: 10, // Moved closer to top edge
-    right: 16, // 16px from right edge
-    width: 110,
-    alignItems: 'flex-end',
-  },
-  lowerLeft: {
-    position: 'absolute',
-    bottom: 10, // Moved closer to bottom edge
-    left: 16, // 16px from left edge
-    width: 110,
-  },
-  lowerRight: {
-    position: 'absolute',
-    bottom: 10, // Moved closer to bottom edge
-    right: 16, // 16px from right edge
-    width: 110,
-    alignItems: 'flex-end',
-  },
+   upperLeft: {
+     position: 'absolute',
+     top: 10, // Moved closer to edge now that progress bars are removed
+     left: 10, // Moved closer to edge for better spacing
+     width: 120, // Increased width for better readability
+   },
+   upperRight: {
+     position: 'absolute',
+     top: 10, // Moved closer to edge for symmetry
+     right: 10, // Moved closer to edge for better spacing
+     width: 120, // Increased width for better readability
+     alignItems: 'flex-end',
+   },
+   lowerLeft: {
+     position: 'absolute',
+     bottom: 10, // Moved closer to edge now that progress bars are removed
+     left: 10, // Moved closer to edge for better spacing
+     width: 120, // Increased width for better readability
+   },
+   lowerRight: {
+     position: 'absolute',
+     bottom: 10, // Moved closer to edge for symmetry
+     right: 10, // Moved closer to edge for better spacing
+     width: 120, // Increased width for better readability
+     alignItems: 'flex-end',
+   },
   kpiTitle: {
     fontSize: 12,
     color: 'rgba(255, 255, 255, 0.8)',
@@ -549,23 +513,11 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginBottom: 2,
   },
-  kpiPercent: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
-    marginBottom: 6,
-  },
-  kpiProgressBar: {
-    width: '100%',
-    height: 3,
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  kpiProgressFill: {
-    height: '100%',
-    borderRadius: 2,
-  },
+   kpiPercent: {
+     fontSize: 12,
+     color: 'rgba(255, 255, 255, 0.9)',
+     fontWeight: '500',
+   },
   rewardsKPI: {
     alignItems: 'flex-end',
   },
@@ -585,15 +537,15 @@ const styles = StyleSheet.create({
      fontWeight: '500',
    },
    achievedSteps: {
-     color: '#10B981', // Green for achieved steps
+     color: '#ffffff', // White to match Steps ring color
      fontWeight: '700',
    },
    achievedHydration: {
-     color: '#06B6D4', // Cyan for achieved hydration
+     color: '#00ff88', // Neon green to match Hydration ring color
      fontWeight: '700',
    },
    achievedSleep: {
-     color: '#8B5CF6', // Purple for achieved sleep
+     color: '#3b82f6', // Blue to match Sleep ring color
      fontWeight: '700',
    },
    goalIndicator: {
@@ -601,18 +553,8 @@ const styles = StyleSheet.create({
    },
    exceededText: {
      fontSize: 10,
-     color: 'rgba(16, 185, 129, 0.8)',
+     color: 'rgba(255, 255, 255, 0.8)',
      fontWeight: '500',
-   },
-   goalAchievedGlow: {
-     position: 'absolute',
-     top: 0,
-     left: 0,
-     right: 0,
-     bottom: 0,
-     backgroundColor: '#10B981',
-     opacity: 0.3,
-     borderRadius: 2,
    },
   moodCheckInCard: {
     borderRadius: 16,
