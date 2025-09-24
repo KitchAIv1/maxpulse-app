@@ -154,15 +154,39 @@ function TriHabitApp() {
 
           {/* Four-Quadrant KPI Layout Around Rings */}
           <View style={styles.kpiQuadrantLayout}>
-            {/* Upper Left - Steps */}
-            <View style={styles.upperLeft}>
-              <Text style={styles.kpiTitle}>Steps</Text>
-              <Text style={styles.kpiValue}>{displaySteps.toLocaleString()}/{displayStepTarget.toLocaleString()}</Text>
-              <Text style={styles.kpiPercent}>{Math.round(displayStepsPct * 100)}%</Text>
-              <View style={styles.kpiProgressBar}>
-                <View style={[styles.kpiProgressFill, { width: `${Math.min(displayStepsPct * 100, 100)}%`, backgroundColor: '#10B981' }]} />
-              </View>
-            </View>
+             {/* Upper Left - Steps */}
+             <View style={styles.upperLeft}>
+               <Text style={styles.kpiTitle}>Steps</Text>
+               <Text style={styles.kpiValue}>
+                 {displaySteps >= displayStepTarget ? (
+                   <>
+                     <Text style={styles.achievedSteps}>{displaySteps.toLocaleString()}</Text>
+                     <Text style={styles.goalIndicator}> ✅</Text>
+                   </>
+                 ) : (
+                   `${displaySteps.toLocaleString()}/${displayStepTarget.toLocaleString()}`
+                 )}
+               </Text>
+               <Text style={styles.kpiPercent}>
+                 {displaySteps >= displayStepTarget ? (
+                   <Text style={styles.exceededText}>Goal: {displayStepTarget.toLocaleString()}</Text>
+                 ) : (
+                   `${Math.round(displayStepsPct * 100)}%`
+                 )}
+               </Text>
+               <View style={styles.kpiProgressBar}>
+                 <View style={[
+                   styles.kpiProgressFill, 
+                   { 
+                     width: `${Math.min(displayStepsPct * 100, 100)}%`, 
+                     backgroundColor: displaySteps >= displayStepTarget ? '#10B981' : '#10B981'
+                   }
+                 ]} />
+                 {displaySteps >= displayStepTarget && (
+                   <View style={styles.goalAchievedGlow} />
+                 )}
+               </View>
+             </View>
 
             {/* Upper Right - Rewards */}
             <View style={styles.upperRight}>
@@ -176,25 +200,73 @@ function TriHabitApp() {
               </TouchableOpacity>
             </View>
 
-            {/* Lower Left - Hydration */}
-            <View style={styles.lowerLeft}>
-              <Text style={styles.kpiTitle}>Hydration</Text>
-              <Text style={styles.kpiValue}>{currentState.waterOz}/{targets.waterOz} oz</Text>
-              <Text style={styles.kpiPercent}>{Math.round(waterPct * 100)}%</Text>
-              <View style={styles.kpiProgressBar}>
-                <View style={[styles.kpiProgressFill, { width: `${Math.min(waterPct * 100, 100)}%`, backgroundColor: '#06B6D4' }]} />
-              </View>
-            </View>
+             {/* Lower Left - Hydration */}
+             <View style={styles.lowerLeft}>
+               <Text style={styles.kpiTitle}>Hydration</Text>
+               <Text style={styles.kpiValue}>
+                 {currentState.waterOz >= targets.waterOz ? (
+                   <>
+                     <Text style={styles.achievedHydration}>{currentState.waterOz}</Text>
+                     <Text style={styles.goalIndicator}> ✅</Text>
+                   </>
+                 ) : (
+                   `${currentState.waterOz}/${targets.waterOz} oz`
+                 )}
+               </Text>
+               <Text style={styles.kpiPercent}>
+                 {currentState.waterOz >= targets.waterOz ? (
+                   <Text style={styles.exceededText}>Goal: {targets.waterOz} oz</Text>
+                 ) : (
+                   `${Math.round(waterPct * 100)}%`
+                 )}
+               </Text>
+               <View style={styles.kpiProgressBar}>
+                 <View style={[
+                   styles.kpiProgressFill, 
+                   { 
+                     width: `${Math.min(waterPct * 100, 100)}%`, 
+                     backgroundColor: '#06B6D4'
+                   }
+                 ]} />
+                 {currentState.waterOz >= targets.waterOz && (
+                   <View style={[styles.goalAchievedGlow, { backgroundColor: '#06B6D4' }]} />
+                 )}
+               </View>
+             </View>
 
-            {/* Lower Right - Sleep */}
-            <View style={styles.lowerRight}>
-              <Text style={styles.kpiTitle}>Sleep</Text>
-              <Text style={styles.kpiValue}>{formatSleepDuration(currentState.sleepHr)}/{formatSleepDuration(targets.sleepHr)}</Text>
-              <Text style={styles.kpiPercent}>{Math.round(sleepPct * 100)}%</Text>
-              <View style={styles.kpiProgressBar}>
-                <View style={[styles.kpiProgressFill, { width: `${Math.min(sleepPct * 100, 100)}%`, backgroundColor: '#8B5CF6' }]} />
-              </View>
-            </View>
+             {/* Lower Right - Sleep */}
+             <View style={styles.lowerRight}>
+               <Text style={styles.kpiTitle}>Sleep</Text>
+               <Text style={styles.kpiValue}>
+                 {currentState.sleepHr >= targets.sleepHr ? (
+                   <>
+                     <Text style={styles.achievedSleep}>{formatSleepDuration(currentState.sleepHr)}</Text>
+                     <Text style={styles.goalIndicator}> ✅</Text>
+                   </>
+                 ) : (
+                   `${formatSleepDuration(currentState.sleepHr)}/${formatSleepDuration(targets.sleepHr)}`
+                 )}
+               </Text>
+               <Text style={styles.kpiPercent}>
+                 {currentState.sleepHr >= targets.sleepHr ? (
+                   <Text style={styles.exceededText}>Goal: {formatSleepDuration(targets.sleepHr)}</Text>
+                 ) : (
+                   `${Math.round(sleepPct * 100)}%`
+                 )}
+               </Text>
+               <View style={styles.kpiProgressBar}>
+                 <View style={[
+                   styles.kpiProgressFill, 
+                   { 
+                     width: `${Math.min(sleepPct * 100, 100)}%`, 
+                     backgroundColor: '#8B5CF6'
+                   }
+                 ]} />
+                 {currentState.sleepHr >= targets.sleepHr && (
+                   <View style={[styles.goalAchievedGlow, { backgroundColor: '#8B5CF6' }]} />
+                 )}
+               </View>
+             </View>
 
             {/* TriRings - Precisely centered based on outermost ring */}
             <View style={styles.ringsContainer}>
@@ -507,11 +579,41 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 2,
   },
-  rewardsLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
-    fontWeight: '500',
-  },
+   rewardsLabel: {
+     fontSize: 12,
+     color: 'rgba(255, 255, 255, 0.8)',
+     fontWeight: '500',
+   },
+   achievedSteps: {
+     color: '#10B981', // Green for achieved steps
+     fontWeight: '700',
+   },
+   achievedHydration: {
+     color: '#06B6D4', // Cyan for achieved hydration
+     fontWeight: '700',
+   },
+   achievedSleep: {
+     color: '#8B5CF6', // Purple for achieved sleep
+     fontWeight: '700',
+   },
+   goalIndicator: {
+     fontSize: 14,
+   },
+   exceededText: {
+     fontSize: 10,
+     color: 'rgba(16, 185, 129, 0.8)',
+     fontWeight: '500',
+   },
+   goalAchievedGlow: {
+     position: 'absolute',
+     top: 0,
+     left: 0,
+     right: 0,
+     bottom: 0,
+     backgroundColor: '#10B981',
+     opacity: 0.3,
+     borderRadius: 2,
+   },
   moodCheckInCard: {
     borderRadius: 16,
     padding: 16,
