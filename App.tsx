@@ -144,33 +144,70 @@ function TriHabitApp() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header */}
+          {/* Header - Simplified */}
           <View style={styles.header}>
             <View>
               <Text style={styles.dateText}>{dateFmt}</Text>
               <Text style={styles.titleText}>Your Daily Health</Text>
             </View>
-            <View style={styles.headerBadges}>
+          </View>
+
+          {/* Four-Quadrant KPI Layout Around Rings */}
+          <View style={styles.kpiQuadrantLayout}>
+            {/* Upper Left - Steps */}
+            <View style={styles.upperLeft}>
+              <Text style={styles.kpiTitle}>Steps</Text>
+              <Text style={styles.kpiValue}>{displaySteps.toLocaleString()}/{displayStepTarget.toLocaleString()}</Text>
+              <Text style={styles.kpiPercent}>{Math.round(displayStepsPct * 100)}%</Text>
+              <View style={styles.kpiProgressBar}>
+                <View style={[styles.kpiProgressFill, { width: `${Math.min(displayStepsPct * 100, 100)}%`, backgroundColor: '#10B981' }]} />
+              </View>
+            </View>
+
+            {/* Upper Right - Rewards */}
+            <View style={styles.upperRight}>
               <TouchableOpacity 
-                style={styles.rewardsButton}
+                style={styles.rewardsKPI}
                 onPress={() => setCurrentScreen('rewards')}
               >
-                <Text style={styles.rewardsPointsText}>🏆 1,247 pts</Text>
+                <Text style={styles.rewardsIcon}>🏆</Text>
+                <Text style={styles.rewardsPoints}>1,247 pts</Text>
+                <Text style={styles.rewardsLabel}>Rewards</Text>
               </TouchableOpacity>
+            </View>
+
+            {/* Lower Left - Hydration */}
+            <View style={styles.lowerLeft}>
+              <Text style={styles.kpiTitle}>Hydration</Text>
+              <Text style={styles.kpiValue}>{currentState.waterOz}/{targets.waterOz} oz</Text>
+              <Text style={styles.kpiPercent}>{Math.round(waterPct * 100)}%</Text>
+              <View style={styles.kpiProgressBar}>
+                <View style={[styles.kpiProgressFill, { width: `${Math.min(waterPct * 100, 100)}%`, backgroundColor: '#06B6D4' }]} />
+              </View>
+            </View>
+
+            {/* Lower Right - Sleep */}
+            <View style={styles.lowerRight}>
+              <Text style={styles.kpiTitle}>Sleep</Text>
+              <Text style={styles.kpiValue}>{formatSleepDuration(currentState.sleepHr)}/{formatSleepDuration(targets.sleepHr)}</Text>
+              <Text style={styles.kpiPercent}>{Math.round(sleepPct * 100)}%</Text>
+              <View style={styles.kpiProgressBar}>
+                <View style={[styles.kpiProgressFill, { width: `${Math.min(sleepPct * 100, 100)}%`, backgroundColor: '#8B5CF6' }]} />
+              </View>
+            </View>
+
+            {/* TriRings - Precisely centered based on outermost ring */}
+            <View style={styles.ringsContainer}>
+              <TriRings
+                stepsPct={displayStepsPct}
+                waterPct={waterPct}
+                sleepPct={sleepPct}
+                onLifeScorePress={handleLifeScorePress}
+              />
             </View>
           </View>
 
-                 {/* TriRings */}
-                 <View style={styles.ringsContainer}>
-                 <TriRings
-                   stepsPct={displayStepsPct}
-                   waterPct={waterPct}
-                   sleepPct={sleepPct}
-                   onLifeScorePress={handleLifeScorePress}
-                 />
-                 </View>
-
-          {/* Quick Actions */}
+          {/* Quick Actions - Below the quadrant layout */}
           <View style={styles.quickActions}>
             <TouchableOpacity
               style={[styles.actionButton, styles.hydrationButton]}
@@ -191,36 +228,6 @@ function TriHabitApp() {
               <Text style={styles.actionButtonText}>Mood Check-In</Text>
             </TouchableOpacity>
           </View>
-
-          {/* KPI Cards - Back to 3 Cards */}
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            style={styles.kpiScroll}
-            contentContainerStyle={styles.kpiContainer}
-          >
-            <KPICard
-              title="Steps"
-              value={`${displaySteps.toLocaleString()} / ${displayStepTarget.toLocaleString()}`}
-              sub={stepTrackingAvailable 
-                ? (isTracking ? "Live tracking active" : "Tracking available") 
-                : "Auto from phone pedometer"
-              }
-              percent={displayStepsPct}
-            />
-            <KPICard
-              title="Hydration"
-              value={`${currentState.waterOz} / ${targets.waterOz} oz`}
-              sub="Personalized by weight & climate"
-              percent={waterPct}
-            />
-            <KPICard
-              title="Sleep"
-              value={`${formatSleepDuration(currentState.sleepHr)} / ${formatSleepDuration(targets.sleepHr)}`}
-              sub="Chronotype & recovery‑aware"
-              percent={sleepPct}
-            />
-          </ScrollView>
 
           {/* Mood Check-In Card */}
           <TouchableOpacity style={styles.moodCheckInCard} onPress={handleMoodCheckIn}>
@@ -394,8 +401,12 @@ const styles = StyleSheet.create({
     color: '#FFD700', // Golden color
   },
   ringsContainer: {
+    position: 'absolute',
+    top: 40, // Centered in the 400px container (40px + 320px + 40px)
+    left: 0,
+    right: 0,
     alignItems: 'center',
-    marginBottom: 8,
+    zIndex: 1, // Ensure rings appear above quadrant background
   },
   quickActions: {
     flexDirection: 'row',
@@ -423,8 +434,83 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     color: '#1f2937',
   },
-  kpiContainer: {
-    paddingRight: 16,
+  kpiQuadrantLayout: {
+    position: 'relative',
+    height: 400, // Increased height for more vertical spacing
+    marginBottom: 20,
+  },
+  upperLeft: {
+    position: 'absolute',
+    top: 10, // Moved closer to top edge
+    left: 16, // 16px from left edge
+    width: 110,
+  },
+  upperRight: {
+    position: 'absolute',
+    top: 10, // Moved closer to top edge
+    right: 16, // 16px from right edge
+    width: 110,
+    alignItems: 'flex-end',
+  },
+  lowerLeft: {
+    position: 'absolute',
+    bottom: 10, // Moved closer to bottom edge
+    left: 16, // 16px from left edge
+    width: 110,
+  },
+  lowerRight: {
+    position: 'absolute',
+    bottom: 10, // Moved closer to bottom edge
+    right: 16, // 16px from right edge
+    width: 110,
+    alignItems: 'flex-end',
+  },
+  kpiTitle: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
+    marginBottom: 4,
+  },
+  kpiValue: {
+    fontSize: 16,
+    color: 'white',
+    fontWeight: '600',
+    marginBottom: 2,
+  },
+  kpiPercent: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.9)',
+    fontWeight: '500',
+    marginBottom: 6,
+  },
+  kpiProgressBar: {
+    width: '100%',
+    height: 3,
+    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+    borderRadius: 2,
+    overflow: 'hidden',
+  },
+  kpiProgressFill: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  rewardsKPI: {
+    alignItems: 'flex-end',
+  },
+  rewardsIcon: {
+    fontSize: 20,
+    marginBottom: 4,
+  },
+  rewardsPoints: {
+    fontSize: 16,
+    color: '#FFD700',
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  rewardsLabel: {
+    fontSize: 12,
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontWeight: '500',
   },
   moodCheckInCard: {
     borderRadius: 16,

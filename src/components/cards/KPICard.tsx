@@ -46,13 +46,13 @@ export const KPICard: React.FC<KPICardProps> = ({
 
 const styles = StyleSheet.create({
   card: {
-    flex: 1,
+    width: 200, // Fixed width for center card layout
     borderRadius: 16,
     padding: 12,
     backgroundColor: 'rgba(255, 255, 255, 0.1)',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginHorizontal: 4, // Small horizontal margin for spacing
+    marginHorizontal: 10, // Spacing for center layout
   },
   header: {
     flexDirection: 'row',
