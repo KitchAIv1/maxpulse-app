@@ -141,7 +141,7 @@ export function getNextBestAction(
   sleepPct: number,
   moodCheckInPct?: number
 ): { key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood Check-In'; pct: number; tip: string } {
-  const actions = [
+  const actions: Array<{ key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood Check-In'; pct: number; tip: string }> = [
     {
       key: 'Steps' as const,
       pct: stepsPct,

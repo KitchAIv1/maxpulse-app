@@ -96,10 +96,10 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
     if (!selectedMood) return;
 
     const checkIn = {
-      level: selectedMood,
+      mood_level: selectedMood,
       notes: notes.trim() || undefined,
       journal_entry: journalEntry.trim() || undefined,
-      context_factors: healthContext ? {
+      health_context: healthContext ? {
         sleep_quality: healthContext.sleepHours,
         hydration_level: healthContext.hydrationOz,
         activity_level: healthContext.stepsCount,

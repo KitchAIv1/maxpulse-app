@@ -12,7 +12,10 @@
     "build:ios": "expo build:ios",
     "tsc": "tsc --noEmit",
     "lint": "eslint . --ext .ts,.tsx",
-    "test": "jest"
+    "test": "jest",
+    "test:db": "echo 'Database connection test - implement with your preferred testing framework'",
+    "verify:sync": "echo 'Sync functionality verification - implement with your preferred testing framework'",
+    "check:data": "echo 'Data integrity check - run docs/technical/database_verification.sql queries'"
   },
   "dependencies": {
     "@react-native-async-storage/async-storage": "^2.2.0",
@@ -23,6 +26,7 @@
     "expo-device": "~8.0.8",
     "expo-haptics": "~15.0.7",
     "expo-linear-gradient": "~15.0.7",
+    "expo-network": "~8.0.7",
     "expo-notifications": "~0.32.11",
     "expo-secure-store": "~15.0.7",
     "expo-sensors": "~15.0.7",

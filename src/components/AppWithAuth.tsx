@@ -8,6 +8,7 @@ import { AuthContainer } from '../screens/auth';
 import { authService, planService, activationService, supabase } from '../services/supabase';
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
+import SyncManager from '../services/SyncManager';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
@@ -16,7 +17,7 @@ interface AppWithAuthProps {
 export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = loading
   const [user, setUser] = useState<any>(null);
-  const { setUser: setStoreUser, initializeTargets } = useAppStore();
+  const { setUser: setStoreUser, initializeTargets, loadTodayData } = useAppStore();
 
   // Check authentication status on app start
   useEffect(() => {
@@ -42,6 +43,13 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
       // Load user's dynamic targets from their plan
       await loadUserTargets(currentUser.id);
+      
+      // Initialize sync manager
+      const syncManager = SyncManager.getInstance();
+      await syncManager.initialize();
+      
+      // Load today's data
+      await loadTodayData();
       
       setIsAuthenticated(true);
     } catch (error) {

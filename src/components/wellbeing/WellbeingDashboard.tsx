@@ -87,7 +87,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
           steps: Math.max(0.2, Math.min(1.2, breakdown.steps + (Math.random() - 0.5) * 0.4)),
           hydration: Math.max(0.2, Math.min(1.2, breakdown.hydration + (Math.random() - 0.5) * 0.4)),
           sleep: Math.max(0.2, Math.min(1.2, breakdown.sleep + (Math.random() - 0.5) * 0.4)),
-          mood: Math.max(0.2, Math.min(1.2, breakdown.mood + (Math.random() - 0.5) * 0.4)),
+          mood: Math.max(0.2, Math.min(1.2, (breakdown.mood || 0) + (Math.random() - 0.5) * 0.4)),
         },
       });
     }
@@ -106,7 +106,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
       { name: 'hydration' as const, value: hydration },
       { name: 'sleep' as const, value: sleep },
       { name: 'mood' as const, value: mood },
-    ].sort((a, b) => a.value - b.value);
+    ].sort((a, b) => (a.value || 0) - (b.value || 0));
 
     const weakestMetric = metrics[0].name;
     onNavigateToModule?.(weakestMetric);

@@ -11,7 +11,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, Bar } from '../components';
-import { useAppStore, useLifeScore } from '../stores/appStore';
+import { useAppStore } from '../stores/appStore';
+import { useLifeScore } from '../hooks/useAppSelectors';
 
 interface RewardsScreenProps {
   onBack: () => void;

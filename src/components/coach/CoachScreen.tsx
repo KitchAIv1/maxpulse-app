@@ -16,7 +16,8 @@ import { ChatComposer } from './ChatComposer';
 import { WellnessPrompts } from './WellnessPrompts';
 import { CoachScreenProps, ChatMessage as ChatMessageType, QuickAction, HealthContextData } from '../../types/coach';
 import AICoachService from '../../services/AICoachService';
-import { useAppStore, useLifeScore } from '../../stores/appStore';
+import { useAppStore } from '../../stores/appStore';
+import { useLifeScore } from '../../hooks/useAppSelectors';
 import { useStepProgress } from '../../stores/stepTrackingStore';
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({

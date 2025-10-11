@@ -81,11 +81,10 @@ export interface MoodCheckIn {
   id: string;
   user_id: string;
   timestamp: string;
-  level: MoodLevel;
+  mood_level: MoodLevel;
   notes?: string;
   journal_entry?: string;
-  tags?: string[]; // e.g., ['work', 'family', 'health']
-  context_factors?: {
+  health_context?: {
     sleep_quality?: number;
     hydration_level?: number;
     activity_level?: number;
@@ -141,10 +140,10 @@ export interface RewardsConfig {
 
 // Coach/AI Types
 export interface NextBestAction {
-  key: 'Steps' | 'Hydration' | 'Sleep';
+  key: 'Steps' | 'Hydration' | 'Sleep' | 'Mood Check-In';
   pct: number;
   tip: string;
-  priority: number;
+  priority?: number;
 }
 
 // Component Props Types
@@ -182,3 +181,6 @@ export * from './coach';
 
 // Export activation types
 export * from './activation';
+
+// Export sync types
+export * from './sync';

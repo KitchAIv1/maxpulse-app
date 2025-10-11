@@ -553,7 +553,13 @@ export const activationService = {
         medical_conditions: [],
         medical_allergies: [],
         medical_medications: [],
-        mental_health_data: {},
+        mental_health_data: {
+          energy: 'unknown',
+          stress: 'unknown', 
+          burnout: 'unknown',
+          mindfulness: 'unknown',
+          socialSupport: 'unknown'
+        },
         activation_code_id: activationCode.id,
         distributor_id: activationCode.distributor_id,
         session_id: activationCode.session_id,

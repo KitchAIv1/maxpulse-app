@@ -13,7 +13,8 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
-import { useAppStore, useLifeScore, useNextBestAction } from './src/stores/appStore';
+import { useAppStore } from './src/stores/appStore';
+import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
 import { RewardsScreen } from './src/screens/RewardsScreen';
