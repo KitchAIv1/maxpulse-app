@@ -10,11 +10,12 @@ import {
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
+  Image,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, KPICard, CalAiTriRings, CalendarBar, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { useAppStore } from './src/stores/appStore';
-import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
+import { useLifeScore } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
 import { theme } from './src/utils/theme';
@@ -51,7 +52,6 @@ function TriHabitApp() {
   const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / finalTargets.steps);
 
   const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
-  const nextAction = useNextBestAction();
 
   // Handle wellbeing dashboard navigation
   const handleLifeScorePress = () => {
@@ -141,11 +141,12 @@ function TriHabitApp() {
                  {/* Header - With Rewards */}
                  <View style={styles.header}>
                    <View style={styles.headerLeft}>
-                     <Text style={styles.dateText}>{dateFmt}</Text>
-                     <Text style={styles.titleText}>Your Daily Health</Text>
-            <Text style={styles.successText}>
-              ✅ Targets: {finalTargets.steps.toLocaleString()} steps, {finalTargets.waterOz} oz, {finalTargets.sleepHr}h
-            </Text>
+                     <Image 
+                       source={require('./src/assets/images/ax.png')} 
+                       style={styles.logoImage}
+                       resizeMode="contain"
+                     />
+                     <Text style={styles.titleText}>MaxPulse</Text>
                    </View>
                    
                    {/* Rewards - Upper Right */}
@@ -167,6 +168,7 @@ function TriHabitApp() {
               stepsPct={displayStepsPct}
               waterPct={currentState.waterOz / finalTargets.waterOz}
               sleepPct={currentState.sleepHr / finalTargets.sleepHr}
+              moodPct={moodCheckInPct}
               stepsData={{
                 current: displaySteps,
                 target: displayStepTarget,
@@ -178,6 +180,10 @@ function TriHabitApp() {
               sleepData={{
                 current: currentState.sleepHr,
                 target: finalTargets.sleepHr,
+              }}
+              moodData={{
+                current: moodCheckInFrequency.total_checkins,
+                target: moodCheckInFrequency.target_checkins,
               }}
               onLifeScorePress={handleLifeScorePress}
             />
@@ -202,53 +208,10 @@ function TriHabitApp() {
               style={[styles.actionButton, styles.stepsButton]}
               onPress={handleMoodCheckIn}
             >
-              <Text style={styles.actionButtonText}>Log Steps</Text>
+              <Text style={styles.actionButtonText}>Mood</Text>
+              <Text style={styles.actionButtonSubtext}>Check-in</Text>
             </TouchableOpacity>
           </View>
-
-          {/* Mood Check-In Card */}
-          <TouchableOpacity style={styles.moodCheckInCard} onPress={handleMoodCheckIn}>
-            <View style={styles.moodCheckInContent}>
-              <View style={styles.moodCheckInLeft}>
-                <Text style={styles.moodCheckInTitle}>Emotional Wellness</Text>
-                <Text style={styles.moodCheckInSubtitle}>
-                  {moodCheckInFrequency.total_checkins}/{moodCheckInFrequency.target_checkins} check-ins this week
-                </Text>
-                <Text style={styles.moodCheckInProgress}>
-                  {Math.round(moodCheckInPct * 100)}% complete
-                </Text>
-              </View>
-              <View style={styles.moodCheckInRight}>
-                <Text style={styles.moodCheckInEmoji}>🧠</Text>
-                <Text style={styles.moodCheckInAction}>Tap to reflect</Text>
-              </View>
-            </View>
-            <View style={styles.moodProgressBar}>
-              <View 
-                style={[styles.moodProgressFill, { width: `${moodCheckInPct * 100}%` }]} 
-              />
-            </View>
-          </TouchableOpacity>
-
-          {/* Next Best Action Card */}
-          <View style={styles.coachCard}>
-            <View style={styles.coachContent}>
-              <View style={styles.coachText}>
-                <Text style={styles.coachLabel}>Next Best Action</Text>
-                <Text style={styles.coachTitle}>Focus: {nextAction.key}</Text>
-                <Text style={styles.coachTip}>{nextAction.tip}</Text>
-              </View>
-              <TouchableOpacity style={styles.coachButton}>
-                <Text style={styles.coachButtonText}>Do it now</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={styles.coachBadges}>
-              <Badge label="Adaptive targets" />
-              <Badge label="Recovery‑aware" />
-              <Badge label="Micro‑habits" />
-            </View>
-          </View>
-
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
@@ -313,6 +276,13 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  logoImage: {
+    width: 34,
+    height: 34,
+    marginRight: theme.spacing.sm,
   },
   headerRewards: {
     alignItems: 'center',
@@ -320,7 +290,7 @@ const styles = StyleSheet.create({
   },
   headerRewardsPoints: {
     fontSize: theme.typography.small,
-    color: '#FFD700',
+    color: '#FF0000', // Changed from gold (#FFD700) to red
     fontWeight: theme.typography.weights.bold,
     marginBottom: 2,
   },
@@ -336,8 +306,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   titleText: {
-    fontSize: theme.typography.large,
-    fontWeight: theme.typography.weights.semibold,
+    fontSize: 30.5, // 29px + 1.5 = 30.5px
+    fontWeight: '500', // Medium: 500
     color: theme.colors.textPrimary,
   },
   warningText: {
@@ -400,106 +370,17 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
+  actionButtonSubtext: {
+    fontSize: theme.typography.xsmall,
+    fontWeight: theme.typography.weights.regular,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 2,
+  },
   ringSection: {
     marginHorizontal: theme.spacing.base,
     marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.sm,
-  },
-  moodCheckInCard: {
-    ...calAiCard.base,
-    marginBottom: theme.spacing.lg,
-  },
-  moodCheckInContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  moodCheckInLeft: {
-    flex: 1,
-  },
-  moodCheckInTitle: {
-    fontSize: theme.typography.medium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  moodCheckInSubtitle: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  moodCheckInProgress: {
-    fontSize: theme.typography.xsmall,
-    color: '#8B5CF6',
-    fontWeight: theme.typography.weights.medium,
-  },
-  moodCheckInRight: {
-    alignItems: 'center',
-  },
-  moodCheckInEmoji: {
-    fontSize: 24,
-    marginBottom: 4,
-  },
-  moodCheckInAction: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
-  },
-  moodProgressBar: {
-    height: 4,
-    backgroundColor: 'rgba(139, 92, 246, 0.2)',
-    borderRadius: 2,
-    overflow: 'hidden',
-  },
-  moodProgressFill: {
-    height: '100%',
-    backgroundColor: '#8b5cf6',
-    borderRadius: 2,
-  },
-  coachCard: {
-    ...calAiCard.base,
-    marginBottom: theme.spacing.base,
-  },
-  coachContent: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-    gap: 12,
-    marginBottom: 12,
-  },
-  coachText: {
-    flex: 1,
-  },
-  coachLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    marginBottom: 4,
-  },
-  coachTitle: {
-    fontSize: theme.typography.medium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  coachTip: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textSecondary,
-  },
-  coachButton: {
-    paddingHorizontal: theme.spacing.md,
-    paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.textPrimary,
-    ...theme.shadows.subtle,
-  },
-  coachButtonText: {
-    fontSize: theme.typography.small,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.cardBackground,
-  },
-  coachBadges: {
-    flexDirection: 'row',
-    gap: 8,
   },
   bottomSpacer: {
     height: 24,

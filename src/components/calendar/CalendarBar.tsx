@@ -124,19 +124,20 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: theme.spacing.base,
     paddingVertical: theme.spacing.sm,
-    marginBottom: theme.spacing.base,
+    marginBottom: theme.spacing.xs, // Reduced from theme.spacing.base to xs
   },
   dayButton: {
     flex: 1,
     alignItems: 'center',
     paddingVertical: theme.spacing.sm,
-    borderRadius: theme.borderRadius.base,
+    borderRadius: theme.borderRadius.lg, // Changed from base to lg for more curved edges
     marginHorizontal: 2,
     minHeight: 56,
     justifyContent: 'center',
   },
   activeDayButton: {
     backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.lg, // Ensure active state also has curved edges
     ...theme.shadows.subtle,
   },
   disabledDayButton: {
@@ -144,14 +145,14 @@ const styles = StyleSheet.create({
   },
   dayLabel: {
     fontSize: theme.typography.xsmall,
-    fontWeight: theme.typography.weights.medium,
+    fontWeight: theme.typography.weights.light, // Changed from medium to light
     color: '#9E9E9E',
     marginBottom: 4,
     textTransform: 'uppercase',
   },
   activeDayLabel: {
     color: '#000000',
-    fontWeight: theme.typography.weights.semibold,
+    fontWeight: theme.typography.weights.regular, // Changed from semibold to regular
   },
   disabledDayLabel: {
     color: '#CFCFCF',
@@ -176,12 +177,12 @@ const styles = StyleSheet.create({
   },
   dateText: {
     fontSize: theme.typography.small,
-    fontWeight: theme.typography.weights.regular,
+    fontWeight: theme.typography.weights.light, // Changed from regular to light
     color: '#9E9E9E',
   },
   activeDateText: {
     color: '#000000',
-    fontWeight: theme.typography.weights.semibold,
+    fontWeight: theme.typography.weights.regular, // Changed from semibold to regular
   },
   disabledDateText: {
     color: '#CFCFCF',

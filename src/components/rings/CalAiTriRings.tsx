@@ -14,6 +14,7 @@ interface CalAiTriRingsProps {
   stepsPct: number;
   waterPct: number;
   sleepPct: number;
+  moodPct: number;
   stepsData: {
     current: number;
     target: number;
@@ -26,6 +27,10 @@ interface CalAiTriRingsProps {
     current: number;
     target: number;
   };
+  moodData: {
+    current: number;
+    target: number;
+  };
   onLifeScorePress?: () => void;
 }
 
@@ -33,90 +38,124 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   stepsPct,
   waterPct,
   sleepPct,
+  moodPct,
   stepsData,
   waterData,
   sleepData,
+  moodData,
   onLifeScorePress,
 }) => {
   // Calculate responsive ring sizes based on screen width
-  const stepsRingSize = Math.min(screenWidth * 0.4, 160);
-  const smallRingSize = Math.min(screenWidth * 0.25, 100);
+  const stepsRingSize = Math.min(screenWidth * 0.30, 120); // Decreased from 0.35/140 to 0.30/120
+  const smallRingSize = Math.min(screenWidth * 0.22, 90); // Optimized for better fit in smaller containers
 
-  const RingCard: React.FC<{
+  // Landscape Steps Card (label left, ring right, percentage below label)
+  const LandscapeStepsCard: React.FC<{
     title: string;
     icon: string;
     percentage: number;
     current: string;
     target: string;
     size: number;
-    isLarge?: boolean;
-  }> = ({ title, icon, percentage, current, target, size, isLarge = false }) => (
-    <View style={[
-      styles.ringCard,
-      isLarge ? styles.largeCard : styles.smallCard,
-      calAiCard.base,
-    ]}>
-      <Text style={styles.cardTitle}>{title}</Text>
+  }> = ({ title, icon, percentage, current, target, size }) => (
+    <View style={[styles.landscapeStepsCard, calAiCard.base]}>
+      <View style={styles.landscapeLeft}>
+        <Text style={styles.landscapeTitle}>{title}</Text>
+        <Text style={styles.landscapePercentage}>
+          {Math.round(percentage * 100)}%
+        </Text>
+      </View>
+      
+      <View style={styles.landscapeRight}>
+        <CalAiRing
+          percentage={percentage}
+          size={size}
+        centerContent={
+          <View style={styles.ringCenter}>
+            <Text style={styles.largeRingIcon}>{icon}</Text>
+            <Text style={styles.largeRingValue}>
+              {current}
+            </Text>
+            <Text style={styles.largeRingTarget}>
+              of {target}
+            </Text>
+          </View>
+        }
+        />
+      </View>
+    </View>
+  );
+
+  // Small Ring Card (label top, percentage below label, ring below)
+  const SmallRingCard: React.FC<{
+    title: string;
+    icon: string;
+    percentage: number;
+    current: string;
+    target: string;
+    size: number;
+  }> = ({ title, icon, percentage, current, target, size }) => (
+    <View style={[styles.smallRingCard, calAiCard.base]}>
+      <Text style={styles.smallCardTitle}>{title}</Text>
       
       <CalAiRing
         percentage={percentage}
         size={size}
         centerContent={
           <View style={styles.ringCenter}>
-            <Text style={styles.ringIcon}>{icon}</Text>
-            <Text style={[styles.ringValue, isLarge && styles.largeRingValue]}>
+            <Text style={styles.smallRingIcon}>{icon}</Text>
+            <Text style={styles.ringValue}>
               {current}
             </Text>
-            <Text style={[styles.ringTarget, isLarge && styles.largeRingTarget]}>
+            <Text style={styles.ringTarget}>
               of {target}
             </Text>
           </View>
         }
       />
-      
-      <Text style={[styles.percentage, isLarge && styles.largePercentage]}>
-        {Math.round(percentage * 100)}%
-      </Text>
     </View>
   );
 
   return (
     <View style={styles.container}>
-      {/* Horizontal Layout: Steps Left, Hydration/Sleep Right */}
-      <View style={styles.horizontalLayout}>
-        {/* Left Side - Steps Card */}
-        <View style={styles.leftSide}>
-          <RingCard
-            title="Steps"
-            icon="🚶‍♂️"
-            percentage={stepsPct}
-            current={stepsData.current.toLocaleString()}
-            target={stepsData.target.toLocaleString()}
-            size={stepsRingSize}
-            isLarge={true}
-          />
-        </View>
+      {/* Top - Landscape Steps Card */}
+      <LandscapeStepsCard
+        title="Steps"
+        icon="🚶‍♂️"
+        percentage={stepsPct}
+        current={stepsData.current.toLocaleString()}
+        target={stepsData.target.toLocaleString()}
+        size={stepsRingSize}
+      />
+      
+      {/* Bottom - Three Cards in a Row: Hydration, Sleep, Mood */}
+      <View style={styles.threeCardRow}>
+        <SmallRingCard
+          title="Hydration"
+          icon="💧"
+          percentage={waterPct}
+          current={`${waterData.current}`}
+          target={`${waterData.target} oz`}
+          size={smallRingSize}
+        />
         
-        {/* Right Side - Hydration and Sleep Stacked */}
-        <View style={styles.rightSide}>
-          <RingCard
-            title="Hydration"
-            icon="💧"
-            percentage={waterPct}
-            current={`${waterData.current}`}
-            target={`${waterData.target} oz`}
-            size={smallRingSize}
-          />
-          
-          <RingCard
-            title="Sleep"
-            icon="😴"
-            percentage={sleepPct}
-            current={formatSleepDuration(sleepData.current)}
-            target={formatSleepDuration(sleepData.target)}
-            size={smallRingSize}
-          />
-        </View>
+        <SmallRingCard
+          title="Sleep"
+          icon="😴"
+          percentage={sleepPct}
+          current={formatSleepDuration(sleepData.current)}
+          target={formatSleepDuration(sleepData.target)}
+          size={smallRingSize}
+        />
+        
+        <SmallRingCard
+          title="Mood"
+          icon="😊"
+          percentage={moodPct}
+          current={`${moodData.current}`}
+          target={`${moodData.target}`}
+          size={smallRingSize}
+        />
       </View>
       
       {/* Life Score Button */}
@@ -134,78 +173,91 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.base,
   },
-  horizontalLayout: {
+  threeCardRow: {
     flexDirection: 'row',
     width: '100%',
-    gap: theme.spacing.sm,
-    alignItems: 'stretch',
-    minHeight: 280, // Ensure consistent height
+    gap: theme.spacing.sm, // Increased from xs to sm for better spacing
+    justifyContent: 'space-between',
   },
-  leftSide: {
-    flex: 1.2, // Slightly larger for steps
-    maxWidth: '55%',
-  },
-  rightSide: {
-    flex: 1,
-    gap: theme.spacing.sm,
-    maxWidth: '45%',
-  },
-  ringCard: {
+  // Landscape Steps Card Styles
+  landscapeStepsCard: {
+    flexDirection: 'row',
     alignItems: 'center',
-    padding: theme.spacing.sm,
-    ...theme.shadows.medium,
+    justifyContent: 'space-between',
+    padding: theme.spacing.base,
+    minHeight: 160,
+  },
+  landscapeLeft: {
     flex: 1,
     justifyContent: 'center',
-    minHeight: 120,
+    paddingLeft: theme.spacing.sm, // Move label to the right
   },
-  largeCard: {
-    paddingVertical: theme.spacing.base,
-    minHeight: 260,
-  },
-  smallCard: {
-    paddingVertical: theme.spacing.xs,
-    minHeight: 120,
-  },
-  cardTitle: {
-    fontSize: theme.typography.regular,
-    fontWeight: theme.typography.weights.semibold,
+  landscapeTitle: {
+    fontSize: theme.typography.large,
+    fontWeight: '360', // Decreased by 40% from semibold (600) to 360
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
+  landscapePercentage: {
+    fontSize: theme.typography.small, // Decreased by half (from medium ~18px to small ~14px)
+    fontWeight: theme.typography.weights.regular, // Removed boldness (changed from bold to regular)
+    color: theme.colors.textPrimary,
+  },
+  landscapeRight: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  // Small Ring Card Styles
+  smallRingCard: {
+    alignItems: 'center',
+    padding: theme.spacing.xs, // Reduced padding for tighter container
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 160, // Reduced from 180 to 160
+    maxWidth: '32%', // Ensure proper sizing with spacing
+  },
+  smallCardTitle: {
+    fontSize: theme.typography.small, // Decreased from regular to small
+    fontWeight: '425', // Decreased by 0.25 from semibold (600) to 425
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.sm, // Increased margin for better spacing without percentage
+  },
+  // Common Ring Styles
   ringCenter: {
     alignItems: 'center',
     justifyContent: 'center',
   },
-  ringIcon: {
+  largeRingIcon: {
     fontSize: 24,
     marginBottom: theme.spacing.tiny,
   },
+  smallRingIcon: {
+    fontSize: 18, // Decreased from 24 to 18 for smaller cards
+    marginBottom: theme.spacing.tiny,
+  },
   ringValue: {
-    fontSize: Math.min(screenWidth * 0.03, theme.typography.small), // Reduced from 0.04 and medium
+    fontSize: Math.min(screenWidth * 0.03, theme.typography.small),
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
   largeRingValue: {
-    fontSize: Math.min(screenWidth * 0.045, theme.typography.medium), // Reduced from 0.05 and large
+    fontSize: Math.min(screenWidth * 0.045, theme.typography.medium),
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    textAlign: 'center',
   },
   ringTarget: {
-    fontSize: Math.min(screenWidth * 0.02, theme.typography.tiny), // Reduced from 0.025 and xsmall
+    fontSize: Math.min(screenWidth * 0.02, theme.typography.tiny),
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginTop: 2,
+    marginTop: 0, // Reduced from 2 to 0 to decrease spacing
   },
   largeRingTarget: {
-    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall), // Reduced from 0.03 and small
-  },
-  percentage: {
-    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall), // Reduced from 0.03 and small
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginTop: theme.spacing.sm,
-  },
-  largePercentage: {
-    fontSize: Math.min(screenWidth * 0.03, theme.typography.small), // Reduced from 0.035 and regular
+    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall),
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 0, // Reduced from 2 to 0 to decrease spacing
   },
   lifeScoreButton: {
     backgroundColor: theme.colors.primary + '20',
