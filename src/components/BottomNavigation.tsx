@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { theme } from '../utils/theme';
 
 interface BottomNavigationProps {
   currentScreen: 'dashboard' | 'coach' | 'rewards' | 'settings';
@@ -52,41 +53,41 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
 const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
-    backgroundColor: 'rgba(0, 0, 0, 0.9)',
+    backgroundColor: theme.colors.cardBackground,
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255, 255, 255, 0.1)',
-    paddingBottom: 34, // Restore full padding to cover system UI
-    paddingTop: 8,
+    borderTopColor: theme.colors.border,
+    paddingBottom: 34,
+    paddingTop: theme.spacing.md,
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 1000, // Ensure it's above everything
+    zIndex: 1000,
+    ...theme.shadows.subtle,
   },
   tab: {
     flex: 1,
     alignItems: 'center',
-    paddingVertical: 8,
+    paddingVertical: theme.spacing.sm,
   },
   activeTab: {
     // Active tab styling handled by text colors
   },
   tabIcon: {
-    fontSize: 24, // Increased from 20 for better visibility
+    fontSize: 24,
     marginBottom: 4,
-    opacity: 0.6,
-    color: 'rgba(255, 255, 255, 0.6)', // Ensure white color for visibility
+    color: theme.colors.navInactive,
   },
   activeTabIcon: {
-    opacity: 1,
-    color: 'white', // Full white for active state
+    color: theme.colors.navActive,
   },
   tabLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.6)',
-    fontWeight: '500',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.navInactive,
+    fontWeight: theme.typography.weights.medium,
   },
   activeTabLabel: {
-    color: 'white',
+    color: theme.colors.navActive,
+    fontWeight: theme.typography.weights.semibold,
   },
 });
