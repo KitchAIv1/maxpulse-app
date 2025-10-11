@@ -84,20 +84,37 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 
 ## 5) UX / UI (Current Implementation)
 
-**Design System:** Modern glassmorphism design with deep red gradient backgrounds and clean typography. Key components:
+**Design System:** Cal AI-inspired minimalist design with beige background, soft pastels, and clean typography. Key components:
 
 ### Core Components
-* **`TriRings`**: Three concentric rings (Steps-white, Hydration-green, Sleep-blue) with tappable Life Score center
-* **`KPICard`**: Quadrant layout showing Steps, Hydration, Sleep, and Rewards without progress bars
+* **`CalAiTriRings`**: Four separate card-based rings in modern layout
+  * **Landscape Steps Card**: Label left, ring right, percentage below label (30% screen width, max 120px)
+  * **Three Core Habit Cards**: Hydration, Sleep, Mood in horizontal row (22% screen width, max 90px each)
+  * **Ring Design**: Light gray track (#EDEDED), black progress arc (#000000), 6-8px width, rounded ends
+* **`CalendarBar`**: 7-day week selector with active/inactive/future day states, positioned above ring cards
 * **`MoodCheckInModal`**: Dedicated mood tracking with 5-point scale, notes, and journaling
 * **`WellbeingDashboard`**: Comprehensive modal with battery gauge, contribution bars, insights, and trends
 * **`CoachScreen`**: Full-screen AI chat interface with message bubbles and quick actions
+* **`BottomNavigation`**: Cal AI styled bottom nav with outline icons and white background
 * **`AuthContainer`**: Complete authentication flow with activation code validation
 
+### MaxPulse Branding
+* **Header**: 34x34px logo + "MaxPulse" title (30.5px, weight 500) + red rewards (#FF0000)
+* **Color Palette**: Beige background, soft pastels, minimal contrast
+* **Typography**: Light to medium weights (360-500) for refined appearance
+* **Cards**: White background with subtle shadows, rounded corners (borderRadius.lg)
+* **Spacing**: Generous padding and margins for breathable layout
+
 ### Screen Architecture
-* **Main Dashboard**: Glassmorphism container with quadrant KPI layout and centered TriRings
-* **Coach Screen**: Chat interface with wellness prompts and contextual responses
-* **Rewards Screen**: Points, streaks, and badges with achievement tracking
+* **Main Dashboard**: Cal AI beige background with card-based ring layout
+  * Header: Logo + MaxPulse + Rewards
+  * Calendar Bar: 7-day week selector
+  * Landscape Steps Card: Full width with ring on right
+  * Three Core Habits: Horizontal row (Hydration, Sleep, Mood)
+  * Quick Actions: +8oz Water, +15m Sleep, Mood Check-in buttons
+* **Coach Screen**: Chat interface with Cal AI styling and wellness prompts
+* **Rewards Screen**: Points, streaks, and badges with Cal AI card design
+* **Profile Screen**: User data verification and backend alignment display
 * **Profile Confirmation**: Assessment data review and editing before app access
 
 ### Mobile Implementation (React Native + Expo)

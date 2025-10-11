@@ -1,6 +1,6 @@
 # MaxPulse - Personalized Health Transformation App
 
-A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys.
+A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations.
 
 ![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green)
 
@@ -17,11 +17,13 @@ A comprehensive React Native health transformation platform that combines **Step
 - **Sleep Monitoring**: Manual sleep hour entry with Life Score integration
 - **Mood Check-ins**: Emotional wellness tracking with 5-point scale and journaling
 
-### 🎯 **Life Score Visualization**
-- **TriRings Display**: Three concentric rings showing Steps, Hydration, and Sleep progress
-- **4-Factor Life Score**: Combines physical metrics (75%) with mood check-in frequency (25%)
+### 🎯 **Health Visualization**
+- **Card-Based Ring Layout**: Four separate ring cards in Cal AI minimalist style
+  - **Landscape Steps Card**: Large ring with label left, percentage display, and optimized sizing
+  - **Three Core Habit Cards**: Hydration, Sleep, and Mood in a horizontal row with compact rings
+- **4-Factor Life Score**: Combines Steps, Hydration, Sleep (25% each) with Mood check-in frequency (25%)
 - **Real-time Updates**: Instant recalculation when any metric changes
-- **Glassmorphism UI**: Modern design with deep red gradients and clean typography
+- **Cal AI Design System**: Beige background, soft pastels, rounded cards with subtle shadows, light typography
 
 ### 🤖 **AI Coach**
 - **Natural Language Chat**: Describe symptoms, ask questions, share feelings
@@ -112,37 +114,55 @@ A comprehensive React Native health transformation platform that combines **Step
 
 ```
 maxpulse-app/
-├── App.tsx                     # Main app component with authentication wrapper
+├── App.tsx                     # Main app component with MaxPulse branding
 ├── src/
+│   ├── assets/                # Static assets
+│   │   └── images/            # Logo and image files (ax.png)
 │   ├── components/             # Reusable UI components
 │   │   ├── ui/                # Basic UI atoms (Badge, Bar)
 │   │   ├── cards/             # KPICard components
-│   │   ├── rings/             # TriRings visualization
+│   │   ├── rings/             # Cal AI Ring components
+│   │   │   ├── CalAiRing.tsx  # Single ring with light gray track and progress arc
+│   │   │   └── CalAiTriRings.tsx # Four-ring layout (Steps + 3 core habits)
+│   │   ├── calendar/          # Calendar components
+│   │   │   └── CalendarBar.tsx # 7-day week selector
 │   │   ├── wellbeing/         # Wellbeing Dashboard components
 │   │   ├── coach/             # AI Coach chat interface
 │   │   ├── mood/              # Mood check-in components
 │   │   ├── auth/              # Authentication components
-│   │   └── AppWithAuth.tsx    # Authentication wrapper
+│   │   ├── BottomNavigation.tsx # Cal AI styled bottom nav
+│   │   └── AppWithAuth.tsx    # Authentication wrapper with V2 Engine
 │   ├── screens/               # Screen components
 │   │   ├── auth/              # Authentication screens
+│   │   ├── ProfileScreen.tsx  # User profile and data verification
 │   │   └── RewardsScreen.tsx  # Rewards and gamification
 │   ├── stores/                # Zustand state management
-│   │   ├── appStore.ts        # Global app state
+│   │   ├── appStore.ts        # Global app state with V2 Engine integration
 │   │   └── stepTrackingStore.ts # Step tracking state
 │   ├── services/              # API services and business logic
 │   │   ├── supabase.ts        # Supabase client and services
 │   │   ├── StepTrackingService.ts # Step tracking logic
+│   │   ├── HealthDataService.ts # Daily metrics and health data CRUD
+│   │   ├── OfflineQueueService.ts # Offline-first data queue
+│   │   ├── SyncManager.ts     # Background data synchronization
+│   │   ├── TargetManager.ts   # Personalized target extraction
+│   │   ├── V2EngineConnector.ts # V2 transformation roadmap connector
+│   │   ├── AppStoreActions.ts # App store business logic
+│   │   ├── DatabaseInitializer.ts # User data initialization
 │   │   ├── HealthPermissionsManager.ts # Health permissions
 │   │   └── AICoachService.ts  # AI Coach logic
 │   ├── types/                 # TypeScript type definitions
 │   │   ├── index.ts           # Core types
 │   │   ├── health.ts          # Health tracking types
-│   │   ├── activation.ts      # Activation code types
+│   │   ├── activation.ts      # Activation code types with V2 Engine
+│   │   ├── sync.ts            # Sync operation types
 │   │   ├── wellbeing.ts       # Wellbeing Dashboard types
 │   │   ├── coach.ts           # AI Coach types
 │   │   └── moodCheckIn.ts     # Mood tracking types
 │   └── utils/                 # Utility functions
-│       └── index.ts           # Core algorithms and helpers
+│       ├── index.ts           # Core algorithms and helpers
+│       ├── theme.ts           # Cal AI design system theme
+│       └── calAiStyles.ts     # Reusable Cal AI card styles
 ├── docs/                      # Project documentation
 │   ├── PRD.md                 # Product Requirements Document
 │   └── ui/ux.md              # UI/UX Guidelines
@@ -193,18 +213,178 @@ maxpulse-app/
 
 ## 🎯 Key Components
 
-### TriRings Visualization
-The signature three-ring health visualization:
-- **Outer Ring (White)**: Steps progress with dynamic goal achievement
-- **Middle Ring (Green)**: Hydration progress with real-time updates
-- **Inner Ring (Blue)**: Sleep progress with target visualization
-- **Center**: Tappable Life Score (0-100) that opens Wellbeing Dashboard
+### Cal AI Ring Visualization
+Modern card-based ring layout with four separate tracking components:
+
+#### Landscape Steps Card
+- **Layout**: Label and percentage on left, large ring on right
+- **Ring Size**: 30% screen width (max 120px)
+- **Typography**: Weight 360 for label, small size for percentage
+- **Icon**: 🚶‍♂️ at 24px
+
+#### Three Core Habit Cards (Horizontal Row)
+1. **Hydration Card** 💧
+   - Ring size: 22% screen width (max 90px)
+   - Icon size: 18px
+   - Label: Small, weight 425
+   - Shows current oz vs target oz
+
+2. **Sleep Card** 😴
+   - Ring size: 22% screen width (max 90px)
+   - Icon size: 18px
+   - Label: Small, weight 425
+   - Shows current hours vs target hours
+
+3. **Mood Card** 😊
+   - Ring size: 22% screen width (max 90px)
+   - Icon size: 18px
+   - Label: Small, weight 425
+   - Shows check-ins completed vs weekly target
+
+#### Ring Design Specifications
+- **Track**: Light gray (#EDEDED), 6-8px width, rounded ends
+- **Progress Arc**: Black (#000000), smooth animation, clockwise progression
+- **Center Content**: Icon + current value + target value (tight spacing)
+- **Container**: Cal AI white cards with subtle shadows and rounded corners
+
+### Calendar Bar
+- **7-Day Week Selector**: Horizontal layout with abbreviated day names
+- **Active Day**: White background, bold text, solid border with curved edges
+- **Inactive Days**: Dashed gray circles, muted text
+- **Future Days**: Disabled with reduced opacity
+- **Position**: Above ring cards for logical flow
 
 ### Life Score Algorithm
 ```typescript
 // 4-factor model: Steps, Hydration, Sleep, Mood Check-ins
 const lifeScore = (stepsPct * 0.25) + (waterPct * 0.25) + 
                   (sleepPct * 0.25) + (moodCheckInPct * 0.25);
+```
+
+### MaxPulse Header
+- **Logo**: 34x34px MaxPulse logo on the left
+- **App Name**: "MaxPulse" at 30.5px, weight 500
+- **Rewards**: Red (#FF0000) points display on the right
+
+## 🎨 Cal AI Design System
+
+MaxPulse follows the Cal AI design philosophy for a clean, minimal, and approachable health app experience.
+
+### Color Palette
+```typescript
+{
+  background: '#F5F5DC',      // Beige background for calm feel
+  cardBackground: '#FFFFFF',   // Pure white cards
+  textPrimary: '#2C2C2C',     // Dark gray for main text
+  textSecondary: '#8E8E8E',   // Medium gray for secondary text
+  primary: '#FF6B6B',         // Soft red for accents
+  hydration: '#D4E8FF',       // Light blue for hydration
+  sleep: '#E5D9FF',           // Light purple for sleep
+  protein: '#FFE5E5',         // Light pink for mood
+  warning: '#FFA07A',         // Light orange for warnings
+  success: '#90EE90',         // Light green for success
+}
+```
+
+### Typography Scale
+```typescript
+{
+  tiny: 10,      // Small labels
+  xsmall: 12,    // Secondary text
+  small: 14,     // Body text
+  regular: 16,   // Default text
+  medium: 18,    // Headings
+  large: 20,     // Section headers
+  xlarge: 24,    // Main headers
+  xxlarge: 32,   // Hero text
+}
+
+// Font Weights
+{
+  light: '300',     // Subtle text
+  regular: '400',   // Body text
+  medium: '500',    // Semi-emphasis
+  semibold: '600',  // Strong emphasis
+  bold: '700',      // Highest emphasis
+}
+```
+
+### Spacing System
+```typescript
+{
+  tiny: 2,    // Micro spacing
+  xs: 8,      // Extra small
+  sm: 12,     // Small
+  base: 16,   // Default
+  md: 20,     // Medium
+  lg: 24,     // Large
+  xl: 32,     // Extra large
+  xxl: 48,    // Double extra large
+}
+```
+
+### Border Radius
+```typescript
+{
+  sm: 8,      // Small elements
+  md: 12,     // Medium cards
+  lg: 16,     // Large cards
+  xl: 20,     // Extra large containers
+  full: 9999, // Fully rounded (pills, circles)
+}
+```
+
+### Shadows
+```typescript
+{
+  subtle: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  medium: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+}
+```
+
+### Component Patterns
+
+#### Cards
+```typescript
+calAiCard.base = {
+  backgroundColor: theme.colors.cardBackground,
+  borderRadius: theme.borderRadius.lg,
+  padding: theme.spacing.base,
+  ...theme.shadows.medium,
+}
+```
+
+#### Typography
+```typescript
+calAiText = {
+  heading: {
+    fontSize: theme.typography.large,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+  },
+  body: {
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.regular,
+    color: theme.colors.textPrimary,
+  },
+  label: {
+    fontSize: theme.typography.small,
+    fontWeight: theme.typography.weights.medium,
+    color: theme.colors.textSecondary,
+  },
+}
 ```
 
 ### AI Coach Features
@@ -216,17 +396,40 @@ const lifeScore = (stepsPct * 0.25) + (waterPct * 0.25) +
 ## 📊 Database Schema
 
 ### Core Tables
-- **`activation_codes`**: Pre-configured user profiles with personalized targets
+- **`activation_codes`**: Pre-configured user profiles with personalized targets and V2 Engine data
+  - Contains `onboarding_data` JSON with `v2Analysis.personalizedTargets` and `transformationRoadmap`
 - **`app_user_profiles`**: MaxPulse app user profiles and preferences
-- **`daily_metrics`**: Daily aggregated health data
+- **`daily_metrics`**: Daily aggregated health data with auto-calculated `life_score` (generated column)
 - **`mood_checkins`**: Emotional wellness tracking data
-- **`plan_progress`**: 90-day transformation plan tracking
+- **`plan_progress`**: 90-day transformation plan tracking with weekly milestone data
 
 ### Health Data
-- **`hydration_logs`**: Individual hydration entries
-- **`sleep_sessions`**: Sleep tracking data
-- **`pedometer_snapshots`**: Step count snapshots
+- **`hydration_logs`**: Individual hydration entries with timestamps
+- **`sleep_sessions`**: Sleep tracking data with session durations
+- **`pedometer_snapshots`**: Step count snapshots with device sync
 - **`rewards_ledger`**: Points and achievement tracking
+- **`offline_queue`**: Offline-first operation queue for background sync
+
+### V2 Engine Integration
+The app uses the **V2 Engine Connector** to extract dynamic weekly targets from activation codes:
+
+```typescript
+// V2EngineConnector extracts current week's targets
+const weeklyTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+// Returns: { steps: 6250, water: 51, sleep: 6.6 } based on plan_progress
+
+// TargetManager provides the single source of truth
+const targets = await TargetManager.getCurrentWeekTargets(userId);
+// UI displays these dynamic targets, not hardcoded values
+```
+
+**Key Services:**
+- **`TargetManager`**: Single source of truth for user targets (V2 Engine → UI)
+- **`V2EngineConnector`**: Extracts weekly progression from transformation roadmap
+- **`HealthDataService`**: CRUD operations for daily metrics with RLS
+- **`SyncManager`**: Background synchronization with offline queue support
+- **`OfflineQueueService`**: Offline-first data persistence with AsyncStorage
+- **`DatabaseInitializer`**: One-time user data setup on first login
 
 ## 🧪 Development
 
