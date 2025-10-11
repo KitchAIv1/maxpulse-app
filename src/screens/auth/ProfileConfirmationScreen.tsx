@@ -13,7 +13,7 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { ActivationCode, UserProfileFromActivation } from '../../types';
-import { activationService } from '../../services/supabase';
+import { activationService, supabase } from '../../services/supabase';
 
 interface ProfileConfirmationScreenProps {
   user: any;
@@ -34,15 +34,54 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
   const initialProfile = activationService.createUserProfileFromActivation(activationCode, user.id);
   const [profileData, setProfileData] = useState(initialProfile);
 
-  // Extract key data for display
-  const { demographics, personalizedTargets, medical } = activationCode.onboarding_data;
+  // Extract key data for display with fallbacks
+  const { demographics, personalizedTargets, medical } = activationCode.onboarding_data || {};
+  
+  // Provide fallbacks for missing data
+  const safeDemographics = demographics || { bmi: 0, age: 0, gender: 'other', heightCm: 0, weightKg: 0 };
+  const safeTargets = personalizedTargets || { 
+    bmi: { category: 'Unknown' },
+    steps: { targetDaily: 8000 },
+    hydration: { targetLiters: 2.5 },
+    sleep: { targetMinHours: 7, targetMaxHours: 9 }
+  };
+  const safeMedical = medical || { conditions: [], allergies: [], medications: [] };
 
   const handleConfirmProfile = async () => {
     setIsLoading(true);
 
     try {
-      // Here you would typically save the profile to the database
-      // For now, we'll just pass it back to the parent component
+      // Save the profile to the database
+      const { error } = await supabase
+        .from('app_user_profiles')
+        .upsert({
+          user_id: user.id,
+          email: profileData.email,
+          name: profileData.name,
+          age: profileData.age,
+          gender: profileData.gender,
+          height_cm: profileData.height_cm,
+          weight_kg: profileData.weight_kg,
+          bmi: profileData.bmi,
+          medical_conditions: profileData.medical_conditions,
+          medical_allergies: profileData.medical_allergies,
+          medical_medications: profileData.medical_medications,
+          mental_health_data: profileData.mental_health_data,
+          activation_code_id: profileData.activation_code_id,
+          distributor_id: profileData.distributor_id,
+          session_id: profileData.session_id,
+          plan_type: profileData.plan_type,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('Error saving profile:', error);
+        Alert.alert('Error', 'Failed to save profile. Please try again.');
+        return;
+      }
+
+      // Pass the profile data back to complete authentication
       onProfileConfirmed(profileData);
     } catch (error) {
       console.error('Error confirming profile:', error);
@@ -85,6 +124,9 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
               onChangeText={(value) => updateProfileData('name', value)}
               placeholder="Enter your full name"
               placeholderTextColor="rgba(255,255,255,0.5)"
+              autoComplete="off"
+              textContentType="none"
+              selectionColor="white"
             />
           </View>
 
@@ -170,8 +212,8 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
 
           <View style={styles.metricCard}>
             <Text style={styles.metricLabel}>Current BMI</Text>
-            <Text style={styles.metricValue}>{demographics.bmi.toFixed(1)}</Text>
-            <Text style={styles.metricCategory}>{personalizedTargets.bmi.category}</Text>
+            <Text style={styles.metricValue}>{safeDemographics.bmi.toFixed(1)}</Text>
+            <Text style={styles.metricCategory}>{safeTargets.bmi.category}</Text>
           </View>
         </View>
 
@@ -182,47 +224,47 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
           <View style={styles.targetsGrid}>
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>🚶‍♂️</Text>
-              <Text style={styles.targetValue}>{personalizedTargets.steps.targetDaily.toLocaleString()}</Text>
+              <Text style={styles.targetValue}>{safeTargets.steps.targetDaily.toLocaleString()}</Text>
               <Text style={styles.targetLabel}>Daily Steps</Text>
             </View>
 
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>💧</Text>
-              <Text style={styles.targetValue}>{personalizedTargets.hydration.targetLiters}L</Text>
+              <Text style={styles.targetValue}>{safeTargets.hydration.targetLiters}L</Text>
               <Text style={styles.targetLabel}>Daily Water</Text>
             </View>
 
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>😴</Text>
-              <Text style={styles.targetValue}>{personalizedTargets.sleep.targetMinHours}-{personalizedTargets.sleep.targetMaxHours}h</Text>
+              <Text style={styles.targetValue}>{safeTargets.sleep.targetMinHours}-{safeTargets.sleep.targetMaxHours}h</Text>
               <Text style={styles.targetLabel}>Sleep Range</Text>
             </View>
           </View>
         </View>
 
         {/* Medical Information */}
-        {(medical.conditions.length > 0 || medical.allergies.length > 0 || medical.medications.length > 0) && (
+        {(safeMedical.conditions.length > 0 || safeMedical.allergies.length > 0 || safeMedical.medications.length > 0) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Medical Information</Text>
             
-            {medical.conditions.length > 0 && (
+            {safeMedical.conditions.length > 0 && (
               <View style={styles.medicalGroup}>
                 <Text style={styles.medicalLabel}>Conditions:</Text>
-                <Text style={styles.medicalValue}>{medical.conditions.join(', ')}</Text>
+                <Text style={styles.medicalValue}>{safeMedical.conditions.join(', ')}</Text>
               </View>
             )}
 
-            {medical.allergies.length > 0 && (
+            {safeMedical.allergies.length > 0 && (
               <View style={styles.medicalGroup}>
                 <Text style={styles.medicalLabel}>Allergies:</Text>
-                <Text style={styles.medicalValue}>{medical.allergies.join(', ')}</Text>
+                <Text style={styles.medicalValue}>{safeMedical.allergies.join(', ')}</Text>
               </View>
             )}
 
-            {medical.medications.length > 0 && (
+            {safeMedical.medications.length > 0 && (
               <View style={styles.medicalGroup}>
                 <Text style={styles.medicalLabel}>Medications:</Text>
-                <Text style={styles.medicalValue}>{medical.medications.join(', ')}</Text>
+                <Text style={styles.medicalValue}>{safeMedical.medications.join(', ')}</Text>
               </View>
             )}
           </View>

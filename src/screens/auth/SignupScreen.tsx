@@ -179,6 +179,9 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
                 onChangeText={(value) => updateFormData('activationCode', value.toUpperCase())}
                 autoCapitalize="characters"
                 maxLength={10}
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
               {activationCodeStatus.message && (
                 <Text style={[
@@ -201,7 +204,9 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
                 onChangeText={(value) => updateFormData('email', value)}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoComplete="email"
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
             </View>
 
@@ -215,7 +220,9 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
                 value={formData.password}
                 onChangeText={(value) => updateFormData('password', value)}
                 secureTextEntry
-                autoComplete="new-password"
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
             </View>
 
@@ -229,7 +236,9 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
                 value={formData.confirmPassword}
                 onChangeText={(value) => updateFormData('confirmPassword', value)}
                 secureTextEntry
-                autoComplete="new-password"
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
             </View>
 

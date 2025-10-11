@@ -119,8 +119,10 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   setError: (error) => set({ error }),
 
-  initializeTargets: (profile) => {
-    const targets = generateTargets(profile);
+  initializeTargets: (customTargets) => {
+    // If custom targets are provided (from activation code), use them
+    // Otherwise generate default targets
+    const targets = customTargets || generateTargets();
     set({ targets });
   },
 

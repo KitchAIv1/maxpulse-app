@@ -88,7 +88,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 onChangeText={(value) => updateFormData('email', value)}
                 keyboardType="email-address"
                 autoCapitalize="none"
-                autoComplete="email"
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
             </View>
 
@@ -101,7 +103,9 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
                 value={formData.password}
                 onChangeText={(value) => updateFormData('password', value)}
                 secureTextEntry
-                autoComplete="current-password"
+                autoComplete="off"
+                textContentType="none"
+                selectionColor="white"
               />
             </View>
 

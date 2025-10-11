@@ -500,9 +500,9 @@ export const planService = {
    */
   async getCurrentWeekTargets(userId: string): Promise<DynamicTargets | null> {
     try {
-      // Get user's activation code and plan progress
-      const { data: userProfile, error: profileError } = await supabase
-        .from('user_profiles')
+            // Get user's activation code and plan progress
+            const { data: userProfile, error: profileError } = await supabase
+              .from('app_user_profiles')
         .select('activation_code_id')
         .eq('user_id', userId)
         .single();
