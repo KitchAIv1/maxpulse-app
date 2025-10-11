@@ -222,93 +222,25 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           )}
         </View>
 
-        {/* Daily Metrics from Database */}
+        {/* Database Status (Simplified) */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Metrics (Database Status)</Text>
-          <Text style={styles.sectionSubtitle}>Database record status</Text>
+          <Text style={styles.sectionTitle}>Database Status</Text>
+          <Text style={styles.sectionSubtitle}>Connection and sync status</Text>
           {dailyMetrics ? (
-            <>
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>🚶‍♂️</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Steps Target</Text>
-                  <Text style={styles.targetValue}>{dailyMetrics.steps_target.toLocaleString()}</Text>
-                  <Text style={styles.targetCurrent}>Current: {dailyMetrics.steps_actual.toLocaleString()}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>💧</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Hydration Target</Text>
-                  <Text style={styles.targetValue}>{dailyMetrics.water_oz_target} oz</Text>
-                  <Text style={styles.targetCurrent}>Current: {dailyMetrics.water_oz_actual} oz</Text>
-                </View>
-              </View>
-              
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>😴</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Sleep Target</Text>
-                  <Text style={styles.targetValue}>{dailyMetrics.sleep_hr_target}h</Text>
-                  <Text style={styles.targetCurrent}>Current: {formatSleepDuration(dailyMetrics.sleep_hr_actual)}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>🧠</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Mood Check-ins Target</Text>
-                  <Text style={styles.targetValue}>{dailyMetrics.mood_checkins_target}/week</Text>
-                  <Text style={styles.targetCurrent}>Current: {dailyMetrics.mood_checkins_actual}</Text>
-                </View>
-              </View>
-              
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Life Score (Database Calculated)</Text>
-                <Text style={styles.dataValue}>{dailyMetrics.life_score}%</Text>
-              </View>
-            </>
+            <View style={styles.dataCard}>
+              <Text style={styles.dataLabel}>✅ Database Connected</Text>
+              <Text style={styles.dataValue}>Daily metrics record found</Text>
+            </View>
           ) : (
-            <Text style={styles.noData}>
-              {isLoading ? 'Loading...' : 'No daily metrics found - database may not be initialized'}
-            </Text>
+            <View style={styles.dataCard}>
+              <Text style={styles.dataLabel}>⚠️ Database Status</Text>
+              <Text style={styles.dataValue}>
+                {isLoading ? 'Checking connection...' : 'No daily metrics - may need initialization'}
+              </Text>
+            </View>
           )}
         </View>
 
-        {/* App Store State Comparison */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>App Store State (Current UI)</Text>
-          <Text style={styles.sectionSubtitle}>What the dashboard is currently using</Text>
-          
-          <View style={styles.comparisonCard}>
-            <Text style={styles.comparisonLabel}>Steps Target</Text>
-            <Text style={styles.comparisonValue}>
-              DB: {dailyMetrics?.steps_target || 'N/A'} | UI: {targets.steps}
-            </Text>
-          </View>
-          
-          <View style={styles.comparisonCard}>
-            <Text style={styles.comparisonLabel}>Hydration Target</Text>
-            <Text style={styles.comparisonValue}>
-              DB: {dailyMetrics?.water_oz_target || 'N/A'} oz | UI: {targets.waterOz} oz
-            </Text>
-          </View>
-          
-          <View style={styles.comparisonCard}>
-            <Text style={styles.comparisonLabel}>Sleep Target</Text>
-            <Text style={styles.comparisonValue}>
-              DB: {dailyMetrics?.sleep_hr_target || 'N/A'}h | UI: {targets.sleepHr}h
-            </Text>
-          </View>
-          
-          <View style={styles.comparisonCard}>
-            <Text style={styles.comparisonLabel}>Current State</Text>
-            <Text style={styles.comparisonValue}>
-              Steps: {currentState.steps} | Water: {currentState.waterOz}oz | Sleep: {formatSleepDuration(currentState.sleepHr)}
-            </Text>
-          </View>
-        </View>
 
         {/* 90-Day Plan Progress */}
         <View style={styles.section}>

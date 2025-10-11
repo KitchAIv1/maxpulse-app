@@ -67,34 +67,30 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
   const loadUserTargets = async (userId: string) => {
     try {
-      console.log('🎯 Loading user targets for:', userId);
+      console.log('🎯 V2 Engine: Loading current week targets for user:', userId);
       
-      // Get user's activation code from profile
-      const { data: profile } = await supabase
-        .from('app_user_profiles')
-        .select('activation_code_id')
-        .eq('user_id', userId)
-        .single();
-
-      if (profile?.activation_code_id) {
-        // Load personalized targets directly from activation code
-        const personalizedTargets = await TargetManager.getUserTargets(profile.activation_code_id);
-        
-        console.log('✅ Loaded personalized targets:', personalizedTargets);
-        
-        await initializeTargets({
-          steps: personalizedTargets.steps,
-          waterOz: personalizedTargets.waterOz,
-          sleepHr: personalizedTargets.sleepHr,
-        });
-        
-        console.log('🎯 Dashboard should now show:', personalizedTargets);
-      } else {
-        console.warn('No activation code found, using defaults');
-        await initializeTargets();
-      }
+      // Use V2 Engine to get current week's dynamic targets
+      const weeklyTargets = await TargetManager.getCurrentWeekTargets(userId);
+      
+      console.log('✅ V2 Engine loaded targets:', weeklyTargets);
+      
+      await initializeTargets({
+        steps: weeklyTargets.steps,
+        waterOz: weeklyTargets.waterOz,
+        sleepHr: weeklyTargets.sleepHr,
+      });
+      
+      console.log('🎯 Dashboard now shows V2 Engine targets:', {
+        steps: weeklyTargets.steps,
+        waterOz: weeklyTargets.waterOz,
+        sleepHr: weeklyTargets.sleepHr,
+        source: weeklyTargets.source,
+        week: weeklyTargets.week,
+        phase: weeklyTargets.phase,
+        focus: weeklyTargets.focus,
+      });
     } catch (error) {
-      console.error('Error loading user targets:', error);
+      console.error('Error loading V2 Engine targets:', error);
       // Fallback to default targets
       await initializeTargets();
     }
@@ -144,20 +140,20 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
           console.error('Failed to save profile after auth:', profileError);
         }
 
-        // For new users, load personalized targets immediately
-        console.log('🎯 Loading personalized targets for new user:', profile.activation_code_id);
+        // For new users, use V2 Engine for dynamic weekly targets
+        console.log('🎯 V2 Engine: Loading targets for new user:', authenticatedUser.id);
         
-        const personalizedTargets = await TargetManager.getUserTargets(profile.activation_code_id);
+        const weeklyTargets = await TargetManager.getCurrentWeekTargets(authenticatedUser.id);
         
-        console.log('✅ New user personalized targets:', personalizedTargets);
+        console.log('✅ V2 Engine new user targets:', weeklyTargets);
         
         await initializeTargets({
-          steps: personalizedTargets.steps,
-          waterOz: personalizedTargets.waterOz,
-          sleepHr: personalizedTargets.sleepHr,
+          steps: weeklyTargets.steps,
+          waterOz: weeklyTargets.waterOz,
+          sleepHr: weeklyTargets.sleepHr,
         });
         
-        console.log('🎯 Dashboard initialized with personalized targets');
+        console.log('🎯 Dashboard initialized with V2 Engine targets:', weeklyTargets);
       } else {
         // For existing users, load their current targets
         await loadUserTargets(authenticatedUser.id);
