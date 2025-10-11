@@ -7,6 +7,7 @@ export { KPICard } from './cards/KPICard';
 export { TriRings } from './rings/TriRings';
 export { CalAiRing } from './rings/CalAiRing';
 export { CalAiTriRings } from './rings/CalAiTriRings';
+export { CalendarBar } from './calendar/CalendarBar';
 export { BottomNavigation } from './BottomNavigation';
 export { AppWithAuth } from './AppWithAuth';
 export { default as StepTrackingManager } from './StepTrackingManager';

@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, CalAiTriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
+import { Badge, KPICard, CalAiTriRings, CalendarBar, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
@@ -158,6 +158,9 @@ function TriHabitApp() {
                    </TouchableOpacity>
                  </View>
 
+          {/* Calendar Bar */}
+          <CalendarBar disabled={true} />
+
           {/* Cal AI Ring Cards */}
           <View style={styles.ringSection}>
             <CalAiTriRings
@@ -246,38 +249,6 @@ function TriHabitApp() {
             </View>
           </View>
 
-          {/* Diagnostics */}
-          <View style={styles.diagnosticsCard}>
-            <Text style={styles.diagnosticsTitle}>Diagnostics</Text>
-            <View style={styles.diagnosticsGrid}>
-              <View style={styles.diagnosticItem}>
-                <Text style={styles.diagnosticLabel}>Hydration gap</Text>
-                <Text style={styles.diagnosticValue}>
-                  {Math.max(0, finalTargets.waterOz - currentState.waterOz)} oz left
-                </Text>
-                <Text style={styles.diagnosticHint}>Aim for steady sips each hour</Text>
-              </View>
-              <View style={styles.diagnosticItem}>
-                <Text style={styles.diagnosticLabel}>Sleep debt</Text>
-                <Text style={styles.diagnosticValue}>
-                  {formatSleepDuration(Math.max(0, finalTargets.sleepHr - currentState.sleepHr))}
-                </Text>
-                <Text style={styles.diagnosticHint}>Wind‑down 30m earlier today</Text>
-              </View>
-              <View style={styles.diagnosticItem}>
-                <Text style={styles.diagnosticLabel}>Step pace</Text>
-                <Text style={styles.diagnosticValue}>
-                  {Math.round(displayStepsPct * 100)}% of today
-                </Text>
-                <Text style={styles.diagnosticHint}>Add 1–2 short walks</Text>
-              </View>
-              <View style={styles.diagnosticItem}>
-                <Text style={styles.diagnosticLabel}>Streaks</Text>
-                <Text style={styles.diagnosticValue}>🔥 3‑day hydration</Text>
-                <Text style={styles.diagnosticHint}>Keep it going!</Text>
-              </View>
-            </View>
-          </View>
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
@@ -529,43 +500,6 @@ const styles = StyleSheet.create({
   coachBadges: {
     flexDirection: 'row',
     gap: 8,
-  },
-  diagnosticsCard: {
-    ...calAiCard.base,
-  },
-  diagnosticsTitle: {
-    fontSize: theme.typography.small,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
-  },
-  diagnosticsGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-  },
-  diagnosticItem: {
-    width: '47%',
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  diagnosticLabel: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  diagnosticValue: {
-    fontSize: theme.typography.large,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  diagnosticHint: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textTertiary,
   },
   bottomSpacer: {
     height: 24,

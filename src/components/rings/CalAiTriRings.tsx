@@ -181,31 +181,31 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.tiny,
   },
   ringValue: {
-    fontSize: Math.min(screenWidth * 0.04, theme.typography.medium),
+    fontSize: Math.min(screenWidth * 0.03, theme.typography.small), // Reduced from 0.04 and medium
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
   largeRingValue: {
-    fontSize: Math.min(screenWidth * 0.05, theme.typography.large),
+    fontSize: Math.min(screenWidth * 0.045, theme.typography.medium), // Reduced from 0.05 and large
   },
   ringTarget: {
-    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall),
+    fontSize: Math.min(screenWidth * 0.02, theme.typography.tiny), // Reduced from 0.025 and xsmall
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 2,
   },
   largeRingTarget: {
-    fontSize: Math.min(screenWidth * 0.03, theme.typography.small),
+    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall), // Reduced from 0.03 and small
   },
   percentage: {
-    fontSize: Math.min(screenWidth * 0.03, theme.typography.small),
+    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall), // Reduced from 0.03 and small
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.sm,
   },
   largePercentage: {
-    fontSize: Math.min(screenWidth * 0.035, theme.typography.regular),
+    fontSize: Math.min(screenWidth * 0.03, theme.typography.small), // Reduced from 0.035 and regular
   },
   lifeScoreButton: {
     backgroundColor: theme.colors.primary + '20',
