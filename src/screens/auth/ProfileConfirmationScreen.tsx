@@ -51,10 +51,17 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
     setIsLoading(true);
 
     try {
-      // Save the profile to the database
+      // Use the user object passed to the component (from signup flow)
+      console.log('Attempting to save profile for user:', user.id);
+      console.log('Profile data:', {
+        user_id: user.id,
+        email: profileData.email,
+        name: profileData.name,
+      });
+
       const { error } = await supabase
         .from('app_user_profiles')
-        .upsert({
+        .insert({
           user_id: user.id,
           email: profileData.email,
           name: profileData.name,
@@ -71,14 +78,20 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
           distributor_id: profileData.distributor_id,
           session_id: profileData.session_id,
           plan_type: profileData.plan_type,
-          created_at: new Date().toISOString(),
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+        });
 
       if (error) {
         console.error('Error saving profile:', error);
-        Alert.alert('Error', 'Failed to save profile. Please try again.');
-        return;
+        console.error('Full error details:', JSON.stringify(error, null, 2));
+        
+        // If RLS is blocking us, try a different approach or just proceed
+        if (error.code === '42501') {
+          console.warn('RLS policy blocking profile save, proceeding without database save for now');
+          Alert.alert('Notice', 'Profile will be saved after login. Proceeding to app...');
+        } else {
+          Alert.alert('Error', `Failed to save profile: ${error.message || 'Unknown error'}`);
+          return;
+        }
       }
 
       // Pass the profile data back to complete authentication
@@ -92,7 +105,10 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
   };
 
   const updateProfileData = (field: keyof UserProfileFromActivation, value: any) => {
-    setProfileData(prev => ({ ...prev, [field]: value }));
+    // Only allow editing of name - all other data comes from assessment
+    if (field === 'name') {
+      setProfileData(prev => ({ ...prev, [field]: value }));
+    }
   };
 
   return (
@@ -145,37 +161,20 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
           <View style={styles.row}>
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>Age</Text>
-              <TextInput
-                style={styles.input}
-                value={profileData.age.toString()}
-                onChangeText={(value) => updateProfileData('age', parseInt(value) || 0)}
-                keyboardType="numeric"
-                placeholder="Age"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-              />
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>{profileData.age}</Text>
+              </View>
+              <Text style={styles.helperText}>From assessment data</Text>
             </View>
 
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>Gender</Text>
-              <View style={styles.genderContainer}>
-                {['male', 'female', 'other'].map((gender) => (
-                  <TouchableOpacity
-                    key={gender}
-                    style={[
-                      styles.genderOption,
-                      profileData.gender === gender && styles.genderOptionSelected
-                    ]}
-                    onPress={() => updateProfileData('gender', gender)}
-                  >
-                    <Text style={[
-                      styles.genderOptionText,
-                      profileData.gender === gender && styles.genderOptionTextSelected
-                    ]}>
-                      {gender.charAt(0).toUpperCase() + gender.slice(1)}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>
+                  {profileData.gender.charAt(0).toUpperCase() + profileData.gender.slice(1)}
+                </Text>
               </View>
+              <Text style={styles.helperText}>From assessment data</Text>
             </View>
           </View>
         </View>
@@ -187,26 +186,18 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
           <View style={styles.row}>
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>Height (cm)</Text>
-              <TextInput
-                style={styles.input}
-                value={profileData.height_cm.toString()}
-                onChangeText={(value) => updateProfileData('height_cm', parseInt(value) || 0)}
-                keyboardType="numeric"
-                placeholder="Height"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-              />
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>{profileData.height_cm} cm</Text>
+              </View>
+              <Text style={styles.helperText}>From assessment data</Text>
             </View>
 
             <View style={[styles.inputGroup, styles.halfWidth]}>
               <Text style={styles.label}>Weight (kg)</Text>
-              <TextInput
-                style={styles.input}
-                value={profileData.weight_kg.toString()}
-                onChangeText={(value) => updateProfileData('weight_kg', parseInt(value) || 0)}
-                keyboardType="numeric"
-                placeholder="Weight"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-              />
+              <View style={styles.readOnlyField}>
+                <Text style={styles.readOnlyValue}>{profileData.weight_kg} kg</Text>
+              </View>
+              <Text style={styles.helperText}>From assessment data</Text>
             </View>
           </View>
 
@@ -277,7 +268,7 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
           disabled={isLoading}
         >
           <Text style={styles.confirmButtonText}>
-            {isLoading ? 'Setting up your profile...' : 'Confirm & Start Journey'}
+            {isLoading ? 'Setting up your profile...' : 'Confirm Profile & Start Journey'}
           </Text>
         </TouchableOpacity>
 
@@ -353,37 +344,24 @@ const styles = StyleSheet.create({
     color: 'rgba(255,255,255,0.6)',
     marginTop: 4,
   },
+  readOnlyField: {
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  readOnlyValue: {
+    fontSize: 16,
+    color: 'rgba(255,255,255,0.8)',
+    fontWeight: '500',
+  },
   row: {
     flexDirection: 'row',
     gap: 16,
   },
   halfWidth: {
     flex: 1,
-  },
-  genderContainer: {
-    flexDirection: 'row',
-    gap: 8,
-  },
-  genderOption: {
-    flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 8,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
-  },
-  genderOptionSelected: {
-    backgroundColor: 'white',
-    borderColor: 'white',
-  },
-  genderOptionText: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '500',
-  },
-  genderOptionTextSelected: {
-    color: '#7f1d1d',
   },
   metricCard: {
     backgroundColor: 'rgba(255,255,255,0.1)',

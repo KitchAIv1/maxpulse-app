@@ -165,11 +165,17 @@ ALTER TABLE rewards_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE device_connections ENABLE ROW LEVEL SECURITY;
 
+-- Drop existing policies if they exist
+DROP POLICY IF EXISTS "App users can view own profile" ON app_user_profiles;
+DROP POLICY IF EXISTS "App users can insert own profile" ON app_user_profiles;
+DROP POLICY IF EXISTS "App users can update own profile" ON app_user_profiles;
+DROP POLICY IF EXISTS "Allow profile creation during signup" ON app_user_profiles;
+
 -- RLS Policies for app_user_profiles
 CREATE POLICY "App users can view own profile" ON app_user_profiles
     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "App users can insert own profile" ON app_user_profiles
+CREATE POLICY "App users can insert profile" ON app_user_profiles
     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "App users can update own profile" ON app_user_profiles

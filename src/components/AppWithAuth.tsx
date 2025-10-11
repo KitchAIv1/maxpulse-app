@@ -5,7 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContainer } from '../screens/auth';
-import { authService, planService, activationService } from '../services/supabase';
+import { authService, planService, activationService, supabase } from '../services/supabase';
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
 
@@ -83,8 +83,40 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
         display_name: profile?.name || authenticatedUser.email,
       });
 
-      // If this is a new user with profile data, set up their targets
+      // If this is a new user with profile data, set up their targets and save profile
       if (profile) {
+        // Try to save the profile to the database now that user is authenticated
+        try {
+          const { error } = await supabase
+            .from('app_user_profiles')
+            .upsert({
+              user_id: authenticatedUser.id,
+              email: profile.email,
+              name: profile.name,
+              age: profile.age,
+              gender: profile.gender,
+              height_cm: profile.height_cm,
+              weight_kg: profile.weight_kg,
+              bmi: profile.bmi,
+              medical_conditions: profile.medical_conditions,
+              medical_allergies: profile.medical_allergies,
+              medical_medications: profile.medical_medications,
+              mental_health_data: profile.mental_health_data,
+              activation_code_id: profile.activation_code_id,
+              distributor_id: profile.distributor_id,
+              session_id: profile.session_id,
+              plan_type: profile.plan_type,
+            }, { onConflict: 'user_id' });
+
+          if (error) {
+            console.error('Error saving profile after auth:', error);
+          } else {
+            console.log('Profile saved successfully after authentication');
+          }
+        } catch (profileError) {
+          console.error('Failed to save profile after auth:', profileError);
+        }
+
         // For new users, extract targets from their activation code
         const activationCode = await activationService.getActivationCodeData(profile.activation_code_id);
         if (activationCode) {
