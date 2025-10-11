@@ -138,15 +138,24 @@ function TriHabitApp() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-                 {/* Header - Simplified */}
+                 {/* Header - With Rewards */}
                  <View style={styles.header}>
-                   <View>
+                   <View style={styles.headerLeft}>
                      <Text style={styles.dateText}>{dateFmt}</Text>
                      <Text style={styles.titleText}>Your Daily Health</Text>
             <Text style={styles.successText}>
               ✅ Targets: {finalTargets.steps.toLocaleString()} steps, {finalTargets.waterOz} oz, {finalTargets.sleepHr}h
             </Text>
                    </View>
+                   
+                   {/* Rewards - Upper Right */}
+                   <TouchableOpacity 
+                     style={styles.headerRewards}
+                     onPress={() => setCurrentScreen('rewards')}
+                   >
+                     <Text style={styles.headerRewardsPoints}>1,247 pts</Text>
+                     <Text style={styles.headerRewardsLabel}>Rewards</Text>
+                   </TouchableOpacity>
                  </View>
 
           {/* Cal AI Ring Cards */}
@@ -171,14 +180,6 @@ function TriHabitApp() {
             />
           </View>
 
-          {/* Rewards KPI - Moved outside rings */}
-          <TouchableOpacity 
-            style={styles.rewardsCard}
-            onPress={() => setCurrentScreen('rewards')}
-          >
-            <Text style={styles.rewardsPoints}>1,247 pts</Text>
-            <Text style={styles.rewardsLabel}>Rewards</Text>
-          </TouchableOpacity>
 
           {/* Quick Actions - Below the quadrant layout */}
           <View style={styles.quickActions}>
@@ -335,9 +336,27 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-start',
     marginBottom: theme.spacing.lg,
     paddingTop: theme.spacing.sm,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerRewards: {
+    alignItems: 'center',
+    paddingLeft: theme.spacing.sm,
+  },
+  headerRewardsPoints: {
+    fontSize: theme.typography.small,
+    color: '#FFD700',
+    fontWeight: theme.typography.weights.bold,
+    marginBottom: 2,
+  },
+  headerRewardsLabel: {
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.weights.medium,
   },
   dateText: {
     fontSize: theme.typography.xsmall,
@@ -414,24 +433,6 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.base,
     marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.sm,
-  },
-  rewardsCard: {
-    ...calAiCard.base,
-    marginHorizontal: theme.spacing.base,
-    marginBottom: theme.spacing.base,
-    paddingVertical: theme.spacing.sm,
-    alignItems: 'center',
-  },
-  rewardsPoints: {
-    fontSize: theme.typography.large,
-    color: '#FFD700',
-    fontWeight: theme.typography.weights.bold,
-    marginBottom: 4,
-  },
-  rewardsLabel: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textSecondary,
-    fontWeight: theme.typography.weights.medium,
   },
   moodCheckInCard: {
     ...calAiCard.base,

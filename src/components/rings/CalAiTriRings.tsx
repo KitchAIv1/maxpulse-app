@@ -2,11 +2,13 @@
 // Main steps card on top (large), hydration and sleep cards below (smaller)
 
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
 import { CalAiRing } from './CalAiRing';
 import { theme } from '../../utils/theme';
 import { calAiCard } from '../../utils/calAiStyles';
 import { formatSleepDuration } from '../../utils';
+
+const { width: screenWidth } = Dimensions.get('window');
 
 interface CalAiTriRingsProps {
   stepsPct: number;
@@ -36,6 +38,10 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   sleepData,
   onLifeScorePress,
 }) => {
+  // Calculate responsive ring sizes based on screen width
+  const stepsRingSize = Math.min(screenWidth * 0.4, 160);
+  const smallRingSize = Math.min(screenWidth * 0.25, 100);
+
   const RingCard: React.FC<{
     title: string;
     icon: string;
@@ -76,36 +82,41 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
 
   return (
     <View style={styles.container}>
-      {/* Large Steps Card */}
-      <RingCard
-        title="Steps"
-        icon="🚶‍♂️"
-        percentage={stepsPct}
-        current={stepsData.current.toLocaleString()}
-        target={stepsData.target.toLocaleString()}
-        size={200}
-        isLarge={true}
-      />
-      
-      {/* Bottom Row - Hydration and Sleep */}
-      <View style={styles.bottomRow}>
-        <RingCard
-          title="Hydration"
-          icon="💧"
-          percentage={waterPct}
-          current={`${waterData.current}`}
-          target={`${waterData.target} oz`}
-          size={150}
-        />
+      {/* Horizontal Layout: Steps Left, Hydration/Sleep Right */}
+      <View style={styles.horizontalLayout}>
+        {/* Left Side - Steps Card */}
+        <View style={styles.leftSide}>
+          <RingCard
+            title="Steps"
+            icon="🚶‍♂️"
+            percentage={stepsPct}
+            current={stepsData.current.toLocaleString()}
+            target={stepsData.target.toLocaleString()}
+            size={stepsRingSize}
+            isLarge={true}
+          />
+        </View>
         
-        <RingCard
-          title="Sleep"
-          icon="😴"
-          percentage={sleepPct}
-          current={formatSleepDuration(sleepData.current)}
-          target={formatSleepDuration(sleepData.target)}
-          size={150}
-        />
+        {/* Right Side - Hydration and Sleep Stacked */}
+        <View style={styles.rightSide}>
+          <RingCard
+            title="Hydration"
+            icon="💧"
+            percentage={waterPct}
+            current={`${waterData.current}`}
+            target={`${waterData.target} oz`}
+            size={smallRingSize}
+          />
+          
+          <RingCard
+            title="Sleep"
+            icon="😴"
+            percentage={sleepPct}
+            current={formatSleepDuration(sleepData.current)}
+            target={formatSleepDuration(sleepData.target)}
+            size={smallRingSize}
+          />
+        </View>
       </View>
       
       {/* Life Score Button */}
@@ -123,25 +134,37 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: theme.spacing.base,
   },
+  horizontalLayout: {
+    flexDirection: 'row',
+    width: '100%',
+    gap: theme.spacing.sm,
+    alignItems: 'stretch',
+    minHeight: 280, // Ensure consistent height
+  },
+  leftSide: {
+    flex: 1.2, // Slightly larger for steps
+    maxWidth: '55%',
+  },
+  rightSide: {
+    flex: 1,
+    gap: theme.spacing.sm,
+    maxWidth: '45%',
+  },
   ringCard: {
     alignItems: 'center',
-    padding: theme.spacing.base,
+    padding: theme.spacing.sm,
     ...theme.shadows.medium,
+    flex: 1,
+    justifyContent: 'center',
+    minHeight: 120,
   },
   largeCard: {
-    minWidth: 240,
-    paddingVertical: theme.spacing.lg,
+    paddingVertical: theme.spacing.base,
+    minHeight: 260,
   },
   smallCard: {
-    flex: 1,
-    marginHorizontal: theme.spacing.xs,
-    minWidth: 180,
-  },
-  bottomRow: {
-    flexDirection: 'row',
-    gap: theme.spacing.sm,
-    width: '100%',
-    justifyContent: 'center',
+    paddingVertical: theme.spacing.xs,
+    minHeight: 120,
   },
   cardTitle: {
     fontSize: theme.typography.regular,
@@ -158,31 +181,31 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.tiny,
   },
   ringValue: {
-    fontSize: theme.typography.medium,
+    fontSize: Math.min(screenWidth * 0.04, theme.typography.medium),
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
   largeRingValue: {
-    fontSize: theme.typography.large,
+    fontSize: Math.min(screenWidth * 0.05, theme.typography.large),
   },
   ringTarget: {
-    fontSize: theme.typography.xsmall,
+    fontSize: Math.min(screenWidth * 0.025, theme.typography.xsmall),
     color: theme.colors.textSecondary,
     textAlign: 'center',
     marginTop: 2,
   },
   largeRingTarget: {
-    fontSize: theme.typography.small,
+    fontSize: Math.min(screenWidth * 0.03, theme.typography.small),
   },
   percentage: {
-    fontSize: theme.typography.small,
+    fontSize: Math.min(screenWidth * 0.03, theme.typography.small),
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
     marginTop: theme.spacing.sm,
   },
   largePercentage: {
-    fontSize: theme.typography.regular,
+    fontSize: Math.min(screenWidth * 0.035, theme.typography.regular),
   },
   lifeScoreButton: {
     backgroundColor: theme.colors.primary + '20',
