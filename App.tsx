@@ -17,6 +17,8 @@ import { useAppStore } from './src/stores/appStore';
 import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
+import { theme } from './src/utils/theme';
+import { calAiCard, calAiContainer, calAiText } from './src/utils/calAiStyles';
 import { RewardsScreen } from './src/screens/RewardsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
@@ -129,11 +131,8 @@ function TriHabitApp() {
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
-      <LinearGradient
-        colors={['#7f1d1d', '#991b1b', '#1f2937']} // red-900 to red-800 to gray-900 - matte deep red
-        style={styles.gradient}
-      >
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={true} />
+      <View style={styles.gradient}>
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -342,7 +341,7 @@ function TriHabitApp() {
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      </LinearGradient>
+      </View>
       <BottomNavigation 
         currentScreen={currentScreen} 
         onScreenChange={setCurrentScreen} 
@@ -380,44 +379,46 @@ function TriHabitApp() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#7f1d1d', // Matte deep red - ensure no white background shows through
+    backgroundColor: theme.colors.background,
   },
   gradient: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 50, // Account for status bar
-    paddingBottom: 100, // Account for bottom navigation
+    paddingHorizontal: theme.spacing.base,
+    paddingTop: 50,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20, // Increased spacing to glass container
-    paddingTop: 8,
+    marginBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
   },
   dateText: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.xsmall,
+    fontWeight: theme.typography.weights.regular,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   titleText: {
-    fontSize: 20,
-    fontWeight: '600',
-    color: 'white',
+    fontSize: theme.typography.large,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
   },
   warningText: {
-    fontSize: 10,
-    color: '#fbbf24',
+    fontSize: theme.typography.tiny,
+    color: theme.colors.warning,
     marginTop: 2,
   },
   successText: {
-    fontSize: 10,
-    color: '#10b981',
+    fontSize: theme.typography.tiny,
+    color: theme.colors.success,
     marginTop: 2,
   },
   headerBadges: {
@@ -426,24 +427,16 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   rewardsButton: {
-    paddingHorizontal: 16, // Increased from 12
-    paddingVertical: 10, // Increased from 8
-    borderRadius: 20, // Increased from 18
-    backgroundColor: 'rgba(255, 215, 0, 0.2)', // Changed to golden background
-    borderWidth: 1,
-    borderColor: 'rgba(255, 215, 0, 0.4)', // Golden border
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: 'rgba(255, 215, 0, 0.3)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.8,
-    shadowRadius: 4,
-    elevation: 4, // Android shadow
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.md,
+    borderRadius: theme.borderRadius.xl,
+    backgroundColor: theme.colors.cardBackground,
+    ...theme.shadows.subtle,
   },
   rewardsPointsText: {
-    fontSize: 14, // Increased from 12
-    fontWeight: '700', // Increased from 600
-    color: '#FFD700', // Golden color
+    fontSize: theme.typography.small,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.warning,
   },
   ringsContainer: {
     position: 'absolute',
@@ -455,60 +448,52 @@ const styles = StyleSheet.create({
   },
   quickActions: {
     flexDirection: 'row',
-    gap: 12, // Increased gap for better spacing
-    marginBottom: 24, // Increased spacing to next section
-    marginTop: 0, // Remove top margin since glass container has bottom margin
-    paddingHorizontal: 16, // Align with glass container margins
+    gap: theme.spacing.md,
+    marginBottom: theme.spacing.lg,
+    marginTop: 0,
+    paddingHorizontal: theme.spacing.base,
   },
   actionButton: {
     flex: 1,
-    borderRadius: 16, // Increased for modern look
-    paddingVertical: 16, // Better touch target
-    paddingHorizontal: 12,
+    borderRadius: theme.borderRadius.lg,
+    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 48, // Ensure good touch target
-    // Base glassmorphism effects
-    borderWidth: 1,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4, // Android shadow
+    minHeight: 48,
+    backgroundColor: theme.colors.cardBackground,
+    ...theme.shadows.subtle,
   },
   hydrationButton: {
-    backgroundColor: 'rgba(0, 255, 136, 0.10)', // Decreased opacity for subtler look
-    borderColor: 'rgba(0, 255, 136, 0.18)', // Decreased border opacity
+    backgroundColor: theme.colors.fat, // Soft blue for hydration
   },
   sleepButton: {
-    backgroundColor: 'rgba(59, 130, 246, 0.10)', // Decreased opacity for subtler look
-    borderColor: 'rgba(59, 130, 246, 0.18)', // Decreased border opacity
+    backgroundColor: '#E5D9FF', // Soft purple for sleep
   },
   stepsButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.15)', // White ring color with opacity
-    borderColor: 'rgba(255, 255, 255, 0.25)', // Slightly more opaque border
+    backgroundColor: theme.colors.protein, // Soft pink for mood
   },
   actionButtonText: {
-    fontSize: 16, // Increased for better readability
-    fontWeight: '600', // Bolder for glass backgrounds
-    color: 'white', // White text for better contrast on glass
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
   },
   glassContainer: {
-    backgroundColor: 'rgba(255, 255, 255, 0.08)', // Semi-transparent white overlay
-    borderRadius: 24, // Rounded corners for modern look
+    // PRESERVED: Glassmorphism for ring container
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderRadius: theme.borderRadius.xxl,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)', // Subtle glass border
-    marginHorizontal: 16, // Side margins
-    marginBottom: 24, // Increased spacing to action buttons
-    marginTop: 8, // Add small top margin from header
-    padding: 16, // Inner padding
-    // Simulate backdrop blur with layered transparency
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    marginHorizontal: theme.spacing.base,
+    marginBottom: theme.spacing.lg,
+    marginTop: theme.spacing.sm,
+    padding: theme.spacing.base,
     shadowColor: 'rgba(0, 0, 0, 0.1)',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.3,
     shadowRadius: 12,
-    elevation: 8, // Android shadow
+    elevation: 8,
   },
   kpiQuadrantLayout: {
     position: 'relative',
