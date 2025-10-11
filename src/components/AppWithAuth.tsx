@@ -44,14 +44,21 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       // Load user's dynamic targets from their plan
       await loadUserTargets(currentUser.id);
       
-      // Initialize sync manager
-      const syncManager = SyncManager.getInstance();
-      await syncManager.initialize();
-      
-      // Load today's data
-      await loadTodayData();
-      
       setIsAuthenticated(true);
+      
+      // Initialize sync manager and load data in background (non-blocking)
+      setTimeout(async () => {
+        try {
+          const syncManager = SyncManager.getInstance();
+          await syncManager.initialize();
+          
+          // Load today's data in background
+          await loadTodayData();
+        } catch (error) {
+          console.warn('Background initialization failed:', error);
+          // Don't break the app - it will work without background sync
+        }
+      }, 100); // Small delay to let UI render first
     } catch (error) {
       console.error('Error checking auth status:', error);
       setIsAuthenticated(false);

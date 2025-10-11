@@ -31,12 +31,12 @@ const initialState: AppState = {
     sleepHr: 8,
   },
   currentState: {
-    steps: 0, // Will be loaded from database
-    waterOz: 0,
-    sleepHr: 0,
+    steps: 0, // Will be updated by step tracking service
+    waterOz: 0, // Starts at 0, increments with user actions
+    sleepHr: 0, // Starts at 0, updated by user
   },
   moodCheckInFrequency: {
-    total_checkins: 0, // Will be calculated from database
+    total_checkins: 0, // Starts at 0, increments with check-ins
     target_checkins: 7, // Target: daily check-ins (7 per week)
     current_streak: 0,
     last_checkin: null,
@@ -80,12 +80,18 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
-    await AppStoreActions.loadTodayData(
-      user.id,
-      get().setDailyMetrics,
-      (loading) => set({ isLoading: loading }),
-      (error) => set({ error })
-    );
+    // Load data in background without blocking UI
+    try {
+      await AppStoreActions.loadTodayData(
+        user.id,
+        get().setDailyMetrics,
+        () => {}, // Don't show loading spinner for background sync
+        (error) => console.warn('Failed to load today data:', error) // Don't break UI
+      );
+    } catch (error) {
+      console.warn('Background data load failed:', error);
+      // Don't break the app - UI will work with current state
+    }
   },
 
   updateCurrentState: (updates) =>
@@ -95,15 +101,30 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   addHydration: async (amount) => {
     const { user, currentState } = get();
-    if (!user) return;
+    
+    // Always update UI immediately (optimistic update)
+    set((state) => ({
+      currentState: {
+        ...state.currentState,
+        waterOz: state.currentState.waterOz + amount,
+      },
+    }));
 
-    await AppStoreActions.addHydration(
-      user.id,
-      amount,
-      currentState.waterOz,
-      (updates) => set((state) => ({ ...state, ...updates })),
-      (error) => set({ error })
-    );
+    // Try database sync in background if user is authenticated
+    if (user) {
+      try {
+        await AppStoreActions.addHydration(
+          user.id,
+          amount,
+          currentState.waterOz,
+          () => {}, // Don't update UI again, already done optimistically
+          (error) => console.warn('Database sync failed:', error) // Don't break UI on DB errors
+        );
+      } catch (error) {
+        console.warn('Failed to sync hydration to database:', error);
+        // Don't revert UI - keep the optimistic update
+      }
+    }
   },
 
   updateSteps: (steps) => {
@@ -114,28 +135,56 @@ export const useAppStore = create<AppStore>((set, get) => ({
 
   updateSleep: async (hours) => {
     const { user } = get();
-    if (!user) return;
+    
+    // Always update UI immediately (optimistic update)
+    set((state) => ({
+      currentState: { ...state.currentState, sleepHr: hours },
+    }));
 
-    await AppStoreActions.updateSleep(
-      user.id,
-      hours,
-      (updates) => set((state) => ({ ...state, ...updates })),
-      (error) => set({ error })
-    );
+    // Try database sync in background if user is authenticated
+    if (user) {
+      try {
+        await AppStoreActions.updateSleep(
+          user.id,
+          hours,
+          () => {}, // Don't update UI again, already done optimistically
+          (error) => console.warn('Database sync failed:', error) // Don't break UI on DB errors
+        );
+      } catch (error) {
+        console.warn('Failed to sync sleep to database:', error);
+        // Don't revert UI - keep the optimistic update
+      }
+    }
   },
 
   addMoodCheckIn: async (checkIn) => {
     const { user } = get();
-    if (!user) return;
+    
+    // Always update UI immediately (optimistic update)
+    const now = new Date().toISOString();
+    set((state) => ({
+      moodCheckInFrequency: {
+        ...state.moodCheckInFrequency,
+        total_checkins: state.moodCheckInFrequency.total_checkins + 1,
+        last_checkin: now,
+        current_streak: state.moodCheckInFrequency.current_streak + 1,
+      },
+    }));
 
-    await AppStoreActions.addMoodCheckIn(
-      user.id,
-      checkIn,
-      (updates) => set((state) => ({
-        moodCheckInFrequency: { ...state.moodCheckInFrequency, ...updates }
-      })),
-      (error) => set({ error })
-    );
+    // Try database sync in background if user is authenticated
+    if (user) {
+      try {
+        await AppStoreActions.addMoodCheckIn(
+          user.id,
+          checkIn,
+          () => {}, // Don't update UI again, already done optimistically
+          (error) => console.warn('Database sync failed:', error) // Don't break UI on DB errors
+        );
+      } catch (error) {
+        console.warn('Failed to sync mood check-in to database:', error);
+        // Don't revert UI - keep the optimistic update
+      }
+    }
   },
 
   setLoading: (isLoading) => set({ isLoading }),
@@ -143,14 +192,31 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setError: (error) => set({ error }),
 
   initializeTargets: async (customTargets) => {
-    const { user } = get();
+    // Always set targets immediately for UI
+    const targets = customTargets || generateTargets();
+    set({ targets });
     
-    await AppStoreActions.initializeTargets(
-      user?.id || '',
-      (targets) => set({ targets }),
-      (error) => set({ error }),
-      customTargets
-    );
+    // Try database initialization in background if user is authenticated
+    const { user } = get();
+    if (user) {
+      try {
+        await AppStoreActions.initializeTargets(
+          user.id,
+          (dbTargets) => {
+            // Only update if different from current
+            const current = get().targets;
+            if (JSON.stringify(current) !== JSON.stringify(dbTargets)) {
+              set({ targets: dbTargets });
+            }
+          },
+          (error) => console.warn('Database target sync failed:', error),
+          customTargets
+        );
+      } catch (error) {
+        console.warn('Failed to sync targets to database:', error);
+        // Keep the UI targets - don't break the experience
+      }
+    }
   },
 
   reset: () => set(initialState),

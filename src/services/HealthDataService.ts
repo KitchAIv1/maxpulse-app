@@ -59,6 +59,13 @@ class HealthDataService {
     sleepHr: number;
   }): Promise<DailyMetrics | null> {
     try {
+      // First check if today's metrics already exist
+      const existing = await this.getTodayMetrics(userId);
+      if (existing) {
+        console.log('Daily metrics already exist for today');
+        return existing;
+      }
+
       const today = getTodayDate();
       
       const dailyMetrics: Partial<DailyMetrics> = {
@@ -78,15 +85,17 @@ class HealthDataService {
 
       const { data, error } = await supabase
         .from('daily_metrics')
-        .upsert(dailyMetrics, { onConflict: 'user_id,date' })
+        .insert(dailyMetrics) // Use insert instead of upsert to avoid conflicts
         .select()
         .single();
 
       if (error) {
         console.error('Error initializing daily metrics:', error);
+        console.error('Full error:', JSON.stringify(error, null, 2));
         return null;
       }
 
+      console.log('Daily metrics initialized successfully');
       return data;
     } catch (error) {
       console.error('Failed to initialize daily metrics:', error);
