@@ -126,6 +126,8 @@ export interface V2Analysis {
   riskAnalysis: RiskAnalysis;
   priorityActions: string[];
   ninetyDayProjection: NinetyDayProjection;
+  personalizedTargets: PersonalizedTargets;
+  transformationRoadmap: TransformationRoadmap;
 }
 
 export interface RiskAnalysis {

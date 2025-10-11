@@ -34,8 +34,9 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
   const initialProfile = activationService.createUserProfileFromActivation(activationCode, user.id);
   const [profileData, setProfileData] = useState(initialProfile);
 
-  // Extract key data for display with fallbacks
-  const { demographics, personalizedTargets, medical } = activationCode.onboarding_data || {};
+  // Extract key data for display with fallbacks - data is nested under v2Analysis
+  const { demographics, v2Analysis, medical } = activationCode.onboarding_data || {};
+  const personalizedTargets = v2Analysis?.personalizedTargets;
   
   // Provide fallbacks for missing data
   const safeDemographics = demographics || { bmi: 0, age: 0, gender: 'other', heightCm: 0, weightKg: 0 };

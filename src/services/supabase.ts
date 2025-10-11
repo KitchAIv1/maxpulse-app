@@ -466,7 +466,9 @@ export const activationService = {
    */
   extractDynamicTargets(activationCode: ActivationCode): DynamicTargets {
     try {
-      const { personalizedTargets } = activationCode.onboarding_data || {};
+      // The data is nested under v2Analysis.personalizedTargets
+      const { v2Analysis } = activationCode.onboarding_data || {};
+      const personalizedTargets = v2Analysis?.personalizedTargets;
       
       // Provide fallback values if data is missing
       const defaultTargets = {
@@ -476,9 +478,11 @@ export const activationService = {
       };
 
       if (!personalizedTargets) {
-        console.warn('No personalized targets found in activation code, using defaults');
+        console.warn('No personalized targets found in v2Analysis, using defaults');
         return defaultTargets;
       }
+
+      console.log('Found personalized targets:', personalizedTargets);
       
       return {
         steps: personalizedTargets.steps?.targetDaily || defaultTargets.steps,
