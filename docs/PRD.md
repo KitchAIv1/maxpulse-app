@@ -1,16 +1,23 @@
-# TriHabit – Unified Health Habits App (PRD)
+# MaxPulse – Personalized Health Transformation App (PRD)
 
-Single‑screen daily health dashboard that unifies **Steps (pedometer)**, **Hydration**, and **Sleep** with an **AI Coach** and **Diagnostics**, plus a **Rewards** layer that reinforces healthy behavior without toxic competition.
+A comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys.
 
-*Last updated: 2025‑09‑08*
+*Last updated: January 2025*
 
 ---
 
 ## 1) Executive Summary
 
-TriHabit delivers a friction‑less, one‑screen experience so users can glance, act, and get back to life. Steps auto‑ingest from the phone’s pedometer/health source; hydration and sleep are tracked with minimal taps or device sync. A Life Indicator summarizes daily status (already implemented in the current UI) and drives a single Next Best Action. Rewards convert consistency into points and streaks—designed for sustainability, not late‑night gaming.
+MaxPulse transforms health habits through personalized, data-driven 90-day transformation programs. Users access the app via unique activation codes that contain their personalized health assessment data, dynamic targets, and transformation roadmap. The app features real-time step tracking, hydration logging, sleep monitoring, and mood check-ins, all unified through a Life Score visualization and AI Coach guidance.
 
-**Primary KPI (MVP):** Day‑7 retention; % of users completing at least one Next Best Action per day; Hydration compliance rate.
+**Key Differentiators:**
+- **Activation Code System**: Seamless onboarding with pre-configured personalized targets
+- **AI Coach Chat Interface**: Natural language health conversations with contextual insights
+- **Wellbeing Dashboard**: Comprehensive Life Score breakdown with trends and insights
+- **Mood Check-In System**: Emotional wellness tracking with journaling capabilities
+- **90-Day Transformation Plans**: Progressive targets based on individual health assessments
+
+**Primary KPIs:** Day-7 retention; Life Score improvement over 90 days; Activation code conversion rate; AI Coach engagement.
 
 ---
 
@@ -18,60 +25,93 @@ TriHabit delivers a friction‑less, one‑screen experience so users can glance
 
 **Goals**
 
-* One‑screen habit control: steps, water, sleep with immediate feedback.
-* Auto steps via device pedometer (no manual step edit UI).
-* Clear Life Indicator + one actionable nudge.
-* Gentle, non‑competitive rewards: daily points, streak multipliers, weekly badges.
-* iOS/Android parity using React Native with Expo.
+* **Personalized Health Transformation**: Activation code system with individualized targets and 90-day plans
+* **Comprehensive Tracking**: Steps (auto), hydration, sleep, and mood check-ins with Life Score visualization
+* **AI-Powered Guidance**: Natural language coach interface with contextual health insights
+* **Emotional Wellness**: Mood tracking with journaling and wellness check capabilities
+* **Data-Driven Insights**: Wellbeing Dashboard with trends, breakdowns, and actionable recommendations
+* **Seamless Authentication**: Supabase-powered auth with activation code validation and profile setup
+* **Cross-Platform Excellence**: React Native with Expo for iOS/Android parity
 
-**Non‑Goals (MVP)**
+**Non‑Goals (Current Version)**
 
-* Social leaderboards/competitions.
-* Nutrition/calorie tracking.
-* Wearable‑specific deep integrations beyond HealthKit/Google Fit read scopes.
+* Social features or competitive elements
+* Nutrition/calorie tracking beyond hydration
+* Wearable integrations beyond HealthKit/Google Fit
+* Manual target adjustment (targets come from assessment data)
 
 ---
 
 ## 3) Personas
 
-* **Busy Builder (primary):** 25–55, wants low‑effort health wins. Success = opens app 2–3× daily, logs water quickly, follows a nightly sleep nudge.
-* **Data‑Aware Recoverer:** wants to improve sleep and hydration to boost energy; tolerates brief explanations.
+* **Health Transformation Seeker (primary):** 30–55, has completed a health assessment and received an activation code from a distributor/coach. Wants personalized guidance and measurable progress. Success = follows 90-day plan, engages with AI Coach, improves Life Score consistently.
+* **Wellness-Conscious Professional:** Busy but health-aware, values data-driven insights and emotional wellness tracking. Uses mood check-ins and AI Coach for stress management and work-life balance.
+* **Accountability Partner User:** Works with a health coach/distributor who provided the activation code. Values progress tracking and sharing insights with their support network.
 
 ---
 
-## 4) User Stories (MVP)
+## 4) User Stories (Current Implementation)
 
-1. As a user, I see **today’s steps/hydration/sleep** and a **Life Indicator** at a glance.
-2. As a user, **steps** are auto‑counted from my phone **without manual entry**.
-3. As a user, I can log water in **one tap** (+8oz, +12oz) and see remaining target.
-4. As a user, I see **sleep from last night** (via HealthKit/Google Fit) or can enter it once if not connected.
-5. As a user, I get a **Next Best Action** (e.g., “Drink 8oz now”).
-6. As a user, I earn **points** for hitting targets and maintaining streaks, redeemable for badges (MVP) and simple in‑app perks (V1.1).
+### Authentication & Onboarding
+1. As a new user, I **enter my activation code** to access my personalized health program
+2. As a user, I **review and confirm my profile** derived from my health assessment data
+3. As a user, I see my **personalized targets** based on my assessment results
 
-**Acceptance Criteria** are listed per feature in §10.
+### Core Health Tracking
+4. As a user, I see **today's steps/hydration/sleep/mood** and a **Life Score** at a glance
+5. As a user, **steps are auto-tracked** from my phone's pedometer without manual entry
+6. As a user, I can **log hydration** in one tap (+8oz) and see progress toward my target
+7. As a user, I can **update sleep hours** and see how it affects my Life Score
+8. As a user, I can **check in with my mood** through a dedicated modal with journaling
+
+### AI Coach & Insights
+9. As a user, I can **chat with my AI Coach** using natural language about my health
+10. As a user, I get **personalized recommendations** based on my current metrics
+11. As a user, I can **perform wellness checks** to assess mood, energy, and stress levels
+12. As a user, I can **share symptoms** naturally and receive contextual health insights
+
+### Wellbeing Dashboard
+13. As a user, I can **tap my Life Score** to see a detailed breakdown of contributing factors
+14. As a user, I see **daily insights** and suggestions for improving my score
+15. As a user, I can **view trends** over time to track my progress
+16. As a user, I can **navigate to specific modules** from the dashboard for focused improvement
+
+### Rewards & Gamification
+17. As a user, I **earn points** for consistent healthy behaviors and target achievement
+18. As a user, I can **view my rewards** including points, streaks, and badges earned
 
 ---
 
-## 5) UX / UI (Integrated)
+## 5) UX / UI (Current Implementation)
 
-**Reference Implementation:** The provided React UI (“TriHabit Health Dashboard”) is the source of truth for component structure and visual style. Key components:
+**Design System:** Modern glassmorphism design with deep red gradient backgrounds and clean typography. Key components:
 
-* `TriRings`: concentric rings for Steps (outer), Hydration (middle), Sleep (inner), with center Life Indicator and percent logic.
-* `KPICard`: compact KPI tiles with micro‑progress bars.
-* `Next Best Action` card with small badges.
-* `Diagnostics` grid: hydration gap, sleep debt, step pace, streaks.
+### Core Components
+* **`TriRings`**: Three concentric rings (Steps-white, Hydration-green, Sleep-blue) with tappable Life Score center
+* **`KPICard`**: Quadrant layout showing Steps, Hydration, Sleep, and Rewards without progress bars
+* **`MoodCheckInModal`**: Dedicated mood tracking with 5-point scale, notes, and journaling
+* **`WellbeingDashboard`**: Comprehensive modal with battery gauge, contribution bars, insights, and trends
+* **`CoachScreen`**: Full-screen AI chat interface with message bubbles and quick actions
+* **`AuthContainer`**: Complete authentication flow with activation code validation
 
-### Mobile Implementation Notes (React Native)
+### Screen Architecture
+* **Main Dashboard**: Glassmorphism container with quadrant KPI layout and centered TriRings
+* **Coach Screen**: Chat interface with wellness prompts and contextual responses
+* **Rewards Screen**: Points, streaks, and badges with achievement tracking
+* **Profile Confirmation**: Assessment data review and editing before app access
 
-* Use **Expo** + **nativewind** (Tailwind‑for‑RN) for styling parity.
-* Replace `<svg>` with **react‑native‑svg** and recreate ring arcs using `strokeDasharray` (same math as web).
-* Gradients using **expo-linear-gradient**.
-* Haptics using **expo-haptics** for button taps and goal completion.
+### Mobile Implementation (React Native + Expo)
+* **Styling**: NativeWind (Tailwind CSS for React Native) with custom glassmorphism effects
+* **Graphics**: React Native SVG for rings with `strokeDasharray` calculations
+* **Gradients**: Expo Linear Gradient for background effects
+* **State**: Zustand for global state management
+* **Backend**: Supabase integration with Row Level Security
 
-### Accessibility
-
-* Life Indicator is `role=progressbar` with `aria-valuenow` equivalent using RN Accessibility props.
-* Always show numbers (not color‑only) and use icons for color‑blind friendliness.
+### Accessibility & UX
+* Life Score is accessible with proper ARIA labels and screen reader support
+* Color-blind friendly with icons and text labels alongside colors
+* Haptic feedback for interactions and goal completions
+* Smooth animations and transitions throughout the app
 
 ---
 
@@ -122,121 +162,286 @@ TriHabit delivers a friction‑less, one‑screen experience so users can glance
 
 ---
 
-## 7) Tech Stack & Native Integrations
+## 7) Tech Stack & Native Integrations (Current Implementation)
 
-**Client**: React Native (Expo, TypeScript), nativewind, react‑native‑svg, expo‑notifications, expo‑haptics, expo‑secure‑store.
+**Client Framework**: 
+- React Native with Expo SDK 54
+- TypeScript for type safety
+- NativeWind (Tailwind CSS for React Native)
+- React Native SVG for graphics
+- Zustand for state management
 
-**Sensors / Health**:
+**UI & Styling**:
+- Expo Linear Gradient for background effects
+- Custom glassmorphism components
+- Haptic feedback via Expo Haptics
+- Responsive design with quadrant layouts
 
-* **iOS**: Core Motion pedometer via **expo‑sensors/Pedometer** (steps); **HealthKit** via `react-native-health` (sleep, hydration if available); Info.plist: `NSMotionUsageDescription`, `NSHealthShareUsageDescription`.
-* **Android**: `ACTIVITY_RECOGNITION` permission for steps (pedometer); **Google Fit** via `react-native-google-fit` (sleep & hydration if available). OAuth scopes: `https://www.googleapis.com/auth/fitness.activity.read`, `.../sleep.read`, `.../nutrition.read`.
+**Health & Sensors**:
+- **iOS**: Core Motion pedometer, HealthKit integration via `react-native-health`
+- **Android**: Activity Recognition API, Google Fit via `react-native-google-fit`
+- **Permissions**: Motion, HealthKit, Activity Recognition with graceful fallbacks
+- **Local Storage**: AsyncStorage for Expo Go compatibility
 
-**Backend**: **Supabase** (Auth, Postgres, RLS), Edge Functions (Deno) for points calculation, CRON jobs for end‑of‑day finalization; PostHog/Amplitude for analytics.
+**Backend & Authentication**:
+- **Supabase**: PostgreSQL database with Row Level Security (RLS)
+- **Authentication**: Email/password with activation code validation
+- **Real-time**: Supabase subscriptions for live data updates
+- **Security**: Environment variables, secure token storage
 
-**Build/Ship**: Expo EAS, OTA updates via Expo Updates.
+**AI & Intelligence**:
+- **AI Coach Service**: Natural language processing for health conversations
+- **Wellness Analysis**: Mood, energy, stress level assessment
+- **Contextual Insights**: Health correlation and recommendation engine
+- **Symptom Processing**: Natural language symptom sharing and analysis
 
-**State**: Zustand or Redux Toolkit (Zustand recommended for simplicity).
+**Data Architecture**:
+- **Activation Codes**: Pre-configured user profiles with personalized targets
+- **Dynamic Targets**: 90-day progressive health plans
+- **Life Score Algorithm**: Multi-factor health scoring with mood integration
+- **Trend Analysis**: Historical data processing and visualization
 
-**Internationalization**: `i18next` (later).
-
----
-
-## 8) Data Model (Supabase)
-
-**users**
-
-* `id` (uuid, pk), `created_at`, `tz`, `display_name`
-
-**device\_connections**
-
-* `user_id` (fk), `platform` (enum: ios, android), `health_source` (enum: pedometer, apple\_health, google\_fit), `last_sync_at`
-
-**daily\_metrics** (one row per day)
-
-* `user_id`, `date` (date, pk composite), `steps_actual` int, `steps_target` int
-* `water_oz_actual` numeric, `water_oz_target` numeric
-* `sleep_hr_actual` numeric, `sleep_hr_target` numeric
-* `life_score` int, `finalized` bool default false
-
-**hydration\_logs**
-
-* `user_id`, `ts`, `amount_oz` numeric, `source` (manual|healthkit|googlefit)
-
-**sleep\_sessions**
-
-* `user_id`, `start_ts`, `end_ts`, `source`
-
-**pedometer\_snapshots**
-
-* `user_id`, `ts`, `steps_cumulative` int (raw device counter), `source`
-
-**rewards\_ledger**
-
-* `id` pk, `user_id`, `date`, `type` (steps|hydration|sleep|daily\_bonus|streak), `points` int, `meta` jsonb
-
-**badges** & **user\_badges**
-
-* Static badges table; junction table for user awards
-
-**RLS**: row‑level policy `user_id = auth.uid()` for all user‑owned tables.
+**Build & Deployment**:
+- Expo Development Build for native features
+- Git version control with GitHub integration
+- Environment-based configuration management
 
 ---
 
-## 9) Core Algorithms
+## 8) Data Model (Current Supabase Schema)
 
-**Life Score** (center indicator): use current implementation with optional weights; clamp and smooth with EMA.
+### Core Authentication & Profiles
 
-```ts
-export const clamp01 = (x:number)=>Math.max(0,Math.min(1,x));
-export function computeLifeScore(stepsPct:number, waterPct:number, sleepPct:number){
-  const s=clamp01(stepsPct), w=clamp01(waterPct), sl=clamp01(sleepPct);
-  const raw = s*0.33 + w*0.34 + sl*0.33; // default
-  return Math.round(raw*100);
+**`activation_codes`** (Pre-existing from assessment system)
+* `id` (uuid, pk), `code` (unique), `distributor_id`, `session_id`
+* `customer_name`, `customer_email`, `onboarding_data` (jsonb)
+* `status` (pending|activated|expired), `activated_at`, `expires_at`
+* Contains personalized targets, demographics, medical data, and 90-day plans
+
+**`app_user_profiles`** (MaxPulse app users)
+* `user_id` (fk to auth.users), `email`, `name`, `age`, `gender`
+* `height_cm`, `weight_kg`, `bmi`, `medical_conditions[]`, `medical_allergies[]`
+* `mental_health_data` (jsonb), `activation_code_id` (fk)
+* `distributor_id`, `session_id`, `plan_type`
+
+### Health Tracking Data
+
+**`daily_metrics`** (Daily aggregated data)
+* `user_id`, `date` (composite pk), `steps_actual`, `steps_target`
+* `water_oz_actual`, `water_oz_target`, `sleep_hr_actual`, `sleep_hr_target`
+* `life_score`, `finalized` (bool)
+
+**`hydration_logs`** (Individual hydration entries)
+* `user_id`, `timestamp`, `amount_oz`, `source` (manual|healthkit|googlefit)
+
+**`sleep_sessions`** (Sleep tracking data)
+* `user_id`, `start_timestamp`, `end_timestamp`, `duration_hours`, `source`
+
+**`pedometer_snapshots`** (Step count snapshots)
+* `user_id`, `timestamp`, `steps_cumulative`, `source` (device|healthkit|googlefit)
+
+**`mood_checkins`** (Emotional wellness tracking)
+* `user_id`, `timestamp`, `mood_level` (1-5), `energy_level`, `stress_level`
+* `notes`, `journal_entry`, `health_context` (jsonb)
+
+### Plan & Progress Tracking
+
+**`plan_progress`** (90-day transformation tracking)
+* `user_id`, `current_week`, `current_phase`, `weekly_scores` (jsonb)
+* `target_adjustments` (jsonb), `adaptation_notes`
+
+**`weekly_targets`** (Progressive target system)
+* `user_id`, `week_number`, `phase`, `steps_target`, `hydration_target`
+* `sleep_target`, `focus_areas[]`, `expected_outcomes[]`
+
+### Rewards & Gamification
+
+**`rewards_ledger`** (Points and achievements)
+* `user_id`, `date`, `type` (steps|hydration|sleep|mood|daily_bonus|streak)
+* `points`, `metadata` (jsonb)
+
+**`badges`** & **`user_badges`** (Achievement system)
+* Static badges definition and user achievement tracking
+
+### Device & Health Integration
+
+**`device_connections`** (Health platform connections)
+* `user_id`, `platform` (ios|android), `health_source` (pedometer|healthkit|googlefit)
+* `last_sync_at`, `permissions_granted[]`, `sync_status`
+
+### Security & Access Control
+* **Row Level Security (RLS)** enabled on all user tables
+* Policies ensure `user_id = auth.uid()` for data access
+* Activation codes validate during signup process
+
+---
+
+## 9) Core Algorithms (Current Implementation)
+
+### Life Score Calculation (4-Factor Model)
+The Life Score integrates physical metrics with emotional wellness:
+
+```typescript
+export function computeLifeScore(
+  stepsPct: number, 
+  waterPct: number, 
+  sleepPct: number, 
+  moodCheckInPct: number
+) {
+  const s = clamp01(stepsPct);
+  const w = clamp01(waterPct);
+  const sl = clamp01(sleepPct);
+  const m = clamp01(moodCheckInPct);
+  
+  // 4-way split: 25% each component
+  const raw = s * 0.25 + w * 0.25 + sl * 0.25 + m * 0.25;
+  return Math.round(raw * 100);
+}
+
+export const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
+```
+
+### Mood Check-In Frequency Calculation
+```typescript
+export function calculateMoodCheckInPct(frequency: MoodCheckInFrequency): number {
+  if (frequency.target_checkins === 0) return 0;
+  return Math.min(1, frequency.total_checkins / frequency.target_checkins);
 }
 ```
 
-**Ring dasharray** (RN mirrors web): circumference = `2πr`; dash = `C*pct`, gap = `C*(1-pct)`.
+### Ring Visualization (React Native SVG)
+```typescript
+export function ringDasharray(radius: number, percentage: number): string {
+  const circumference = 2 * Math.PI * radius;
+  const dashLength = circumference * Math.min(1, percentage);
+  const gapLength = circumference - dashLength;
+  return `${dashLength} ${gapLength}`;
+}
+```
 
-**Points Engine (Edge Function)**
+### Dynamic Target Generation
+```typescript
+export function generateTargets(customTargets?: Partial<Targets>): Targets {
+  const defaults = { steps: 8000, waterOz: 80, sleepHr: 8 };
+  return { ...defaults, ...customTargets };
+}
+```
 
-* Triggered on hydration log insert, sleep import, or end‑of‑day cron.
-* Reads `daily_metrics`, applies config JSON, writes `rewards_ledger` rows idempotently.
+### Next Best Action Algorithm
+Prioritizes actions based on current deficits and time of day:
+
+```typescript
+export function getNextBestAction(
+  stepsPct: number,
+  waterPct: number, 
+  sleepPct: number,
+  moodCheckInPct: number
+): NextBestAction {
+  const deficits = [
+    { key: 'steps', deficit: 1 - stepsPct, priority: getTimePriority('steps') },
+    { key: 'hydration', deficit: 1 - waterPct, priority: getTimePriority('hydration') },
+    { key: 'sleep', deficit: 1 - sleepPct, priority: getTimePriority('sleep') },
+    { key: 'mood', deficit: 1 - moodCheckInPct, priority: 1 }
+  ];
+  
+  // Return highest priority deficit with contextual tip
+  const topAction = deficits.sort((a, b) => 
+    (b.deficit * b.priority) - (a.deficit * a.priority)
+  )[0];
+  
+  return {
+    key: topAction.key,
+    tip: getActionTip(topAction.key, topAction.deficit)
+  };
+}
+```
+
+### AI Coach Response Generation
+The AI Coach uses contextual health data to generate personalized responses:
+
+```typescript
+export function generateCoachResponse(
+  message: string,
+  healthContext: HealthContextData,
+  conversationHistory: ChatMessage[]
+): CoachResponse {
+  // Analyze current health metrics
+  const insights = analyzeHealthContext(healthContext);
+  
+  // Generate contextual response based on:
+  // - User message intent
+  // - Current health status
+  // - Conversation history
+  // - Time of day and patterns
+  
+  return {
+    message: generateContextualMessage(message, insights),
+    insights: insights,
+    suggestedActions: generateQuickActions(healthContext),
+    followUpQuestions: generateFollowUps(message, insights)
+  };
+}
+```
 
 ---
 
-## 10) Flows & Acceptance Criteria
+## 10) Current User Flows & Features
 
-### Onboarding & Permissions
+### Authentication & Onboarding Flow
 
-1. Welcome → Choose targets (auto‑suggest from profile: age/weight/climate) → Connect health sources.
-2. Ask for **Motion** (steps) permission first; HealthKit/Fit optional for sleep/hydration.
+1. **Signup Screen**: User enters activation code, email, and password
+2. **Code Validation**: Real-time validation against Supabase activation_codes table
+3. **Profile Confirmation**: Display assessment-derived profile data for review/editing
+4. **Account Creation**: Create Supabase auth user and app_user_profiles record
+5. **Target Initialization**: Load personalized targets from activation code data
 
-**AC**
+**Acceptance Criteria:**
+* Activation codes are validated in real-time with visual feedback
+* Invalid/expired/used codes show appropriate error messages
+* Profile data is pre-populated from assessment with editing capabilities
+* Targets are automatically set based on personalized assessment results
 
-* If Motion is denied, show banner to enable in Settings; Steps UI remains read‑only with “No data yet”.
-* If Sleep is unavailable, show hollow sleep ring and a connect prompt.
+### Daily Health Tracking Loop
 
-### Daily Loop
+1. **Dashboard View**: Glassmorphism quadrant layout with TriRings and KPIs
+2. **Step Tracking**: Automatic pedometer integration with real-time updates
+3. **Hydration Logging**: One-tap +8oz buttons with instant UI updates
+4. **Sleep Tracking**: Manual entry with Life Score recalculation
+5. **Mood Check-In**: Dedicated modal with 5-point scale and journaling
 
-1. Open app → See rings and Life Indicator.
-2. Tap +8oz / +12oz → hydration increases, diagnostics update, potential points awarded.
-3. At 8pm local, show gentle hydration/sleep nudges if under pace.
+**Acceptance Criteria:**
+* Life Score updates instantly when any metric changes
+* Step tracking works in background with periodic sync
+* Hydration adds trigger haptic feedback and smooth animations
+* Mood check-ins contribute to weekly frequency targets
 
-**AC**
+### AI Coach Interaction
 
-* Hydration add animates within 150ms and triggers light haptic.
-* Diagnostics hydration gap updates instantly; Life Score recomputes.
-* Step ring updates passively every 10–30s while app is foregrounded.
+1. **Chat Interface**: Full-screen chat with message bubbles and quick actions
+2. **Natural Language**: Users can describe symptoms, ask questions, share feelings
+3. **Contextual Responses**: AI analyzes current health metrics for personalized advice
+4. **Wellness Checks**: Structured mood, energy, and stress assessments
+5. **Quick Actions**: Pre-defined actions for common health tasks
 
-### Rewards
+**Acceptance Criteria:**
+* Chat responses are contextually relevant to user's current health status
+* Wellness checks provide structured assessment with follow-up insights
+* Quick actions integrate with main app functionality (logging, target checking)
+* Conversation history is maintained for context continuity
 
-1. Open Rewards page → see today’s point breakdown, streak tile, badges grid.
-2. When all three targets are met, show completion confetti and +20 points.
+### Wellbeing Dashboard
 
-**AC**
+1. **Life Score Tap**: Tapping center Life Score opens comprehensive modal
+2. **Score Breakdown**: Battery gauge with contribution bars for each metric
+3. **Daily Insights**: AI-generated suggestions based on current performance
+4. **Trends & History**: 7-day and 30-day Life Score trend visualization
+5. **Module Navigation**: Direct links to improve specific health areas
 
-* Points never exceed configured caps.
-* Post‑10pm steps do not change today’s points (guardrail respected).
+**Acceptance Criteria:**
+* Dashboard opens smoothly with animated transitions
+* All metrics are accurately represented in breakdown view
+* Trends show meaningful patterns over time
+* Insights are actionable and personalized to user's current state
 
 ---
 
