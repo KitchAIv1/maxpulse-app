@@ -103,10 +103,10 @@ export class AppStoreActions {
     try {
       const healthService = this.healthService;
       
-      // Generate targets (custom or default)
+      // Generate targets (custom or personalized defaults)
       const targets = customTargets || {
-        steps: 8000,
-        waterOz: 80,
+        steps: 10000,
+        waterOz: 95,
         sleepHr: 8,
       };
       

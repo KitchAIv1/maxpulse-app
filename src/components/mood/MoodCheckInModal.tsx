@@ -80,7 +80,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
       });
     }
 
-    if (healthContext?.stepsCount && healthContext.stepsCount > 8000) {
+    if (healthContext?.stepsCount && healthContext.stepsCount > 10000) {
       prompts.push({
         id: 'activity',
         question: 'How did your activity affect your mood?',

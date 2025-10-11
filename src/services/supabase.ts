@@ -470,10 +470,10 @@ export const activationService = {
       const { v2Analysis } = activationCode.onboarding_data || {};
       const personalizedTargets = v2Analysis?.personalizedTargets;
       
-      // Provide fallback values if data is missing
+      // Provide fallback values if data is missing - use personalized targets
       const defaultTargets = {
-        steps: 8000,
-        waterOz: 80,
+        steps: 10000,
+        waterOz: 95,
         sleepHr: 8,
       };
 
@@ -495,10 +495,10 @@ export const activationService = {
       };
     } catch (error) {
       console.error('Error extracting dynamic targets:', error);
-      // Return safe defaults
+      // Return safe defaults - use personalized targets
       return {
-        steps: 8000,
-        waterOz: 80,
+        steps: 10000,
+        waterOz: 95,
         sleepHr: 8,
       };
     }

@@ -192,6 +192,14 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setError: (error) => set({ error }),
 
   initializeTargets: async (customTargets) => {
+    const currentTargets = get().targets;
+    
+    // If we already have personalized targets (10000, 95, 8), don't override them
+    if (currentTargets.steps === 10000 && currentTargets.waterOz === 95 && currentTargets.sleepHr === 8) {
+      console.log('🛡️ Personalized targets already set, preventing override');
+      return;
+    }
+
     // Always set targets immediately for UI
     const targets = customTargets || generateTargets();
     set({ targets });

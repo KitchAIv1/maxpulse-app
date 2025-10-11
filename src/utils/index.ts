@@ -183,9 +183,9 @@ export function generateTargets(profile?: {
   activityLevel?: 'low' | 'moderate' | 'high';
   climate?: 'cold' | 'moderate' | 'hot';
 }): { steps: number; waterOz: number; sleepHr: number } {
-  // Default targets from PRD
-  let steps = 8000;
-  let waterOz = 80;
+  // Personalized targets as defaults
+  let steps = 10000;
+  let waterOz = 95;
   let sleepHr = 8;
 
   if (profile) {

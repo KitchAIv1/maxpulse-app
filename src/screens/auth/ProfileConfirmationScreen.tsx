@@ -42,8 +42,8 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
   const safeDemographics = demographics || { bmi: 0, age: 0, gender: 'other', heightCm: 0, weightKg: 0 };
   const safeTargets = personalizedTargets || { 
     bmi: { category: 'Unknown' },
-    steps: { targetDaily: 8000 },
-    hydration: { targetLiters: 2.5 },
+    steps: { targetDaily: 10000 },
+    hydration: { targetLiters: 2.8 },
     sleep: { targetMinHours: 7, targetMaxHours: 9 }
   };
   const safeMedical = medical || { conditions: [], allergies: [], medications: [] };

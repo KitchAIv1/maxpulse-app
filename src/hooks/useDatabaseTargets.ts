@@ -19,8 +19,8 @@ export interface DatabaseTargets {
 export const useDatabaseTargets = () => {
   const { user } = useAppStore();
   const [dbTargets, setDbTargets] = useState<DatabaseTargets>({
-    steps: 8000, // Default fallback
-    waterOz: 80,
+    steps: 10000, // Personalized targets as fallback
+    waterOz: 95,
     sleepHr: 8,
     isLoaded: false,
     isLoading: false,

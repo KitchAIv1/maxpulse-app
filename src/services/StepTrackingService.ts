@@ -413,7 +413,7 @@ class StepTrackingService implements IStepTrackingService {
     return {
       date,
       totalSteps: 0,
-      target: 8000,
+      target: 10000,
       percentage: 0,
       lastUpdated: new Date().toISOString(),
       sources: [],
