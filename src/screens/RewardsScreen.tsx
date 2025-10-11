@@ -9,10 +9,11 @@ import {
   ScrollView,
   TouchableOpacity,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, Bar } from '../components';
 import { useAppStore } from '../stores/appStore';
 import { useLifeScore } from '../hooks/useAppSelectors';
+import { theme } from '../utils/theme';
+import { calAiCard } from '../utils/calAiStyles';
 
 interface RewardsScreenProps {
   onBack: () => void;
@@ -46,10 +47,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
   const allTargetsMet = stepsPct >= 1 && waterPct >= 1 && sleepPct >= 1;
 
   return (
-    <LinearGradient
-      colors={['#047857', '#065f46', '#1f2937']}
-      style={styles.gradient}
-    >
+    <View style={styles.gradient}>
         <ScrollView 
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
@@ -186,51 +184,50 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
-      </LinearGradient>
+      </View>
   );
 };
 
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
-    paddingTop: 50, // Account for status bar
-    paddingBottom: 100, // Account for bottom navigation
+    paddingHorizontal: theme.spacing.base,
+    paddingTop: 50,
+    paddingBottom: 100,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 20,
+    marginBottom: theme.spacing.md,
   },
   backButton: {
-    padding: 8,
+    padding: theme.spacing.xsmall,
   },
   backButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
+    color: theme.colors.textPrimary,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.medium,
   },
   title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: theme.typography.xlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
   },
   headerSpacer: {
     width: 60,
   },
   pointsCard: {
-    borderRadius: 16,
-    padding: 20,
-    backgroundColor: 'rgba(255, 255, 255, 0.15)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    marginBottom: 16,
+    ...calAiCard.base,
+    padding: theme.spacing.md,
+    marginBottom: theme.spacing.base,
+    ...theme.shadows.medium,
   },
   pointsHeader: {
     flexDirection: 'row',
@@ -238,42 +235,38 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   pointsValue: {
-    fontSize: 36,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: theme.typography.xxlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   pointsLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
   },
   weeklyProgress: {
     alignItems: 'flex-end',
     minWidth: 120,
   },
   weeklyLabel: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   weeklyPercent: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginTop: 4,
   },
   sectionCard: {
-    borderRadius: 16,
-    padding: 16,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    marginBottom: 16,
+    ...calAiCard.base,
+    marginBottom: theme.spacing.base,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: 'white',
-    marginBottom: 12,
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.sm,
   },
   earningsGrid: {
     flexDirection: 'row',
@@ -283,48 +276,48 @@ const styles = StyleSheet.create({
   },
   earningItem: {
     width: '47%',
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
   },
   earningType: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   earningPoints: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
-    marginBottom: 8,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xsmall,
   },
   bonusPrompt: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(245, 158, 11, 0.1)',
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.warning + '20',
     borderWidth: 1,
-    borderColor: 'rgba(245, 158, 11, 0.3)',
+    borderColor: theme.colors.warning,
   },
   bonusText: {
-    fontSize: 14,
-    color: 'rgba(245, 158, 11, 1)',
+    fontSize: theme.typography.small,
+    color: theme.colors.warning,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: theme.typography.weights.medium,
   },
   bonusEarned: {
-    padding: 12,
-    borderRadius: 12,
-    backgroundColor: 'rgba(34, 197, 94, 0.1)',
+    padding: theme.spacing.sm,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.success + '20',
     borderWidth: 1,
-    borderColor: 'rgba(34, 197, 94, 0.3)',
+    borderColor: theme.colors.success,
   },
   bonusEarnedText: {
-    fontSize: 14,
-    color: 'rgba(34, 197, 94, 1)',
+    fontSize: theme.typography.small,
+    color: theme.colors.success,
     textAlign: 'center',
-    fontWeight: '500',
+    fontWeight: theme.typography.weights.medium,
   },
   streakContainer: {
     flexDirection: 'row',
@@ -334,35 +327,35 @@ const styles = StyleSheet.create({
   streakItem: {
     flex: 1,
     alignItems: 'center',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: theme.spacing.base,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
   },
   streakNumber: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: theme.typography.xxlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   streakLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
-    fontWeight: '500',
+    fontSize: theme.typography.small,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.weights.medium,
     marginBottom: 4,
   },
   streakSubtext: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
   },
   streakProgress: {
-    marginTop: 8,
+    marginTop: theme.spacing.xsmall,
   },
   streakProgressLabel: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xsmall,
   },
   badgesGrid: {
     flexDirection: 'row',
@@ -371,48 +364,49 @@ const styles = StyleSheet.create({
   },
   badgeItem: {
     width: '47%',
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: theme.spacing.base,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.cardBackground,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
     alignItems: 'center',
+    ...theme.shadows.subtle,
   },
   badgeItemLocked: {
     opacity: 0.6,
   },
   badgeIcon: {
     fontSize: 32,
-    marginBottom: 8,
+    marginBottom: theme.spacing.xsmall,
   },
   badgeName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
+    fontSize: theme.typography.small,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
     textAlign: 'center',
     marginBottom: 4,
   },
   badgeNameLocked: {
-    color: 'rgba(255, 255, 255, 0.6)',
+    color: theme.colors.textTertiary,
   },
   badgeDescription: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
-    marginBottom: 8,
+    marginBottom: theme.spacing.xsmall,
   },
   badgeDescriptionLocked: {
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: theme.colors.textTertiary,
   },
   nextBadgeContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 16,
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    gap: theme.spacing.base,
+    padding: theme.spacing.base,
+    borderRadius: theme.borderRadius.sm,
+    backgroundColor: theme.colors.background,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderColor: theme.colors.border,
   },
   nextBadgeIcon: {
     fontSize: 40,
@@ -421,17 +415,17 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   nextBadgeName: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: 'white',
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   nextBadgeDescription: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginBottom: 8,
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xsmall,
   },
   bottomSpacer: {
-    height: 24,
+    height: theme.spacing.lg,
   },
 });

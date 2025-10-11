@@ -10,7 +10,6 @@ import {
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
 import { WellnessPrompts } from './WellnessPrompts';
@@ -19,6 +18,7 @@ import AICoachService from '../../services/AICoachService';
 import { useAppStore } from '../../stores/appStore';
 import { useLifeScore } from '../../hooks/useAppSelectors';
 import { useStepProgress } from '../../stores/stepTrackingStore';
+import { theme } from '../../utils/theme';
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({
   initialContext,
@@ -218,11 +218,8 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 
   return (
     <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#047857" translucent={true} />
-      <LinearGradient
-        colors={['#047857', '#065f46', '#1f2937']}
-        style={styles.gradient}
-      >
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={true} />
+      <View style={styles.gradient}>
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
@@ -306,7 +303,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 
         </View>
 
-      </LinearGradient>
+      </View>
       
       {/* Chat Composer - Positioned outside gradient to align with bottom nav */}
       <ChatComposer
@@ -321,19 +318,23 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   gradient: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    paddingTop: 50, // Account for status bar
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.sm,
+    paddingTop: 50,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255, 255, 255, 0.1)',
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.cardBackground,
+    ...theme.shadows.subtle,
   },
   headerLeft: {
     flexDirection: 'row',
@@ -344,39 +345,39 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    backgroundColor: theme.colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: theme.spacing.sm,
   },
   coachIcon: {
     fontSize: 20,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: 12,
-    color: 'rgba(255, 255, 255, 0.7)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginTop: 2,
   },
   headerRight: {
     flexDirection: 'row',
-    gap: 8,
+    gap: theme.spacing.xsmall,
   },
   headerButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: theme.colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerButtonText: {
-    fontSize: 16,
-    color: 'white',
+    fontSize: theme.typography.regular,
+    color: theme.colors.textSecondary,
   },
   chatContainer: {
     flex: 1,
@@ -392,45 +393,46 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    paddingHorizontal: 32,
+    paddingHorizontal: theme.spacing.xl,
     paddingVertical: 60,
   },
   emptyStateIcon: {
     fontSize: 48,
-    marginBottom: 16,
+    marginBottom: theme.spacing.base,
   },
   emptyStateTitle: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 8,
+    fontSize: theme.typography.xlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xsmall,
     textAlign: 'center',
   },
   emptyStateText: {
-    fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: theme.typography.regular,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
   },
   typingIndicator: {
-    paddingHorizontal: 16,
-    marginBottom: 16,
+    paddingHorizontal: theme.spacing.base,
+    marginBottom: theme.spacing.base,
   },
   typingBubble: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    borderRadius: 16,
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.base,
     borderTopLeftRadius: 4,
-    padding: 12,
+    padding: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: theme.colors.border,
     maxWidth: '70%',
+    ...theme.shadows.subtle,
   },
   typingText: {
-    fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.8)',
-    marginRight: 8,
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginRight: theme.spacing.xsmall,
   },
   typingDots: {
     flexDirection: 'row',
@@ -440,7 +442,7 @@ const styles = StyleSheet.create({
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: 'rgba(16, 185, 129, 0.6)',
+    backgroundColor: theme.colors.primary,
   },
   dot1: {
     // Animation would be added here
