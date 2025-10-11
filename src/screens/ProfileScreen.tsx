@@ -15,6 +15,7 @@ import { useAppStore } from '../stores/appStore';
 import { supabase, authService } from '../services/supabase';
 import { DailyMetrics, UserProfileFromActivation } from '../types';
 import { formatSleepDuration } from '../utils';
+import DatabaseInitializer from '../services/DatabaseInitializer';
 
 interface ProfileScreenProps {
   onBack?: () => void;
@@ -290,6 +291,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
             <Text style={styles.refreshButtonText}>Refresh Data</Text>
           </TouchableOpacity>
           
+          {profileData && !dailyMetrics && (
+            <TouchableOpacity 
+              style={styles.initButton} 
+              onPress={async () => {
+                if (user && profileData) {
+                  console.log('Manual database initialization...');
+                  const success = await DatabaseInitializer.initializeUserData(
+                    user.id, 
+                    profileData.activation_code_id
+                  );
+                  if (success) {
+                    await handleRefresh();
+                  }
+                }
+              }}
+            >
+              <Text style={styles.initButtonText}>Initialize Database</Text>
+            </TouchableOpacity>
+          )}
+          
           <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
             <Text style={styles.signOutButtonText}>Sign Out</Text>
           </TouchableOpacity>
@@ -427,6 +448,20 @@ const styles = StyleSheet.create({
   },
   refreshButtonText: {
     color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  initButton: {
+    backgroundColor: 'rgba(34,197,94,0.2)',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(34,197,94,0.3)',
+  },
+  initButtonText: {
+    color: '#22c55e',
     fontSize: 16,
     fontWeight: '600',
   },

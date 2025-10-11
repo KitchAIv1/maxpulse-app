@@ -83,9 +83,11 @@ class HealthDataService {
         // Remove finalized for now until database schema is fixed
       };
 
+      console.log('Attempting to insert daily metrics:', dailyMetrics);
+      
       const { data, error } = await supabase
         .from('daily_metrics')
-        .insert(dailyMetrics) // Use insert instead of upsert to avoid conflicts
+        .upsert(dailyMetrics, { onConflict: 'user_id,date' }) // Use upsert to handle existing records
         .select()
         .single();
 
@@ -93,7 +95,21 @@ class HealthDataService {
         console.error('Error initializing daily metrics:', error);
         console.error('Full error:', JSON.stringify(error, null, 2));
         console.error('Attempted to insert:', dailyMetrics);
-        return null;
+        
+        // Try a simpler insert without select
+        console.log('Trying simpler insert...');
+        const { error: simpleError } = await supabase
+          .from('daily_metrics')
+          .upsert(dailyMetrics, { onConflict: 'user_id,date' });
+          
+        if (simpleError) {
+          console.error('Simple insert also failed:', simpleError);
+          return null;
+        } else {
+          console.log('Simple insert succeeded, fetching record...');
+          // Fetch the record separately
+          return await this.getTodayMetrics(userId);
+        }
       }
 
       console.log('Daily metrics initialized successfully');

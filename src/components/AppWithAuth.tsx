@@ -9,6 +9,7 @@ import { authService, planService, activationService, supabase } from '../servic
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
 import SyncManager from '../services/SyncManager';
+import DatabaseInitializer from '../services/DatabaseInitializer';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
@@ -132,17 +133,21 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
           console.error('Failed to save profile after auth:', profileError);
         }
 
-        // For new users, extract targets from their activation code
-        const activationCode = await activationService.getActivationCodeData(profile.activation_code_id);
-        if (activationCode) {
-          const dynamicTargets = activationService.extractDynamicTargets(activationCode);
-          initializeTargets({
-            steps: dynamicTargets.steps,
-            waterOz: dynamicTargets.waterOz,
-            sleepHr: dynamicTargets.sleepHr,
-          });
+        // For new users, initialize complete database setup
+        console.log('Initializing database for new user with activation code:', profile.activation_code_id);
+        
+        const success = await DatabaseInitializer.initializeUserData(
+          authenticatedUser.id, 
+          profile.activation_code_id
+        );
+        
+        if (success) {
+          console.log('Database initialization successful');
+          // Load the newly created targets
+          await loadUserTargets(authenticatedUser.id);
         } else {
-          initializeTargets();
+          console.error('Database initialization failed, using defaults');
+          await initializeTargets();
         }
       } else {
         // For existing users, load their current targets
