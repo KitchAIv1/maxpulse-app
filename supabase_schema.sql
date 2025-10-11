@@ -154,7 +154,8 @@ CREATE TABLE IF NOT EXISTS device_connections (
 );
 
 -- Row Level Security (RLS) Policies
-ALTER TABLE app_user_profiles ENABLE ROW LEVEL SECURITY;
+-- Temporarily disable RLS for app_user_profiles during development
+-- ALTER TABLE app_user_profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE plan_progress ENABLE ROW LEVEL SECURITY;
 ALTER TABLE daily_metrics ENABLE ROW LEVEL SECURITY;
 ALTER TABLE hydration_logs ENABLE ROW LEVEL SECURITY;
@@ -165,21 +166,21 @@ ALTER TABLE rewards_ledger ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_badges ENABLE ROW LEVEL SECURITY;
 ALTER TABLE device_connections ENABLE ROW LEVEL SECURITY;
 
--- Drop existing policies if they exist
-DROP POLICY IF EXISTS "App users can view own profile" ON app_user_profiles;
-DROP POLICY IF EXISTS "App users can insert own profile" ON app_user_profiles;
-DROP POLICY IF EXISTS "App users can update own profile" ON app_user_profiles;
-DROP POLICY IF EXISTS "Allow profile creation during signup" ON app_user_profiles;
+-- Drop existing policies if they exist (commented out for development)
+-- DROP POLICY IF EXISTS "App users can view own profile" ON app_user_profiles;
+-- DROP POLICY IF EXISTS "App users can insert own profile" ON app_user_profiles;
+-- DROP POLICY IF EXISTS "App users can update own profile" ON app_user_profiles;
+-- DROP POLICY IF EXISTS "Allow profile creation during signup" ON app_user_profiles;
 
--- RLS Policies for app_user_profiles
-CREATE POLICY "App users can view own profile" ON app_user_profiles
-    FOR SELECT USING (auth.uid() = user_id);
+-- RLS Policies for app_user_profiles (commented out for development)
+-- CREATE POLICY "App users can view own profile" ON app_user_profiles
+--     FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "App users can insert profile" ON app_user_profiles
-    FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- CREATE POLICY "App users can insert profile" ON app_user_profiles
+--     FOR INSERT WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "App users can update own profile" ON app_user_profiles
-    FOR UPDATE USING (auth.uid() = user_id);
+-- CREATE POLICY "App users can update own profile" ON app_user_profiles
+--     FOR UPDATE USING (auth.uid() = user_id);
 
 -- RLS Policies for plan_progress
 CREATE POLICY "Users can view own plan progress" ON plan_progress

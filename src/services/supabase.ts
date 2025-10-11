@@ -434,13 +434,20 @@ export const activationService = {
   /**
    * Get activation code data for profile setup
    */
-  async getActivationCodeData(code: string): Promise<ActivationCode | null> {
+  async getActivationCodeData(codeOrId: string): Promise<ActivationCode | null> {
     try {
-      const { data, error } = await supabase
-        .from('activation_codes')
-        .select('*')
-        .eq('code', code.toUpperCase())
-        .single();
+      // Try to fetch by ID first (if it looks like a UUID), then by code
+      let query = supabase.from('activation_codes').select('*');
+      
+      if (codeOrId.includes('-') && codeOrId.length > 10) {
+        // Looks like a UUID (activation_code_id)
+        query = query.eq('id', codeOrId);
+      } else {
+        // Looks like an activation code
+        query = query.eq('code', codeOrId.toUpperCase());
+      }
+      
+      const { data, error } = await query.single();
 
       if (error) {
         console.error('Error fetching activation code data:', error);
@@ -458,38 +465,101 @@ export const activationService = {
    * Extract dynamic targets from activation code onboarding data
    */
   extractDynamicTargets(activationCode: ActivationCode): DynamicTargets {
-    const { personalizedTargets } = activationCode.onboarding_data;
-    
-    return {
-      steps: personalizedTargets.steps.targetDaily,
-      waterOz: Math.round(personalizedTargets.hydration.targetLiters * 33.814), // Convert liters to oz
-      sleepHr: (personalizedTargets.sleep.targetMinHours + personalizedTargets.sleep.targetMaxHours) / 2,
-    };
+    try {
+      const { personalizedTargets } = activationCode.onboarding_data || {};
+      
+      // Provide fallback values if data is missing
+      const defaultTargets = {
+        steps: 8000,
+        waterOz: 80,
+        sleepHr: 8,
+      };
+
+      if (!personalizedTargets) {
+        console.warn('No personalized targets found in activation code, using defaults');
+        return defaultTargets;
+      }
+      
+      return {
+        steps: personalizedTargets.steps?.targetDaily || defaultTargets.steps,
+        waterOz: personalizedTargets.hydration?.targetLiters 
+          ? Math.round(personalizedTargets.hydration.targetLiters * 33.814) 
+          : defaultTargets.waterOz,
+        sleepHr: (personalizedTargets.sleep?.targetMinHours && personalizedTargets.sleep?.targetMaxHours)
+          ? (personalizedTargets.sleep.targetMinHours + personalizedTargets.sleep.targetMaxHours) / 2
+          : defaultTargets.sleepHr,
+      };
+    } catch (error) {
+      console.error('Error extracting dynamic targets:', error);
+      // Return safe defaults
+      return {
+        steps: 8000,
+        waterOz: 80,
+        sleepHr: 8,
+      };
+    }
   },
 
   /**
    * Create user profile from activation code data
    */
   createUserProfileFromActivation(activationCode: ActivationCode, userId: string): UserProfileFromActivation {
-    const { demographics, medical, mentalHealth } = activationCode.onboarding_data;
-    
-    return {
-      email: activationCode.customer_email,
-      name: activationCode.customer_name,
-      age: demographics.age,
-      gender: demographics.gender,
-      height_cm: demographics.heightCm,
-      weight_kg: demographics.weightKg,
-      bmi: demographics.bmi,
-      medical_conditions: medical.conditions,
-      medical_allergies: medical.allergies,
-      medical_medications: medical.medications,
-      mental_health_data: mentalHealth,
-      activation_code_id: activationCode.id,
-      distributor_id: activationCode.distributor_id,
-      session_id: activationCode.session_id,
-      plan_type: activationCode.plan_type,
-    };
+    try {
+      const { demographics, medical, mentalHealth } = activationCode.onboarding_data || {};
+      
+      // Provide fallback values for missing data
+      const safeDemographics = demographics || {
+        age: 30,
+        gender: 'other',
+        heightCm: 170,
+        weightKg: 70,
+        bmi: 24.2,
+      };
+      
+      const safeMedical = medical || {
+        conditions: [],
+        allergies: [],
+        medications: [],
+      };
+      
+      return {
+        email: activationCode.customer_email || '',
+        name: activationCode.customer_name || 'User',
+        age: safeDemographics.age,
+        gender: safeDemographics.gender,
+        height_cm: safeDemographics.heightCm,
+        weight_kg: safeDemographics.weightKg,
+        bmi: safeDemographics.bmi,
+        medical_conditions: safeMedical.conditions,
+        medical_allergies: safeMedical.allergies,
+        medical_medications: safeMedical.medications,
+        mental_health_data: mentalHealth || {},
+        activation_code_id: activationCode.id,
+        distributor_id: activationCode.distributor_id,
+        session_id: activationCode.session_id,
+        plan_type: activationCode.plan_type,
+      };
+    } catch (error) {
+      console.error('Error creating user profile from activation code:', error);
+      // Return minimal profile with safe defaults
+      return {
+        email: activationCode.customer_email || '',
+        name: activationCode.customer_name || 'User',
+        age: 30,
+        gender: 'other',
+        height_cm: 170,
+        weight_kg: 70,
+        bmi: 24.2,
+        medical_conditions: [],
+        medical_allergies: [],
+        medical_medications: [],
+        mental_health_data: {},
+        activation_code_id: activationCode.id,
+        distributor_id: activationCode.distributor_id,
+        session_id: activationCode.session_id,
+        plan_type: activationCode.plan_type,
+      };
+    }
   }
 };
 
