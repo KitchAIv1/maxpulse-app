@@ -3,11 +3,15 @@
 
 import { useAppStore } from '../stores/appStore';
 
-export const useLifeScore = () => {
+export const useLifeScore = (databaseTargets?: { steps: number; waterOz: number; sleepHr: number }) => {
   const { currentState, targets, moodCheckInFrequency } = useAppStore();
-  const stepsPct = currentState.steps / targets.steps;
-  const waterPct = currentState.waterOz / targets.waterOz;
-  const sleepPct = currentState.sleepHr / targets.sleepHr;
+  
+  // Use database targets if provided, otherwise fall back to app store targets
+  const activeTargets = databaseTargets || targets;
+  
+  const stepsPct = currentState.steps / activeTargets.steps;
+  const waterPct = currentState.waterOz / activeTargets.waterOz;
+  const sleepPct = currentState.sleepHr / activeTargets.sleepHr;
   const moodCheckInPct = moodCheckInFrequency.total_checkins / moodCheckInFrequency.target_checkins;
   
   // Import computeLifeScore here to avoid circular dependency

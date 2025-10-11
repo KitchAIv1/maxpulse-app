@@ -16,8 +16,10 @@ import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachSc
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
+import { useDatabaseTargets } from './src/hooks/useDatabaseTargets';
 import { formatSleepDuration } from './src/utils';
 import { RewardsScreen } from './src/screens/RewardsScreen';
+import ProfileScreen from './src/screens/ProfileScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
 
 function TriHabitApp() {
@@ -35,16 +37,32 @@ function TriHabitApp() {
     initializeTargets,
   } = useAppStore();
 
+  // Load database targets (source of truth)
+  const { 
+    steps: dbStepsTarget, 
+    waterOz: dbWaterTarget, 
+    sleepHr: dbSleepTarget,
+    isLoaded: dbTargetsLoaded,
+    error: dbTargetsError 
+  } = useDatabaseTargets();
+
   // Use real step data from step tracking store
   const { steps: realSteps, target: stepTarget, percentage: realStepsPct } = useStepProgress();
   const { isAvailable: stepTrackingAvailable, isTracking } = useStepTrackingStatus();
 
-  // Use real steps if available, fallback to mock data
-  const displaySteps = stepTrackingAvailable ? realSteps : currentState.steps;
-  const displayStepTarget = stepTrackingAvailable ? stepTarget : targets.steps;
-  const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / targets.steps);
+  // Use database targets as source of truth, fallback to app store
+  const finalTargets = {
+    steps: dbTargetsLoaded ? dbStepsTarget : targets.steps,
+    waterOz: dbTargetsLoaded ? dbWaterTarget : targets.waterOz,
+    sleepHr: dbTargetsLoaded ? dbSleepTarget : targets.sleepHr,
+  };
 
-  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
+  // Use real steps if available, fallback to current state
+  const displaySteps = stepTrackingAvailable ? realSteps : currentState.steps;
+  const displayStepTarget = stepTrackingAvailable ? stepTarget : finalTargets.steps;
+  const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / finalTargets.steps);
+
+  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore(finalTargets);
   const nextAction = useNextBestAction();
 
   // Handle wellbeing dashboard navigation
@@ -108,15 +126,7 @@ function TriHabitApp() {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
-        <LinearGradient
-          colors={['#7f1d1d', '#991b1b', '#1f2937']}
-          style={styles.gradient}
-        >
-          <View style={styles.placeholderScreen}>
-            <Text style={styles.placeholderTitle}>Settings</Text>
-            <Text style={styles.placeholderText}>Coming Soon</Text>
-          </View>
-        </LinearGradient>
+        <ProfileScreen />
         <BottomNavigation 
           currentScreen={currentScreen} 
           onScreenChange={setCurrentScreen} 
@@ -145,13 +155,19 @@ function TriHabitApp() {
           contentContainerStyle={styles.scrollContent}
           showsVerticalScrollIndicator={false}
         >
-          {/* Header - Simplified */}
-          <View style={styles.header}>
-            <View>
-              <Text style={styles.dateText}>{dateFmt}</Text>
-              <Text style={styles.titleText}>Your Daily Health</Text>
-            </View>
-          </View>
+                 {/* Header - Simplified */}
+                 <View style={styles.header}>
+                   <View>
+                     <Text style={styles.dateText}>{dateFmt}</Text>
+                     <Text style={styles.titleText}>Your Daily Health</Text>
+                     {dbTargetsError && (
+                       <Text style={styles.warningText}>⚠️ Using default targets - {dbTargetsError}</Text>
+                     )}
+                     {dbTargetsLoaded && (
+                       <Text style={styles.successText}>✅ Database targets loaded</Text>
+                     )}
+                   </View>
+                 </View>
 
           {/* Glassmorphism Container for Rings and KPIs */}
           <View style={styles.glassContainer}>
@@ -192,53 +208,53 @@ function TriHabitApp() {
              {/* Lower Left - Hydration */}
              <View style={styles.lowerLeft}>
                <Text style={styles.kpiTitle}>Hydration</Text>
-               <Text style={styles.kpiValue}>
-                 {currentState.waterOz >= targets.waterOz ? (
-                   <>
-                     <Text style={styles.achievedHydration}>{currentState.waterOz}</Text>
-                     <Text style={styles.goalIndicator}> ✅</Text>
-                   </>
-                 ) : (
-                   `${currentState.waterOz}/${targets.waterOz} oz`
-                 )}
-               </Text>
-               <Text style={styles.kpiPercent}>
-                 {currentState.waterOz >= targets.waterOz ? (
-                   <Text style={styles.exceededText}>Goal: {targets.waterOz} oz</Text>
-                 ) : (
-                   `${Math.round(waterPct * 100)}%`
-                 )}
-               </Text>
+                       <Text style={styles.kpiValue}>
+                         {currentState.waterOz >= finalTargets.waterOz ? (
+                           <>
+                             <Text style={styles.achievedHydration}>{currentState.waterOz}</Text>
+                             <Text style={styles.goalIndicator}> ✅</Text>
+                           </>
+                         ) : (
+                           `${currentState.waterOz}/${finalTargets.waterOz} oz`
+                         )}
+                       </Text>
+                       <Text style={styles.kpiPercent}>
+                         {currentState.waterOz >= finalTargets.waterOz ? (
+                           <Text style={styles.exceededText}>Goal: {finalTargets.waterOz} oz</Text>
+                         ) : (
+                           `${Math.round((currentState.waterOz / finalTargets.waterOz) * 100)}%`
+                         )}
+                       </Text>
              </View>
 
              {/* Lower Right - Sleep */}
              <View style={styles.lowerRight}>
                <Text style={styles.kpiTitle}>Sleep</Text>
-               <Text style={styles.kpiValue}>
-                 {currentState.sleepHr >= targets.sleepHr ? (
-                   <>
-                     <Text style={styles.achievedSleep}>{formatSleepDuration(currentState.sleepHr)}</Text>
-                     <Text style={styles.goalIndicator}> ✅</Text>
-                   </>
-                 ) : (
-                   `${formatSleepDuration(currentState.sleepHr)}/${formatSleepDuration(targets.sleepHr)}`
-                 )}
-               </Text>
-               <Text style={styles.kpiPercent}>
-                 {currentState.sleepHr >= targets.sleepHr ? (
-                   <Text style={styles.exceededText}>Goal: {formatSleepDuration(targets.sleepHr)}</Text>
-                 ) : (
-                   `${Math.round(sleepPct * 100)}%`
-                 )}
-               </Text>
+                       <Text style={styles.kpiValue}>
+                         {currentState.sleepHr >= finalTargets.sleepHr ? (
+                           <>
+                             <Text style={styles.achievedSleep}>{formatSleepDuration(currentState.sleepHr)}</Text>
+                             <Text style={styles.goalIndicator}> ✅</Text>
+                           </>
+                         ) : (
+                           `${formatSleepDuration(currentState.sleepHr)}/${formatSleepDuration(finalTargets.sleepHr)}`
+                         )}
+                       </Text>
+                       <Text style={styles.kpiPercent}>
+                         {currentState.sleepHr >= finalTargets.sleepHr ? (
+                           <Text style={styles.exceededText}>Goal: {formatSleepDuration(finalTargets.sleepHr)}</Text>
+                         ) : (
+                           `${Math.round((currentState.sleepHr / finalTargets.sleepHr) * 100)}%`
+                         )}
+                       </Text>
              </View>
 
             {/* TriRings - Precisely centered based on outermost ring */}
             <View style={styles.ringsContainer}>
               <TriRings
                 stepsPct={displayStepsPct}
-                waterPct={waterPct}
-                sleepPct={sleepPct}
+                waterPct={currentState.waterOz / finalTargets.waterOz}
+                sleepPct={currentState.sleepHr / finalTargets.sleepHr}
                 onLifeScorePress={handleLifeScorePress}
               />
             </View>
@@ -317,14 +333,14 @@ function TriHabitApp() {
               <View style={styles.diagnosticItem}>
                 <Text style={styles.diagnosticLabel}>Hydration gap</Text>
                 <Text style={styles.diagnosticValue}>
-                  {Math.max(0, targets.waterOz - currentState.waterOz)} oz left
+                  {Math.max(0, finalTargets.waterOz - currentState.waterOz)} oz left
                 </Text>
                 <Text style={styles.diagnosticHint}>Aim for steady sips each hour</Text>
               </View>
               <View style={styles.diagnosticItem}>
                 <Text style={styles.diagnosticLabel}>Sleep debt</Text>
                 <Text style={styles.diagnosticValue}>
-                  {formatSleepDuration(Math.max(0, targets.sleepHr - currentState.sleepHr))}
+                  {formatSleepDuration(Math.max(0, finalTargets.sleepHr - currentState.sleepHr))}
                 </Text>
                 <Text style={styles.diagnosticHint}>Wind‑down 30m earlier today</Text>
               </View>
@@ -412,6 +428,16 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '600',
     color: 'white',
+  },
+  warningText: {
+    fontSize: 10,
+    color: '#fbbf24',
+    marginTop: 2,
+  },
+  successText: {
+    fontSize: 10,
+    color: '#10b981',
+    marginTop: 2,
   },
   headerBadges: {
     flexDirection: 'row',

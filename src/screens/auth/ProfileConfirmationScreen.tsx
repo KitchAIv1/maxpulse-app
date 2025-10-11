@@ -211,25 +211,40 @@ export const ProfileConfirmationScreen: React.FC<ProfileConfirmationScreenProps>
         {/* Personalized Targets Preview */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Your Personalized Targets</Text>
+          <Text style={styles.sectionSubtitle}>These will be your daily goals in the app</Text>
           
           <View style={styles.targetsGrid}>
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>🚶‍♂️</Text>
-              <Text style={styles.targetValue}>{safeTargets.steps.targetDaily.toLocaleString()}</Text>
+              <Text style={styles.targetValue}>{safeTargets.steps.targetDaily?.toLocaleString() || '8,000'}</Text>
               <Text style={styles.targetLabel}>Daily Steps</Text>
             </View>
 
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>💧</Text>
-              <Text style={styles.targetValue}>{safeTargets.hydration.targetLiters}L</Text>
+              <Text style={styles.targetValue}>
+                {safeTargets.hydration.targetLiters 
+                  ? Math.round(safeTargets.hydration.targetLiters * 33.814) 
+                  : 80} oz
+              </Text>
               <Text style={styles.targetLabel}>Daily Water</Text>
             </View>
 
             <View style={styles.targetCard}>
               <Text style={styles.targetIcon}>😴</Text>
-              <Text style={styles.targetValue}>{safeTargets.sleep.targetMinHours}-{safeTargets.sleep.targetMaxHours}h</Text>
-              <Text style={styles.targetLabel}>Sleep Range</Text>
+              <Text style={styles.targetValue}>
+                {safeTargets.sleep.targetMinHours && safeTargets.sleep.targetMaxHours
+                  ? Math.round((safeTargets.sleep.targetMinHours + safeTargets.sleep.targetMaxHours) / 2)
+                  : 8}h
+              </Text>
+              <Text style={styles.targetLabel}>Sleep Target</Text>
             </View>
+          </View>
+          
+          <View style={styles.alignmentNote}>
+            <Text style={styles.alignmentText}>
+              💡 These targets match exactly what you'll see in your daily dashboard
+            </Text>
           </View>
         </View>
 
@@ -315,6 +330,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '600',
     color: 'white',
+    marginBottom: 8,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: 'rgba(255,255,255,0.8)',
     marginBottom: 16,
   },
   inputGroup: {
@@ -442,6 +462,20 @@ const styles = StyleSheet.create({
     color: '#7f1d1d',
     fontSize: 16,
     fontWeight: '700',
+  },
+  alignmentNote: {
+    backgroundColor: 'rgba(0, 255, 136, 0.1)',
+    borderRadius: 8,
+    padding: 12,
+    marginTop: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(0, 255, 136, 0.2)',
+  },
+  alignmentText: {
+    fontSize: 12,
+    color: 'rgba(0, 255, 136, 0.9)',
+    textAlign: 'center',
+    fontWeight: '500',
   },
   bottomSpacer: {
     height: 20,
