@@ -10,13 +10,14 @@ import {
   StyleSheet,
   RefreshControl,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useAppStore } from '../stores/appStore';
 import { supabase, authService } from '../services/supabase';
 import { DailyMetrics, UserProfileFromActivation } from '../types';
 import { formatSleepDuration } from '../utils';
 import DatabaseInitializer from '../services/DatabaseInitializer';
 import TargetManager from '../services/TargetManager';
+import { theme } from '../utils/theme';
+import { calAiCard } from '../utils/calAiStyles';
 
 interface ProfileScreenProps {
   onBack?: () => void;
@@ -117,10 +118,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
   };
 
   return (
-    <LinearGradient
-      colors={['#7f1d1d', '#991b1b', '#1f2937']}
-      style={styles.gradient}
-    >
+    <View style={styles.gradient}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
@@ -128,7 +126,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            tintColor="white"
+            tintColor={theme.colors.primary}
           />
         }
       >
@@ -322,182 +320,175 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
-    </LinearGradient>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
   gradient: {
     flex: 1,
+    backgroundColor: theme.colors.background,
   },
   scrollView: {
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: 16,
+    paddingHorizontal: theme.spacing.base,
     paddingTop: 50,
     paddingBottom: 100,
   },
   header: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   title: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: 'white',
+    fontSize: theme.typography.xxlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: theme.typography.regular,
+    color: theme.colors.textSecondary,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: 'white',
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
     marginBottom: 4,
   },
   sectionSubtitle: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.7)',
-    marginBottom: 12,
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.sm,
   },
   dataCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    ...calAiCard.base,
+    marginBottom: theme.spacing.xsmall,
   },
   dataLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
-    fontWeight: '500',
+    fontWeight: theme.typography.weights.medium,
   },
   dataValue: {
-    fontSize: 16,
-    color: 'white',
-    fontWeight: '600',
+    fontSize: theme.typography.regular,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.weights.semibold,
   },
   targetCard: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    ...calAiCard.base,
+    marginBottom: theme.spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
   },
   targetIcon: {
     fontSize: 24,
-    marginRight: 16,
+    marginRight: theme.spacing.base,
   },
   targetInfo: {
     flex: 1,
   },
   targetLabel: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   targetValue: {
-    fontSize: 18,
-    color: 'white',
-    fontWeight: '700',
+    fontSize: theme.typography.medium,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.weights.bold,
     marginBottom: 2,
   },
   targetCurrent: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.7)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textTertiary,
   },
   comparisonCard: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 8,
-    padding: 12,
-    marginBottom: 8,
+    backgroundColor: theme.colors.background,
+    borderRadius: theme.borderRadius.sm,
+    padding: theme.spacing.sm,
+    marginBottom: theme.spacing.xsmall,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: theme.colors.border,
   },
   comparisonLabel: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.8)',
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
     marginBottom: 4,
   },
   comparisonValue: {
-    fontSize: 14,
-    color: 'white',
+    fontSize: theme.typography.small,
+    color: theme.colors.textPrimary,
     fontFamily: 'monospace',
   },
   noData: {
-    fontSize: 14,
-    color: 'rgba(255,255,255,0.6)',
+    fontSize: theme.typography.small,
+    color: theme.colors.textTertiary,
     fontStyle: 'italic',
     textAlign: 'center',
-    padding: 20,
+    padding: theme.spacing.md,
   },
   refreshButton: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.primary + '20',
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.base,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.3)',
+    borderColor: theme.colors.primary,
   },
   refreshButtonText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.primary,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
   },
   initButton: {
-    backgroundColor: 'rgba(34,197,94,0.2)',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.success + '20',
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.base,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(34,197,94,0.3)',
+    borderColor: theme.colors.success,
   },
   initButtonText: {
-    color: '#22c55e',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.success,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
   },
   applyButton: {
-    backgroundColor: 'rgba(59,130,246,0.2)',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.secondary + '20',
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.base,
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: theme.spacing.sm,
     borderWidth: 1,
-    borderColor: 'rgba(59,130,246,0.3)',
+    borderColor: theme.colors.secondary,
   },
   applyButtonText: {
-    color: '#3b82f6',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.secondary,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
   },
   signOutButton: {
-    backgroundColor: 'rgba(220,38,38,0.2)',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.error + '20',
+    borderRadius: theme.borderRadius.sm,
+    paddingVertical: theme.spacing.base,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(220,38,38,0.3)',
+    borderColor: theme.colors.error,
   },
   signOutButtonText: {
-    color: '#ff6b6b',
-    fontSize: 16,
-    fontWeight: '600',
+    color: theme.colors.error,
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
   },
   bottomSpacer: {
-    height: 20,
+    height: theme.spacing.md,
   },
 });
 
