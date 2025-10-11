@@ -179,3 +179,6 @@ export * from './wellbeing';
 
 // Export coach types  
 export * from './coach';
+
+// Export activation types
+export * from './activation';

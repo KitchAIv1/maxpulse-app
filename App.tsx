@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal } from './src/components';
+import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { useAppStore, useLifeScore, useNextBestAction } from './src/stores/appStore';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { formatSleepDuration } from './src/utils';
@@ -758,7 +758,9 @@ const styles = StyleSheet.create({
 export default function App() {
   return (
     <StepTrackingManager>
-      <TriHabitApp />
+      <AppWithAuth>
+        <TriHabitApp />
+      </AppWithAuth>
     </StepTrackingManager>
   );
 }

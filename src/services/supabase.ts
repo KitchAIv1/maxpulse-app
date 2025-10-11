@@ -12,13 +12,22 @@ import {
   RewardsLedger,
   Badge,
   UserBadge,
-  DeviceConnection 
+  DeviceConnection,
+  ActivationCode,
+  ActivationCodeValidationResult,
+  ActivationCodeConsumptionResult,
+  UserProfileFromActivation,
+  DynamicTargets,
+  PlanProgress
 } from '../types';
 
 // Supabase configuration
-// Note: These should be environment variables in production
-const SUPABASE_URL = 'YOUR_SUPABASE_URL';
-const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
+const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+
+if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+  throw new Error('Missing Supabase environment variables. Please check your .env file.');
+}
 
 // Custom storage adapter for Expo SecureStore
 const ExpoSecureStoreAdapter = {
@@ -324,4 +333,272 @@ export const deviceService = {
 
     return data;
   },
+};
+
+// Activation Code Service
+export const activationService = {
+  /**
+   * Validate an activation code - check if it exists, is unused, and not expired
+   */
+  async validateActivationCode(code: string): Promise<ActivationCodeValidationResult> {
+    try {
+      const { data, error } = await supabase
+        .from('activation_codes')
+        .select('*')
+        .eq('code', code.toUpperCase())
+        .single();
+
+      if (error) {
+        if (error.code === 'PGRST116') {
+          return {
+            isValid: false,
+            isExpired: false,
+            isUsed: false,
+            error: 'Invalid activation code'
+          };
+        }
+        throw error;
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(data.expires_at);
+      const isExpired = now > expiresAt;
+      const isUsed = data.status === 'activated' || data.activated_at !== null;
+
+      return {
+        isValid: !isExpired && !isUsed,
+        isExpired,
+        isUsed,
+        activationCode: data,
+        error: isExpired ? 'Activation code has expired' : 
+               isUsed ? 'Activation code has already been used' : undefined
+      };
+    } catch (error) {
+      console.error('Error validating activation code:', error);
+      return {
+        isValid: false,
+        isExpired: false,
+        isUsed: false,
+        error: 'Failed to validate activation code'
+      };
+    }
+  },
+
+  /**
+   * Consume an activation code - mark it as used and associate with user
+   */
+  async consumeActivationCode(code: string, userId: string): Promise<ActivationCodeConsumptionResult> {
+    try {
+      // First validate the code
+      const validation = await this.validateActivationCode(code);
+      if (!validation.isValid || !validation.activationCode) {
+        return {
+          success: false,
+          error: validation.error || 'Invalid activation code'
+        };
+      }
+
+      // Update the activation code to mark as used
+      const { data, error } = await supabase
+        .from('activation_codes')
+        .update({
+          status: 'activated',
+          activated_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .eq('code', code.toUpperCase())
+        .select()
+        .single();
+
+      if (error) {
+        console.error('Error consuming activation code:', error);
+        return {
+          success: false,
+          error: 'Failed to activate code'
+        };
+      }
+
+      return {
+        success: true,
+        activationCode: data
+      };
+    } catch (error) {
+      console.error('Error consuming activation code:', error);
+      return {
+        success: false,
+        error: 'Failed to consume activation code'
+      };
+    }
+  },
+
+  /**
+   * Get activation code data for profile setup
+   */
+  async getActivationCodeData(code: string): Promise<ActivationCode | null> {
+    try {
+      const { data, error } = await supabase
+        .from('activation_codes')
+        .select('*')
+        .eq('code', code.toUpperCase())
+        .single();
+
+      if (error) {
+        console.error('Error fetching activation code data:', error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Error getting activation code data:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Extract dynamic targets from activation code onboarding data
+   */
+  extractDynamicTargets(activationCode: ActivationCode): DynamicTargets {
+    const { personalizedTargets } = activationCode.onboarding_data;
+    
+    return {
+      steps: personalizedTargets.steps.targetDaily,
+      waterOz: Math.round(personalizedTargets.hydration.targetLiters * 33.814), // Convert liters to oz
+      sleepHr: (personalizedTargets.sleep.targetMinHours + personalizedTargets.sleep.targetMaxHours) / 2,
+    };
+  },
+
+  /**
+   * Create user profile from activation code data
+   */
+  createUserProfileFromActivation(activationCode: ActivationCode, userId: string): UserProfileFromActivation {
+    const { demographics, medical, mentalHealth } = activationCode.onboarding_data;
+    
+    return {
+      email: activationCode.customer_email,
+      name: activationCode.customer_name,
+      age: demographics.age,
+      gender: demographics.gender,
+      height_cm: demographics.heightCm,
+      weight_kg: demographics.weightKg,
+      bmi: demographics.bmi,
+      medical_conditions: medical.conditions,
+      medical_allergies: medical.allergies,
+      medical_medications: medical.medications,
+      mental_health_data: mentalHealth,
+      activation_code_id: activationCode.id,
+      distributor_id: activationCode.distributor_id,
+      session_id: activationCode.session_id,
+      plan_type: activationCode.plan_type,
+    };
+  }
+};
+
+// Plan Service for 90-day transformation roadmap
+export const planService = {
+  /**
+   * Get current week targets based on user's plan progress
+   */
+  async getCurrentWeekTargets(userId: string): Promise<DynamicTargets | null> {
+    try {
+      // Get user's activation code and plan progress
+      const { data: userProfile, error: profileError } = await supabase
+        .from('user_profiles')
+        .select('activation_code_id')
+        .eq('user_id', userId)
+        .single();
+
+      if (profileError || !userProfile?.activation_code_id) {
+        console.error('Error fetching user profile:', profileError);
+        return null;
+      }
+
+      const activationCode = await activationService.getActivationCodeData(userProfile.activation_code_id);
+      if (!activationCode) {
+        return null;
+      }
+
+      // Get plan progress to determine current week
+      const { data: progress } = await supabase
+        .from('plan_progress')
+        .select('*')
+        .eq('user_id', userId)
+        .single();
+
+      const currentWeek = progress?.current_week || 1;
+      const currentPhase = Math.ceil(currentWeek / 4); // 4 weeks per phase
+      
+      // Extract base targets from activation data
+      const baseTargets = activationService.extractDynamicTargets(activationCode);
+      
+      // Apply weekly progression (could be enhanced with more sophisticated logic)
+      const weeklyMultiplier = this.getWeeklyProgressionMultiplier(currentWeek, currentPhase);
+      
+      return {
+        steps: Math.round(baseTargets.steps * weeklyMultiplier.steps),
+        waterOz: Math.round(baseTargets.waterOz * weeklyMultiplier.hydration),
+        sleepHr: Math.round(baseTargets.sleepHr * weeklyMultiplier.sleep * 10) / 10, // Round to 1 decimal
+      };
+    } catch (error) {
+      console.error('Error getting current week targets:', error);
+      return null;
+    }
+  },
+
+  /**
+   * Get weekly progression multipliers based on transformation roadmap
+   */
+  getWeeklyProgressionMultiplier(week: number, phase: number): { steps: number; hydration: number; sleep: number } {
+    // Phase 1 (Weeks 1-4): Foundation - gradual increase
+    if (phase === 1) {
+      const weekInPhase = week;
+      return {
+        steps: 0.7 + (weekInPhase * 0.075), // 70% to 92.5%
+        hydration: 0.5 + (weekInPhase * 0.125), // 50% to 87.5%
+        sleep: 0.9 + (weekInPhase * 0.025), // 90% to 100%
+      };
+    }
+    
+    // Phase 2 (Weeks 5-8): Movement - maintain and optimize
+    if (phase === 2) {
+      return {
+        steps: 1.0, // Full target
+        hydration: 1.0, // Full target
+        sleep: 1.0, // Full target
+      };
+    }
+    
+    // Phase 3 (Weeks 9-12): Nutrition - maintain excellence
+    return {
+      steps: 1.0,
+      hydration: 1.0,
+      sleep: 1.0,
+    };
+  },
+
+  /**
+   * Update user's plan progress
+   */
+  async updatePlanProgress(userId: string, weeklyData: any): Promise<boolean> {
+    try {
+      const { error } = await supabase
+        .from('plan_progress')
+        .upsert({
+          user_id: userId,
+          current_week: weeklyData.week,
+          current_phase: Math.ceil(weeklyData.week / 4),
+          weekly_scores: weeklyData.scores,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'user_id' });
+
+      if (error) {
+        console.error('Error updating plan progress:', error);
+        return false;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error updating plan progress:', error);
+      return false;
+    }
+  }
 };
