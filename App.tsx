@@ -76,10 +76,8 @@ function TriHabitApp() {
     setMoodCheckInVisible(false);
   };
 
-  // Initialize targets on app start
-  useEffect(() => {
-    initializeTargets();
-  }, [initializeTargets]);
+  // V2 Engine will initialize targets automatically via AppWithAuth
+  // No need to call initializeTargets() here as it would override V2 Engine
 
   // Handle different screens
   if (currentScreen === 'rewards') {

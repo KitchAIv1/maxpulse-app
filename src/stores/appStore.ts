@@ -26,9 +26,9 @@ const initialState: AppState = {
   user: null,
   dailyMetrics: null,
   targets: {
-    steps: 10000, // Will be overridden by personalized targets
-    waterOz: 95,  // Will be overridden by personalized targets
-    sleepHr: 8,   // Will be overridden by personalized targets
+    steps: 0, // Will be set by V2 Engine
+    waterOz: 0, // Will be set by V2 Engine
+    sleepHr: 0, // Will be set by V2 Engine
   },
   currentState: {
     steps: 0, // Will be updated by step tracking service
@@ -192,15 +192,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setError: (error) => set({ error }),
 
   initializeTargets: async (customTargets) => {
-    const currentTargets = get().targets;
-    
-    // If we already have personalized targets (10000, 95, 8), don't override them
-    if (currentTargets.steps === 10000 && currentTargets.waterOz === 95 && currentTargets.sleepHr === 8) {
-      console.log('🛡️ Personalized targets already set, preventing override');
-      return;
-    }
-
-    // Always set targets immediately for UI
+    // Always set targets immediately for UI (V2 Engine has priority)
     const targets = customTargets || generateTargets();
     set({ targets });
 
@@ -215,7 +207,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.warn('Failed to sync step target:', error);
     }
 
-    // Skip database sync for now - personalized targets are the source of truth
+    // Skip database sync for now - V2 Engine is the source of truth
     console.log('✅ Targets set to:', targets);
   },
 

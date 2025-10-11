@@ -5,11 +5,10 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContainer } from '../screens/auth';
-import { authService, planService, activationService, supabase } from '../services/supabase';
+import { authService, supabase } from '../services/supabase';
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
 import SyncManager from '../services/SyncManager';
-import DatabaseInitializer from '../services/DatabaseInitializer';
 import TargetManager from '../services/TargetManager';
 
 interface AppWithAuthProps {
@@ -91,8 +90,8 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       });
     } catch (error) {
       console.error('Error loading V2 Engine targets:', error);
-      // Fallback to default targets
-      await initializeTargets();
+      // Don't fallback - let V2 Engine retry or user will see zeros indicating an issue
+      console.warn('⚠️ V2 Engine failed, targets remain at 0 to indicate issue');
     }
   };
 
@@ -162,9 +161,9 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Error completing authentication:', error);
-      // Still proceed with authentication but use default targets
+      // Still proceed with authentication but don't override V2 Engine targets
       setIsAuthenticated(true);
-      initializeTargets();
+      console.warn('⚠️ Authentication completed but V2 Engine targets may not be loaded');
     }
   };
 
