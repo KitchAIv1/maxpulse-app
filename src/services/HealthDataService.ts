@@ -68,7 +68,7 @@ class HealthDataService {
 
       const today = getTodayDate();
       
-      const dailyMetrics: Partial<DailyMetrics> = {
+      const dailyMetrics = {
         user_id: userId,
         date: today,
         steps_target: targets.steps,
@@ -80,7 +80,7 @@ class HealthDataService {
         mood_checkins_target: 7, // Daily check-ins for a week
         mood_checkins_actual: 0,
         life_score: 0,
-        finalized: false,
+        // Remove finalized for now until database schema is fixed
       };
 
       const { data, error } = await supabase
@@ -92,6 +92,7 @@ class HealthDataService {
       if (error) {
         console.error('Error initializing daily metrics:', error);
         console.error('Full error:', JSON.stringify(error, null, 2));
+        console.error('Attempted to insert:', dailyMetrics);
         return null;
       }
 

@@ -20,7 +20,7 @@ export interface DailyMetrics {
   mood_checkins_actual: number; // Number of check-ins completed
   mood_checkins_target: number; // Target check-ins (e.g., 7 per week)
   life_score: number;
-  finalized: boolean;
+  // finalized column doesn't exist in actual database
 }
 
 export interface HydrationLog {
