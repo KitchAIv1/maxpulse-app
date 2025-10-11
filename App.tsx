@@ -12,7 +12,7 @@ import {
   StatusBar,
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
+import { Badge, KPICard, CalAiTriRings, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
@@ -149,97 +149,36 @@ function TriHabitApp() {
                    </View>
                  </View>
 
-          {/* Glassmorphism Container for Rings and KPIs */}
-          <View style={styles.glassContainer}>
-            <View style={styles.kpiQuadrantLayout}>
-             {/* Upper Left - Steps */}
-             <View style={styles.upperLeft}>
-               <Text style={styles.kpiTitle}>Steps</Text>
-               <Text style={styles.kpiValue}>
-                 {displaySteps >= displayStepTarget ? (
-                   <>
-                     <Text style={styles.achievedSteps}>{displaySteps.toLocaleString()}</Text>
-                     <Text style={styles.goalIndicator}> ✅</Text>
-                   </>
-                 ) : (
-                   `${displaySteps.toLocaleString()}/${displayStepTarget.toLocaleString()}`
-                 )}
-               </Text>
-               <Text style={styles.kpiPercent}>
-                 {displaySteps >= displayStepTarget ? (
-                   <Text style={styles.exceededText}>Goal: {displayStepTarget.toLocaleString()}</Text>
-                 ) : (
-                   `${Math.round(displayStepsPct * 100)}%`
-                 )}
-               </Text>
-             </View>
-
-            {/* Upper Right - Rewards */}
-            <View style={styles.upperRight}>
-              <TouchableOpacity 
-                style={styles.rewardsKPI}
-                onPress={() => setCurrentScreen('rewards')}
-              >
-                <Text style={styles.rewardsPoints}>1,247 pts</Text>
-                <Text style={styles.rewardsLabel}>Rewards</Text>
-              </TouchableOpacity>
-            </View>
-
-             {/* Lower Left - Hydration */}
-             <View style={styles.lowerLeft}>
-               <Text style={styles.kpiTitle}>Hydration</Text>
-                       <Text style={styles.kpiValue}>
-                         {currentState.waterOz >= finalTargets.waterOz ? (
-                           <>
-                             <Text style={styles.achievedHydration}>{currentState.waterOz}</Text>
-                             <Text style={styles.goalIndicator}> ✅</Text>
-                           </>
-                         ) : (
-                           `${currentState.waterOz}/${finalTargets.waterOz} oz`
-                         )}
-                       </Text>
-                       <Text style={styles.kpiPercent}>
-                         {currentState.waterOz >= finalTargets.waterOz ? (
-                           <Text style={styles.exceededText}>Goal: {finalTargets.waterOz} oz</Text>
-                         ) : (
-                           `${Math.round((currentState.waterOz / finalTargets.waterOz) * 100)}%`
-                         )}
-                       </Text>
-             </View>
-
-             {/* Lower Right - Sleep */}
-             <View style={styles.lowerRight}>
-               <Text style={styles.kpiTitle}>Sleep</Text>
-                       <Text style={styles.kpiValue}>
-                         {currentState.sleepHr >= finalTargets.sleepHr ? (
-                           <>
-                             <Text style={styles.achievedSleep}>{formatSleepDuration(currentState.sleepHr)}</Text>
-                             <Text style={styles.goalIndicator}> ✅</Text>
-                           </>
-                         ) : (
-                           `${formatSleepDuration(currentState.sleepHr)}/${formatSleepDuration(finalTargets.sleepHr)}`
-                         )}
-                       </Text>
-                       <Text style={styles.kpiPercent}>
-                         {currentState.sleepHr >= finalTargets.sleepHr ? (
-                           <Text style={styles.exceededText}>Goal: {formatSleepDuration(finalTargets.sleepHr)}</Text>
-                         ) : (
-                           `${Math.round((currentState.sleepHr / finalTargets.sleepHr) * 100)}%`
-                         )}
-                       </Text>
-             </View>
-
-            {/* TriRings - Precisely centered based on outermost ring */}
-            <View style={styles.ringsContainer}>
-              <TriRings
-                stepsPct={displayStepsPct}
-                waterPct={currentState.waterOz / finalTargets.waterOz}
-                sleepPct={currentState.sleepHr / finalTargets.sleepHr}
-                onLifeScorePress={handleLifeScorePress}
-              />
-            </View>
+          {/* Cal AI Ring Cards */}
+          <View style={styles.ringSection}>
+            <CalAiTriRings
+              stepsPct={displayStepsPct}
+              waterPct={currentState.waterOz / finalTargets.waterOz}
+              sleepPct={currentState.sleepHr / finalTargets.sleepHr}
+              stepsData={{
+                current: displaySteps,
+                target: displayStepTarget,
+              }}
+              waterData={{
+                current: currentState.waterOz,
+                target: finalTargets.waterOz,
+              }}
+              sleepData={{
+                current: currentState.sleepHr,
+                target: finalTargets.sleepHr,
+              }}
+              onLifeScorePress={handleLifeScorePress}
+            />
           </View>
-          </View>
+
+          {/* Rewards KPI - Moved outside rings */}
+          <TouchableOpacity 
+            style={styles.rewardsCard}
+            onPress={() => setCurrentScreen('rewards')}
+          >
+            <Text style={styles.rewardsPoints}>1,247 pts</Text>
+            <Text style={styles.rewardsLabel}>Rewards</Text>
+          </TouchableOpacity>
 
           {/* Quick Actions - Below the quadrant layout */}
           <View style={styles.quickActions}>
@@ -438,14 +377,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.warning,
   },
-  ringsContainer: {
-    position: 'absolute',
-    top: 40, // Centered in the 400px container (40px + 320px + 40px)
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    zIndex: 1, // Ensure rings appear above quadrant background
-  },
   quickActions: {
     flexDirection: 'row',
     gap: theme.spacing.md,
@@ -479,107 +410,29 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     textAlign: 'center',
   },
-  glassContainer: {
-    // PRESERVED: Glassmorphism for ring container
-    backgroundColor: 'rgba(255, 255, 255, 0.08)',
-    borderRadius: theme.borderRadius.xxl,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
+  ringSection: {
     marginHorizontal: theme.spacing.base,
     marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.sm,
-    padding: theme.spacing.base,
-    shadowColor: 'rgba(0, 0, 0, 0.1)',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
   },
-  kpiQuadrantLayout: {
-    position: 'relative',
-    height: 400, // Increased height for more vertical spacing
-  },
-   upperLeft: {
-     position: 'absolute',
-     top: 10, // Moved closer to edge now that progress bars are removed
-     left: 10, // Moved closer to edge for better spacing
-     width: 120, // Increased width for better readability
-   },
-   upperRight: {
-     position: 'absolute',
-     top: 10, // Moved closer to edge for symmetry
-     right: 10, // Moved closer to edge for better spacing
-     width: 120, // Increased width for better readability
-     alignItems: 'flex-end',
-   },
-   lowerLeft: {
-     position: 'absolute',
-     bottom: 10, // Moved closer to edge now that progress bars are removed
-     left: 10, // Moved closer to edge for better spacing
-     width: 120, // Increased width for better readability
-   },
-   lowerRight: {
-     position: 'absolute',
-     bottom: 10, // Moved closer to edge for symmetry
-     right: 10, // Moved closer to edge for better spacing
-     width: 120, // Increased width for better readability
-     alignItems: 'flex-end',
-   },
-  kpiTitle: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textSecondary,
-    fontWeight: theme.typography.weights.medium,
-    marginBottom: 4,
-  },
-  kpiValue: {
-    fontSize: theme.typography.xlarge,
-    color: theme.colors.textPrimary,
-    fontWeight: theme.typography.weights.bold,
-    marginBottom: 2,
-  },
-   kpiPercent: {
-     fontSize: theme.typography.small,
-     color: theme.colors.textSecondary,
-     fontWeight: theme.typography.weights.medium,
-   },
-  rewardsKPI: {
-    alignItems: 'flex-end',
-  },
-  rewardsIcon: {
-    fontSize: 20,
-    marginBottom: 4,
+  rewardsCard: {
+    ...calAiCard.base,
+    marginHorizontal: theme.spacing.base,
+    marginBottom: theme.spacing.base,
+    paddingVertical: theme.spacing.sm,
+    alignItems: 'center',
   },
   rewardsPoints: {
-    fontSize: 16,
+    fontSize: theme.typography.large,
     color: '#FFD700',
-    fontWeight: '700',
-    marginBottom: 2,
+    fontWeight: theme.typography.weights.bold,
+    marginBottom: 4,
   },
-   rewardsLabel: {
-     fontSize: theme.typography.xsmall,
-     color: theme.colors.textSecondary,
-     fontWeight: theme.typography.weights.medium,
-   },
-   achievedSteps: {
-     color: theme.colors.textPrimary,
-     fontWeight: theme.typography.weights.bold,
-   },
-   achievedHydration: {
-     color: theme.colors.ringHydration,
-     fontWeight: theme.typography.weights.bold,
-   },
-   achievedSleep: {
-     color: theme.colors.ringSleep,
-     fontWeight: theme.typography.weights.bold,
-   },
-   goalIndicator: {
-     fontSize: theme.typography.small,
-   },
-   exceededText: {
-     fontSize: theme.typography.tiny,
-     color: theme.colors.textSecondary,
-     fontWeight: theme.typography.weights.medium,
-   },
+  rewardsLabel: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    fontWeight: theme.typography.weights.medium,
+  },
   moodCheckInCard: {
     ...calAiCard.base,
     marginBottom: theme.spacing.lg,
