@@ -16,7 +16,6 @@ import { Badge, KPICard, TriRings, BottomNavigation, WellbeingDashboard, CoachSc
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore, useNextBestAction } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
-import { useDatabaseTargets } from './src/hooks/useDatabaseTargets';
 import { formatSleepDuration } from './src/utils';
 import { RewardsScreen } from './src/screens/RewardsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
@@ -37,32 +36,19 @@ function TriHabitApp() {
     initializeTargets,
   } = useAppStore();
 
-  // Load database targets (source of truth)
-  const { 
-    steps: dbStepsTarget, 
-    waterOz: dbWaterTarget, 
-    sleepHr: dbSleepTarget,
-    isLoaded: dbTargetsLoaded,
-    error: dbTargetsError 
-  } = useDatabaseTargets();
-
   // Use real step data from step tracking store
   const { steps: realSteps, target: stepTarget, percentage: realStepsPct } = useStepProgress();
   const { isAvailable: stepTrackingAvailable, isTracking } = useStepTrackingStatus();
 
-  // Use database targets as source of truth, fallback to app store
-  const finalTargets = {
-    steps: dbTargetsLoaded ? dbStepsTarget : targets.steps,
-    waterOz: dbTargetsLoaded ? dbWaterTarget : targets.waterOz,
-    sleepHr: dbTargetsLoaded ? dbSleepTarget : targets.sleepHr,
-  };
+  // Use app store targets directly (already loaded with personalized targets)
+  const finalTargets = targets;
 
   // Use real steps if available, fallback to current state
   const displaySteps = stepTrackingAvailable ? realSteps : currentState.steps;
   const displayStepTarget = stepTrackingAvailable ? stepTarget : finalTargets.steps;
   const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / finalTargets.steps);
 
-  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore(finalTargets);
+  const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
   const nextAction = useNextBestAction();
 
   // Handle wellbeing dashboard navigation
@@ -160,12 +146,9 @@ function TriHabitApp() {
                    <View>
                      <Text style={styles.dateText}>{dateFmt}</Text>
                      <Text style={styles.titleText}>Your Daily Health</Text>
-                     {dbTargetsError && (
-                       <Text style={styles.warningText}>⚠️ Using default targets - {dbTargetsError}</Text>
-                     )}
-                     {dbTargetsLoaded && (
-                       <Text style={styles.successText}>✅ Database targets loaded</Text>
-                     )}
+            <Text style={styles.successText}>
+              ✅ Targets: {finalTargets.steps.toLocaleString()} steps, {finalTargets.waterOz} oz, {finalTargets.sleepHr}h
+            </Text>
                    </View>
                  </View>
 

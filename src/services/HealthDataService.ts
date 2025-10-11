@@ -79,8 +79,8 @@ class HealthDataService {
         sleep_hr_actual: 0,
         mood_checkins_target: 7, // Daily check-ins for a week
         mood_checkins_actual: 0,
-        life_score: 0,
-        // Remove finalized for now until database schema is fixed
+        // life_score is a generated column - don't insert value
+        // finalized column doesn't exist in actual database
       };
 
       console.log('Attempting to insert daily metrics:', dailyMetrics);

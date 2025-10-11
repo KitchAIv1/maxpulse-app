@@ -10,6 +10,7 @@ import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
 import SyncManager from '../services/SyncManager';
 import DatabaseInitializer from '../services/DatabaseInitializer';
+import TargetManager from '../services/TargetManager';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
@@ -47,14 +48,12 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       
       setIsAuthenticated(true);
       
-      // Initialize sync manager and load data in background (non-blocking)
+      // Initialize sync manager in background (non-blocking)
       setTimeout(async () => {
         try {
           const syncManager = SyncManager.getInstance();
           await syncManager.initialize();
-          
-          // Load today's data in background
-          await loadTodayData();
+          console.log('✅ Background sync initialized');
         } catch (error) {
           console.warn('Background initialization failed:', error);
           // Don't break the app - it will work without background sync
@@ -68,24 +67,36 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
   const loadUserTargets = async (userId: string) => {
     try {
-      // Try to get current week targets from the plan service
-      const dynamicTargets = await planService.getCurrentWeekTargets(userId);
+      console.log('🎯 Loading user targets for:', userId);
       
-      if (dynamicTargets) {
-        // Initialize app store with dynamic targets
-        initializeTargets({
-          steps: dynamicTargets.steps,
-          waterOz: dynamicTargets.waterOz,
-          sleepHr: dynamicTargets.sleepHr,
+      // Get user's activation code from profile
+      const { data: profile } = await supabase
+        .from('app_user_profiles')
+        .select('activation_code_id')
+        .eq('user_id', userId)
+        .single();
+
+      if (profile?.activation_code_id) {
+        // Load personalized targets directly from activation code
+        const personalizedTargets = await TargetManager.getUserTargets(profile.activation_code_id);
+        
+        console.log('✅ Loaded personalized targets:', personalizedTargets);
+        
+        await initializeTargets({
+          steps: personalizedTargets.steps,
+          waterOz: personalizedTargets.waterOz,
+          sleepHr: personalizedTargets.sleepHr,
         });
+        
+        console.log('🎯 Dashboard should now show:', personalizedTargets);
       } else {
-        // Fallback to default targets if no plan data available
-        initializeTargets();
+        console.warn('No activation code found, using defaults');
+        await initializeTargets();
       }
     } catch (error) {
       console.error('Error loading user targets:', error);
       // Fallback to default targets
-      initializeTargets();
+      await initializeTargets();
     }
   };
 
@@ -133,22 +144,20 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
           console.error('Failed to save profile after auth:', profileError);
         }
 
-        // For new users, initialize complete database setup
-        console.log('Initializing database for new user with activation code:', profile.activation_code_id);
+        // For new users, load personalized targets immediately
+        console.log('🎯 Loading personalized targets for new user:', profile.activation_code_id);
         
-        const success = await DatabaseInitializer.initializeUserData(
-          authenticatedUser.id, 
-          profile.activation_code_id
-        );
+        const personalizedTargets = await TargetManager.getUserTargets(profile.activation_code_id);
         
-        if (success) {
-          console.log('Database initialization successful');
-          // Load the newly created targets
-          await loadUserTargets(authenticatedUser.id);
-        } else {
-          console.error('Database initialization failed, using defaults');
-          await initializeTargets();
-        }
+        console.log('✅ New user personalized targets:', personalizedTargets);
+        
+        await initializeTargets({
+          steps: personalizedTargets.steps,
+          waterOz: personalizedTargets.waterOz,
+          sleepHr: personalizedTargets.sleepHr,
+        });
+        
+        console.log('🎯 Dashboard initialized with personalized targets');
       } else {
         // For existing users, load their current targets
         await loadUserTargets(authenticatedUser.id);

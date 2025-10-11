@@ -27,6 +27,7 @@ interface StepTrackingStore extends StepTrackingState {
   setTrackingStatus: (status: StepTrackingStatus) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
+  updateTarget: (newTarget: number) => void;
   reset: () => void;
   
   // Computed getters
@@ -39,7 +40,7 @@ interface StepTrackingStore extends StepTrackingState {
 const initialState: StepTrackingState = {
   // Current day data
   todaySteps: 0,
-  todayTarget: 8000,
+  todayTarget: 10000, // Will be synced with app store personalized targets
   lastUpdate: null,
   
   // Live tracking
@@ -318,6 +319,14 @@ export const useStepTrackingStore = create<StepTrackingStore>()(
      */
     clearError: () => {
       set({ lastError: null });
+    },
+
+    /**
+     * Update step target
+     */
+    updateTarget: (newTarget) => {
+      console.log('🎯 Updating step target from', get().todayTarget, 'to', newTarget);
+      set({ todayTarget: newTarget });
     },
 
     /**

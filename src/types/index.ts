@@ -19,7 +19,7 @@ export interface DailyMetrics {
   sleep_hr_target: number;
   mood_checkins_actual: number; // Number of check-ins completed
   mood_checkins_target: number; // Target check-ins (e.g., 7 per week)
-  life_score: number;
+  life_score?: number; // Generated column - optional
   // finalized column doesn't exist in actual database
 }
 

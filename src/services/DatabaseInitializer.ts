@@ -33,7 +33,7 @@ export class DatabaseInitializer {
         sleep_hr_actual: 0,
         mood_checkins_target: 7,
         mood_checkins_actual: 0,
-        life_score: 0,
+        // life_score is a generated column - don't insert value
       };
 
       console.log('Creating daily metrics record:', dailyMetricsData);

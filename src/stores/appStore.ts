@@ -26,9 +26,9 @@ const initialState: AppState = {
   user: null,
   dailyMetrics: null,
   targets: {
-    steps: 8000,
-    waterOz: 80,
-    sleepHr: 8,
+    steps: 10000, // Will be overridden by personalized targets
+    waterOz: 95,  // Will be overridden by personalized targets
+    sleepHr: 8,   // Will be overridden by personalized targets
   },
   currentState: {
     steps: 0, // Will be updated by step tracking service
@@ -195,28 +195,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
     // Always set targets immediately for UI
     const targets = customTargets || generateTargets();
     set({ targets });
-    
-    // Try database initialization in background if user is authenticated
-    const { user } = get();
-    if (user) {
-      try {
-        await AppStoreActions.initializeTargets(
-          user.id,
-          (dbTargets) => {
-            // Only update if different from current
-            const current = get().targets;
-            if (JSON.stringify(current) !== JSON.stringify(dbTargets)) {
-              set({ targets: dbTargets });
-            }
-          },
-          (error) => console.warn('Database target sync failed:', error),
-          customTargets
-        );
-      } catch (error) {
-        console.warn('Failed to sync targets to database:', error);
-        // Keep the UI targets - don't break the experience
+
+    // Sync step target with step tracking store
+    try {
+      const { useStepTrackingStore } = await import('./stepTrackingStore');
+      const stepStore = useStepTrackingStore.getState();
+      if (stepStore.updateTarget) {
+        stepStore.updateTarget(targets.steps);
       }
+    } catch (error) {
+      console.warn('Failed to sync step target:', error);
     }
+
+    // Skip database sync for now - personalized targets are the source of truth
+    console.log('✅ Targets set to:', targets);
   },
 
   reset: () => set(initialState),

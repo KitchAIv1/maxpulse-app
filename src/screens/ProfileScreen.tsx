@@ -16,6 +16,7 @@ import { supabase, authService } from '../services/supabase';
 import { DailyMetrics, UserProfileFromActivation } from '../types';
 import { formatSleepDuration } from '../utils';
 import DatabaseInitializer from '../services/DatabaseInitializer';
+import TargetManager from '../services/TargetManager';
 
 interface ProfileScreenProps {
   onBack?: () => void;
@@ -26,6 +27,12 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
   const [profileData, setProfileData] = useState<UserProfileFromActivation | null>(null);
   const [dailyMetrics, setDailyMetrics] = useState<DailyMetrics | null>(null);
   const [planProgress, setPlanProgress] = useState<any>(null);
+  const [personalizedTargets, setPersonalizedTargets] = useState<{
+    steps: number;
+    waterOz: number;
+    sleepHr: number;
+    source: 'personalized' | 'default';
+  } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -50,6 +57,13 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
         console.error('Error loading profile:', profileError);
       } else {
         setProfileData(profile);
+        
+        // Load personalized targets directly from activation code
+        if (profile.activation_code_id) {
+          const targets = await TargetManager.getUserTargets(profile.activation_code_id);
+          setPersonalizedTargets(targets);
+          console.log('🎯 Loaded personalized targets:', targets);
+        }
       }
 
       // Load today's daily metrics
@@ -170,10 +184,48 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           )}
         </View>
 
+        {/* Personalized Targets (Source of Truth) */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Personalized Targets ({personalizedTargets?.source || 'loading'})</Text>
+          <Text style={styles.sectionSubtitle}>Direct from activation code</Text>
+          {personalizedTargets ? (
+            <>
+              <View style={styles.targetCard}>
+                <Text style={styles.targetIcon}>🚶‍♂️</Text>
+                <View style={styles.targetInfo}>
+                  <Text style={styles.targetLabel}>Steps Target</Text>
+                  <Text style={styles.targetValue}>{personalizedTargets.steps.toLocaleString()}</Text>
+                  <Text style={styles.targetCurrent}>UI Shows: {targets.steps.toLocaleString()}</Text>
+                </View>
+              </View>
+              <View style={styles.targetCard}>
+                <Text style={styles.targetIcon}>💧</Text>
+                <View style={styles.targetInfo}>
+                  <Text style={styles.targetLabel}>Hydration Target</Text>
+                  <Text style={styles.targetValue}>{personalizedTargets.waterOz} oz</Text>
+                  <Text style={styles.targetCurrent}>UI Shows: {targets.waterOz} oz</Text>
+                </View>
+              </View>
+              <View style={styles.targetCard}>
+                <Text style={styles.targetIcon}>😴</Text>
+                <View style={styles.targetInfo}>
+                  <Text style={styles.targetLabel}>Sleep Target</Text>
+                  <Text style={styles.targetValue}>{personalizedTargets.sleepHr}h</Text>
+                  <Text style={styles.targetCurrent}>UI Shows: {targets.sleepHr}h</Text>
+                </View>
+              </View>
+            </>
+          ) : (
+            <Text style={styles.noData}>
+              {isLoading ? 'Loading personalized targets...' : 'No activation code found'}
+            </Text>
+          )}
+        </View>
+
         {/* Daily Metrics from Database */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Daily Targets (daily_metrics)</Text>
-          <Text style={styles.sectionSubtitle}>Source of truth from database</Text>
+          <Text style={styles.sectionTitle}>Daily Metrics (Database Status)</Text>
+          <Text style={styles.sectionSubtitle}>Database record status</Text>
           {dailyMetrics ? (
             <>
               <View style={styles.targetCard}>
@@ -290,6 +342,26 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
           <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
             <Text style={styles.refreshButtonText}>Refresh Data</Text>
           </TouchableOpacity>
+          
+          {personalizedTargets && personalizedTargets.source === 'personalized' && (
+            <TouchableOpacity 
+              style={styles.applyButton} 
+              onPress={async () => {
+                if (personalizedTargets) {
+                  console.log('🎯 Applying personalized targets to UI:', personalizedTargets);
+                  const { initializeTargets } = useAppStore.getState();
+                  await initializeTargets({
+                    steps: personalizedTargets.steps,
+                    waterOz: personalizedTargets.waterOz,
+                    sleepHr: personalizedTargets.sleepHr,
+                  });
+                  console.log('✅ Targets applied successfully!');
+                }
+              }}
+            >
+              <Text style={styles.applyButtonText}>Apply Personalized Targets to UI</Text>
+            </TouchableOpacity>
+          )}
           
           {profileData && !dailyMetrics && (
             <TouchableOpacity 
@@ -462,6 +534,20 @@ const styles = StyleSheet.create({
   },
   initButtonText: {
     color: '#22c55e',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  applyButton: {
+    backgroundColor: 'rgba(59,130,246,0.2)',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(59,130,246,0.3)',
+  },
+  applyButtonText: {
+    color: '#3b82f6',
     fontSize: 16,
     fontWeight: '600',
   },
