@@ -27,7 +27,7 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
   onDateSelect,
   disabled = false,
 }) => {
-  const [currentWeekOffset, setCurrentWeekOffset] = useState(0); // 0 = current week, 1 = last week, 2 = two weeks ago
+  const [currentWeekOffset, setCurrentWeekOffset] = useState(2); // Array index: 0 = 2 weeks ago, 1 = last week, 2 = current week
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
   
@@ -42,19 +42,23 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
     const diffMs = today.getTime() - selected.getTime();
     const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
     
-    // Calculate week offset
-    const weekOffset = Math.floor(diffDays / 7);
+    // Calculate week offset from today
+    const weeksAgo = Math.floor(diffDays / 7);
     
-    if (weekOffset !== currentWeekOffset && weekOffset >= 0 && weekOffset <= 2) {
-      setCurrentWeekOffset(weekOffset);
+    // Map to array index: current week (0 weeks ago) = index 2, last week (1 week ago) = index 1, etc.
+    const arrayIndex = 2 - weeksAgo;
+    
+    if (arrayIndex !== currentWeekOffset && arrayIndex >= 0 && arrayIndex <= 2) {
+      setCurrentWeekOffset(arrayIndex);
       // Scroll to the correct week
       setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: weekOffset * screenWidth, animated: true });
+        scrollViewRef.current?.scrollTo({ x: arrayIndex * screenWidth, animated: true });
       }, 100);
     }
   }, [selectedDate]);
   
   // Generate 3 weeks of data (current week + 2 past weeks)
+  // Order: [2 weeks ago, last week, current week] so swiping left goes to older dates
   const generateThreeWeeks = (): DayItem[][] => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -62,8 +66,8 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
     const weeks: DayItem[][] = [];
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     
-    // Generate 3 weeks
-    for (let weekOffset = 0; weekOffset <= 2; weekOffset++) {
+    // Generate 3 weeks in reverse order (oldest first)
+    for (let weekOffset = 2; weekOffset >= 0; weekOffset--) {
       const week: DayItem[] = [];
       
       // Calculate start of this week (Monday)
@@ -189,7 +193,7 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
       
       {/* Week indicator dots */}
       <View style={styles.indicatorContainer}>
-        {[0, 1, 2].map((index) => (
+        {[2, 1, 0].map((index) => (
           <View
             key={`indicator-${index}`}
             style={[
