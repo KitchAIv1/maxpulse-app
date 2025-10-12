@@ -1,11 +1,11 @@
 // Calendar Bar Component
 // 7-day horizontal week selector with swipeable 3-week navigation
 
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Dimensions, Animated } from 'react-native';
 import { theme } from '../../utils/theme';
 
-const { width: screenWidth } = Dimensions.get('window');
+const { width: screenWidth} = Dimensions.get('window');
 
 interface DayItem {
   day: string; // Mon, Tue, etc.
@@ -22,7 +22,7 @@ interface CalendarBarProps {
   disabled?: boolean;
 }
 
-export const CalendarBar: React.FC<CalendarBarProps> = ({
+const CalendarBarComponent: React.FC<CalendarBarProps> = ({
   selectedDate,
   onDateSelect,
   disabled = false,
@@ -30,6 +30,13 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
   const [currentWeekOffset, setCurrentWeekOffset] = useState(2); // Array index: 0 = 2 weeks ago, 1 = last week, 2 = current week
   const scrollViewRef = useRef<ScrollView>(null);
   const scrollX = useRef(new Animated.Value(0)).current;
+  
+  // Initial scroll to current week on mount
+  useEffect(() => {
+    setTimeout(() => {
+      scrollViewRef.current?.scrollTo({ x: 2 * screenWidth, animated: false });
+    }, 100);
+  }, []);
   
   // Calculate which week the selected date belongs to
   useEffect(() => {
@@ -57,11 +64,17 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
     }
   }, [selectedDate]);
   
-  // Generate 3 weeks of data (current week + 2 past weeks)
-  // Order: [2 weeks ago, last week, current week] so swiping left goes to older dates
-  const generateThreeWeeks = (): DayItem[][] => {
+  // Memoize generated weeks data to avoid unnecessary recalculations
+  const threeWeeks = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
+    
+    const formatDate = (date: Date): string => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
     
     const weeks: DayItem[][] = [];
     const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
@@ -81,7 +94,7 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
         const date = new Date(weekStart);
         date.setDate(weekStart.getDate() + dayIndex);
         
-        const dateString = formatDateYYYYMMDD(date);
+        const dateString = formatDate(date);
         const isToday = date.toDateString() === today.toDateString();
         const isSelected = dateString === selectedDate;
         const isFuture = date > today;
@@ -100,30 +113,21 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
     }
     
     return weeks;
-  };
+  }, [selectedDate]);
   
-  const formatDateYYYYMMDD = (date: Date): string => {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-  };
-  
-  const threeWeeks = generateThreeWeeks();
-  
-  const handleDayPress = (dayItem: DayItem) => {
+  const handleDayPress = useCallback((dayItem: DayItem) => {
     if (dayItem.isFuture || disabled) return;
     onDateSelect(dayItem.fullDate);
-  };
+  }, [disabled, onDateSelect]);
   
-  const handleScroll = (event: any) => {
+  const handleScroll = useCallback((event: any) => {
     const offsetX = event.nativeEvent.contentOffset.x;
     const newWeekOffset = Math.round(offsetX / screenWidth);
     
     if (newWeekOffset !== currentWeekOffset && newWeekOffset >= 0 && newWeekOffset <= 2) {
       setCurrentWeekOffset(newWeekOffset);
     }
-  };
+  }, [currentWeekOffset]);
   
   const renderWeek = (week: DayItem[], weekIndex: number) => (
     <View key={`week-${weekIndex}`} style={styles.weekContainer}>
@@ -206,6 +210,15 @@ export const CalendarBar: React.FC<CalendarBarProps> = ({
     </View>
   );
 };
+
+// Memoize component to prevent unnecessary re-renders
+export const CalendarBar = React.memo(CalendarBarComponent, (prevProps, nextProps) => {
+  return (
+    prevProps.selectedDate === nextProps.selectedDate &&
+    prevProps.disabled === nextProps.disabled &&
+    prevProps.onDateSelect === nextProps.onDateSelect
+  );
+});
 
 const styles = StyleSheet.create({
   container: {

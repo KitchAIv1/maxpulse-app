@@ -7,18 +7,24 @@ import { AppState, DailyMetrics, User, MoodCheckIn } from '../types';
 import { generateTargets, getTodayDate } from '../utils';
 import AppStoreActions from '../services/AppStoreActions';
 import HealthDataService from '../services/HealthDataService';
+import { dateMetricsCache } from '../utils/dateMetricsCache';
 
 interface AppStore extends AppState {
   // Date navigation state
   selectedDate: string; // YYYY-MM-DD format
   isViewingPastDate: boolean;
+  todayStateCache: {
+    currentState: AppState['currentState'];
+    targets: AppState['targets'];
+    moodCheckInFrequency: AppState['moodCheckInFrequency'];
+  } | null;
   
   // Actions
   setUser: (user: User | null) => void;
   setDailyMetrics: (metrics: DailyMetrics | null) => void;
   updateCurrentState: (updates: Partial<AppState['currentState']>) => void;
   addHydration: (amount: number) => Promise<void>;
-  updateSteps: (steps: number) => void;
+  updateSteps: (steps: number) => Promise<void>;
   updateSleep: (hours: number) => Promise<void>;
   addMoodCheckIn: (checkIn: Omit<MoodCheckIn, 'id' | 'user_id' | 'timestamp'>) => Promise<void>;
   setLoading: (loading: boolean) => void;
@@ -56,10 +62,14 @@ const initialState: AppState = {
   error: null,
 };
 
+// Request deduplication map to prevent concurrent DB queries for same date
+const pendingRequests = new Map<string, Promise<void>>();
+
 export const useAppStore = create<AppStore>((set, get) => ({
   ...initialState,
   selectedDate: getTodayDate(),
   isViewingPastDate: false,
+  todayStateCache: null,
 
   setUser: (user) => set({ user }),
 
@@ -93,16 +103,73 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const { user } = get();
     if (!user) return;
 
-    // Load data in background without blocking UI
+    // First, try to restore today's persisted state from AsyncStorage
+    const today = getTodayDate();
+    if (__DEV__) console.log(`🔍 Looking for AsyncStorage key: @todayState_${today}`);
+    let hasPersistedState = false;
+    try {
+      const persistedState = await AsyncStorage.getItem(`@todayState_${today}`);
+      if (__DEV__) console.log('📱 AsyncStorage raw value:', persistedState ? persistedState.substring(0, 100) + '...' : 'NULL');
+      
+      if (persistedState) {
+        const state = JSON.parse(persistedState);
+        if (__DEV__) console.log('✅ Restored today\'s persisted state:', state);
+        set({
+          currentState: {
+            steps: state.steps || 0,
+            waterOz: state.waterOz || 0,
+            sleepHr: state.sleepHr || 0,
+          },
+          moodCheckInFrequency: state.moodCheckInFrequency || {
+            total_checkins: 0,
+            target_checkins: 7,
+            current_streak: 0,
+            last_checkin: null,
+          }
+        });
+        hasPersistedState = true;
+      } else {
+        if (__DEV__) console.log('⚠️ No persisted state found in AsyncStorage for today');
+      }
+    } catch (error) {
+      console.warn('Failed to restore today state:', error);
+    }
+
+    // Load data in background WITHOUT overriding currentState if we have persisted data
     try {
       await AppStoreActions.loadTodayData(
         user.id,
-        get().setDailyMetrics,
+        (dailyMetrics) => {
+          // Only update targets and dailyMetrics from DB
+          if (dailyMetrics) {
+            if (hasPersistedState) {
+              // Keep currentState AND moodCheckInFrequency from AsyncStorage, only update targets and dailyMetrics
+              set({
+                dailyMetrics,
+                targets: {
+                  steps: dailyMetrics.steps_target,
+                  waterOz: dailyMetrics.water_oz_target,
+                  sleepHr: dailyMetrics.sleep_hr_target,
+                },
+                // Don't override currentState or moodCheckInFrequency - they were restored from AsyncStorage
+              });
+            } else {
+              // No persisted state, use DB data for everything
+              get().setDailyMetrics(dailyMetrics);
+            }
+          } else {
+            // No DB data yet - this is fine for first run or offline mode
+            if (__DEV__) console.log('No DB metrics found - using current state (AsyncStorage or zeros)');
+          }
+        },
         () => {}, // Don't show loading spinner for background sync
-        (error) => console.warn('Failed to load today data:', error) // Don't break UI
+        (error) => {
+          // Only warn in dev mode - missing DB data is normal on first run
+          if (__DEV__) console.warn('Failed to load today data:', error);
+        }
       );
     } catch (error) {
-      console.warn('Background data load failed:', error);
+      if (__DEV__) console.warn('Background data load failed:', error);
       // Don't break the app - UI will work with current state
     }
   },
@@ -116,12 +183,31 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const { user, currentState } = get();
     
     // Always update UI immediately (optimistic update)
+    const newWaterOz = currentState.waterOz + amount;
     set((state) => ({
       currentState: {
         ...state.currentState,
-        waterOz: state.currentState.waterOz + amount,
+        waterOz: newWaterOz,
       },
     }));
+
+    // Persist today's state to AsyncStorage for reload persistence
+    const today = getTodayDate();
+    try {
+      const stateToSave = {
+        steps: get().currentState.steps,
+        waterOz: newWaterOz,
+        sleepHr: get().currentState.sleepHr,
+        moodCheckInFrequency: get().moodCheckInFrequency,
+      };
+      await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify(stateToSave));
+      if (__DEV__) console.log('💾 Saved to AsyncStorage:', stateToSave);
+    } catch (error) {
+      console.warn('Failed to persist today state:', error);
+    }
+
+    // Invalidate today's cache since data changed
+    dateMetricsCache.invalidate(today);
 
     // Try database sync in background if user is authenticated
     if (user) {
@@ -140,10 +226,15 @@ export const useAppStore = create<AppStore>((set, get) => ({
     }
   },
 
-  updateSteps: (steps) => {
+  updateSteps: async (steps) => {
     set((state) => ({
       currentState: { ...state.currentState, steps },
     }));
+
+    // DON'T persist to AsyncStorage here!
+    // Steps are updated automatically by pedometer, not user action
+    // Persisting here causes race condition that overwrites water/sleep with zeros
+    // Water and sleep should only be persisted when user manually tracks them
   },
 
   updateSleep: async (hours) => {
@@ -153,6 +244,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
     set((state) => ({
       currentState: { ...state.currentState, sleepHr: hours },
     }));
+
+    // Persist today's state to AsyncStorage for reload persistence
+    const today = getTodayDate();
+    try {
+      const stateToSave = {
+        steps: get().currentState.steps,
+        waterOz: get().currentState.waterOz,
+        sleepHr: hours,
+        moodCheckInFrequency: get().moodCheckInFrequency,
+      };
+      await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify(stateToSave));
+      if (__DEV__) console.log('💾 Saved to AsyncStorage:', stateToSave);
+    } catch (error) {
+      console.warn('Failed to persist today state:', error);
+    }
+
+    // Invalidate today's cache since data changed
+    dateMetricsCache.invalidate(today);
 
     // Try database sync in background if user is authenticated
     if (user) {
@@ -183,6 +292,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
         current_streak: state.moodCheckInFrequency.current_streak + 1,
       },
     }));
+
+    // Persist today's state to AsyncStorage for reload persistence
+    const today = getTodayDate();
+    try {
+      await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify({
+        steps: get().currentState.steps,
+        waterOz: get().currentState.waterOz,
+        sleepHr: get().currentState.sleepHr,
+        moodCheckInFrequency: get().moodCheckInFrequency,
+      }));
+    } catch (error) {
+      console.warn('Failed to persist today state:', error);
+    }
 
     // Try database sync in background if user is authenticated
     if (user) {
@@ -227,6 +349,13 @@ export const useAppStore = create<AppStore>((set, get) => ({
   setSelectedDate: async (date: string) => {
     const today = getTodayDate();
     const isViewingPast = date !== today;
+    const currentState = get();
+    
+    // Prevent unnecessary re-execution if already on this date
+    if (currentState.selectedDate === date) {
+      if (__DEV__) console.log(`Already viewing ${date}, skipping...`);
+      return;
+    }
     
     // Validate date is within range (past 3 weeks)
     const healthService = HealthDataService.getInstance();
@@ -235,7 +364,19 @@ export const useAppStore = create<AppStore>((set, get) => ({
       return;
     }
     
-    // Update selected date and viewing state
+    // If switching FROM today TO a past date, cache today's state
+    if (!currentState.isViewingPastDate && isViewingPast) {
+      if (__DEV__) console.log('📦 Caching today\'s state before viewing past date');
+      set({
+        todayStateCache: {
+          currentState: { ...currentState.currentState },
+          targets: { ...currentState.targets },
+          moodCheckInFrequency: { ...currentState.moodCheckInFrequency },
+        }
+      });
+    }
+    
+    // Update selected date and viewing state FIRST
     set({ 
       selectedDate: date,
       isViewingPastDate: isViewingPast
@@ -248,8 +389,56 @@ export const useAppStore = create<AppStore>((set, get) => ({
       console.warn('Failed to persist selected date:', error);
     }
     
-    // Load metrics for selected date
-    await get().loadDateMetrics(date);
+    // Load data based on date
+    if (isViewingPast) {
+      // Viewing a past date - load from database
+      await get().loadDateMetrics(date);
+    } else {
+      // Returning to today - restore from AsyncStorage (source of truth!)
+      const cache = get().todayStateCache;
+      if (cache) {
+        if (__DEV__) console.log('📤 Restoring today\'s state from AsyncStorage');
+        
+        // Restore from AsyncStorage, NOT from in-memory cache (which might be stale)
+        try {
+          const persistedState = await AsyncStorage.getItem(`@todayState_${date}`);
+          if (persistedState) {
+            const state = JSON.parse(persistedState);
+            if (__DEV__) console.log('✅ Restored from AsyncStorage:', state);
+            set({
+              currentState: {
+                steps: state.steps || 0,
+                waterOz: state.waterOz || 0,
+                sleepHr: state.sleepHr || 0,
+              },
+              moodCheckInFrequency: state.moodCheckInFrequency || cache.moodCheckInFrequency,
+              targets: cache.targets, // Keep targets from cache
+              todayStateCache: null, // Clear cache after restoring
+            });
+          } else {
+            // No AsyncStorage data, use cache as fallback
+            if (__DEV__) console.log('⚠️ No AsyncStorage data, using cached state');
+            set({
+              currentState: cache.currentState,
+              targets: cache.targets,
+              moodCheckInFrequency: cache.moodCheckInFrequency,
+              todayStateCache: null,
+            });
+          }
+        } catch (error) {
+          console.warn('Failed to restore from AsyncStorage:', error);
+          // Fallback to cache
+          set({
+            currentState: cache.currentState,
+            targets: cache.targets,
+            moodCheckInFrequency: cache.moodCheckInFrequency,
+            todayStateCache: null,
+          });
+        }
+      } else {
+        if (__DEV__) console.log('⚠️ No cached state found - keeping current state');
+      }
+    }
   },
 
   loadDateMetrics: async (date: string) => {
@@ -259,14 +448,20 @@ export const useAppStore = create<AppStore>((set, get) => ({
       return;
     }
     
-    set({ isLoading: true, error: null });
+    // Check if there's already a pending request for this date (deduplication)
+    const existingRequest = pendingRequests.get(date);
+    if (existingRequest) {
+      console.log(`⏳ Request for ${date} already in progress, waiting...`);
+      return existingRequest;
+    }
     
-    try {
-      const healthService = HealthDataService.getInstance();
-      const metrics = await healthService.getMetricsByDate(user.id, date);
+    // Check cache first
+    const cachedMetrics = dateMetricsCache.get(date);
+    if (cachedMetrics !== undefined) {
+      console.log(`✨ Cache hit for ${date}`);
+      const metrics = cachedMetrics;
       
       if (metrics) {
-        // Update state with fetched metrics
         set({
           dailyMetrics: metrics,
           currentState: {
@@ -287,7 +482,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
           },
         });
       } else {
-        // No data for this date - show zeros but keep targets
         const currentTargets = get().targets;
         set({
           dailyMetrics: null,
@@ -298,7 +492,6 @@ export const useAppStore = create<AppStore>((set, get) => ({
             current_streak: 0,
             last_checkin: null,
           },
-          // Keep targets unchanged if no metrics exist
           targets: currentTargets.steps > 0 ? currentTargets : {
             steps: 10000,
             waterOz: 64,
@@ -306,12 +499,80 @@ export const useAppStore = create<AppStore>((set, get) => ({
           }
         });
       }
-    } catch (error) {
-      console.error('Failed to load date metrics:', error);
-      set({ error: 'Failed to load data for selected date' });
-    } finally {
-      set({ isLoading: false });
+      return;
     }
+    
+    // Cache miss - fetch from database
+    set({ isLoading: true, error: null });
+    
+    const requestPromise = (async () => {
+      try {
+        const healthService = HealthDataService.getInstance();
+        const metrics = await healthService.getMetricsByDate(user.id, date);
+        
+        // Store in cache
+        dateMetricsCache.set(date, metrics);
+        
+        if (metrics) {
+          // Update state with fetched metrics
+          if (__DEV__) {
+            console.log(`📊 Loaded metrics for ${date}:`, {
+              steps: `${metrics.steps_actual}/${metrics.steps_target}`,
+              water: `${metrics.water_oz_actual}/${metrics.water_oz_target}`,
+              sleep: `${metrics.sleep_hr_actual}/${metrics.sleep_hr_target}`,
+              mood: `${metrics.mood_checkins_actual}/${metrics.mood_checkins_target}`
+            });
+          }
+          
+          set({
+            dailyMetrics: metrics,
+            currentState: {
+              steps: metrics.steps_actual,
+              waterOz: metrics.water_oz_actual,
+              sleepHr: metrics.sleep_hr_actual,
+            },
+            targets: {
+              steps: metrics.steps_target,
+              waterOz: metrics.water_oz_target,
+              sleepHr: metrics.sleep_hr_target,
+            },
+            moodCheckInFrequency: {
+              total_checkins: metrics.mood_checkins_actual,
+              target_checkins: metrics.mood_checkins_target,
+              current_streak: 0,
+              last_checkin: null,
+            },
+          });
+        } else {
+          // No data for this date - show zeros but keep targets
+          const currentTargets = get().targets;
+          set({
+            dailyMetrics: null,
+            currentState: { steps: 0, waterOz: 0, sleepHr: 0 },
+            moodCheckInFrequency: {
+              total_checkins: 0,
+              target_checkins: 7,
+              current_streak: 0,
+              last_checkin: null,
+            },
+            targets: currentTargets.steps > 0 ? currentTargets : {
+              steps: 10000,
+              waterOz: 64,
+              sleepHr: 8,
+            }
+          });
+        }
+      } catch (error) {
+        console.error('Failed to load date metrics:', error);
+        set({ error: 'Failed to load data for selected date' });
+      } finally {
+        set({ isLoading: false });
+        pendingRequests.delete(date);
+      }
+    })();
+    
+    pendingRequests.set(date, requestPromise);
+    return requestPromise;
   },
 
   reset: () => set({ ...initialState, selectedDate: getTodayDate(), isViewingPastDate: false }),

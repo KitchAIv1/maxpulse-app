@@ -211,7 +211,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
 const styles = StyleSheet.create({
   container: {
     alignItems: 'center',
-    gap: theme.spacing.base,
+    gap: theme.spacing.sm,
   },
   threeCardRow: {
     flexDirection: 'row',

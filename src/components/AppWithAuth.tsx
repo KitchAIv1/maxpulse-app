@@ -45,6 +45,9 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       // Load user's dynamic targets from their plan
       await loadUserTargets(currentUser.id);
       
+      // Load today's data (will restore from AsyncStorage if available)
+      await loadTodayData();
+      
       setIsAuthenticated(true);
       
       // Initialize sync manager in background (non-blocking)
