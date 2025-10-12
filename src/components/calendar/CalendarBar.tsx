@@ -218,9 +218,9 @@ const styles = StyleSheet.create({
   weekContainer: {
     width: screenWidth,
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'space-evenly',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.base,
+    paddingHorizontal: theme.spacing.sm,
   },
   dayButton: {
     flex: 1,
