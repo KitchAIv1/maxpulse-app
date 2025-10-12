@@ -226,30 +226,18 @@ class StepTrackingService implements IStepTrackingService {
 
   /**
    * Start Android live tracking using step sensor
+   * NOTE: This requires a development/production build - will not work in Expo Go
    */
   private async startAndroidLiveTracking(): Promise<void> {
     if (Platform.OS !== 'android') return;
 
     try {
-      // For Expo Go, use simulated sensor updates
-      // In a real dev build, this would use native TYPE_STEP_COUNTER sensor
-      console.log('Starting simulated Android step tracking for Expo Go');
+      // In Expo Go, this will do nothing - steps will remain at database value (0)
+      // In a real dev/prod build, this would use native TYPE_STEP_COUNTER sensor
+      console.log('Android step tracking requires dev/prod build - not available in Expo Go');
+      console.log('Steps will display database value only (0 until pedometer is enabled)');
       
-      this.liveUpdateInterval = setInterval(() => {
-        // Simulate realistic step increments (1-12 steps every 2 seconds)
-        const stepIncrement = Math.floor(Math.random() * 12) + 1;
-        
-        const stepData: StepData = {
-          steps: stepIncrement,
-          timestamp: new Date().toISOString(),
-          source: 'sensor',
-          confidence: 'medium',
-        };
-
-        this.handleStepUpdate(stepData);
-      }, this.config.liveUpdateInterval);
-
-      console.log('Android simulated tracking started');
+      // No mock data - let it show actual database value
     } catch (error) {
       console.error('Android live tracking failed:', error);
       throw error;

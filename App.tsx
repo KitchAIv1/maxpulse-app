@@ -42,17 +42,14 @@ function TriHabitApp() {
     initializeTargets,
   } = useAppStore();
 
-  // Use real step data from step tracking store
-  const { steps: realSteps, target: stepTarget, percentage: realStepsPct } = useStepProgress();
-  const { isAvailable: stepTrackingAvailable, isTracking } = useStepTrackingStatus();
-
-  // Use app store targets directly (already loaded with personalized targets)
+  // Always use database values - no fallbacks or mock data
+  // Step tracking service will update database when pedometer is available (dev/prod build)
+  // In Expo Go, steps will show actual database value (0 until manually logged)
   const finalTargets = targets;
-
-  // Use real steps if available, fallback to current state
-  const displaySteps = stepTrackingAvailable ? realSteps : currentState.steps;
-  const displayStepTarget = stepTrackingAvailable ? stepTarget : finalTargets.steps;
-  const displayStepsPct = stepTrackingAvailable ? realStepsPct : (currentState.steps / finalTargets.steps);
+  
+  const displaySteps = currentState.steps; // Always from database
+  const displayStepTarget = finalTargets.steps;
+  const displayStepsPct = finalTargets.steps > 0 ? (currentState.steps / finalTargets.steps) : 0;
 
   const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
 
