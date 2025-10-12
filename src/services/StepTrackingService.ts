@@ -194,30 +194,18 @@ class StepTrackingService implements IStepTrackingService {
 
   /**
    * Start iOS live tracking using Core Motion
+   * NOTE: This requires a development/production build - will not work in Expo Go
    */
   private async startIOSLiveTracking(): Promise<void> {
     if (Platform.OS !== 'ios') return;
 
     try {
-      // For Expo Go, use simulated step tracking
-      // In a real dev build, this would use actual Core Motion
-      console.log('Starting simulated iOS step tracking for Expo Go');
+      // In Expo Go, this will do nothing - steps will remain at database value (0)
+      // In a real dev/prod build, this would use actual Core Motion pedometer
+      console.log('iOS step tracking requires dev/prod build - not available in Expo Go');
+      console.log('Steps will display database value only (0 until pedometer is enabled)');
       
-      this.liveUpdateInterval = setInterval(() => {
-        // Simulate realistic step increments (1-15 steps every 2 seconds)
-        const stepIncrement = Math.floor(Math.random() * 15) + 1;
-        
-        const stepData: StepData = {
-          steps: stepIncrement,
-          timestamp: new Date().toISOString(),
-          source: 'pedometer',
-          confidence: 'high',
-        };
-
-        this.handleStepUpdate(stepData);
-      }, this.config.liveUpdateInterval);
-
-      console.log('iOS simulated tracking started');
+      // No mock data - let it show actual database value
     } catch (error) {
       console.error('iOS live tracking failed:', error);
       throw error;
