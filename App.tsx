@@ -33,9 +33,12 @@ function TriHabitApp() {
     currentState,
     targets,
     moodCheckInFrequency,
+    selectedDate,
+    isViewingPastDate,
     addHydration,
     updateSleep,
     addMoodCheckIn,
+    setSelectedDate,
     initializeTargets,
   } = useAppStore();
 
@@ -76,6 +79,11 @@ function TriHabitApp() {
   const handleMoodCheckInSubmit = (checkIn: any) => {
     addMoodCheckIn(checkIn);
     setMoodCheckInVisible(false);
+  };
+
+  // Handle date selection from calendar
+  const handleDateSelect = async (date: string) => {
+    await setSelectedDate(date);
   };
 
   // V2 Engine will initialize targets automatically via AppWithAuth
@@ -160,7 +168,11 @@ function TriHabitApp() {
                  </View>
 
           {/* Calendar Bar */}
-          <CalendarBar disabled={true} />
+          <CalendarBar 
+            selectedDate={selectedDate}
+            onDateSelect={handleDateSelect}
+            disabled={false}
+          />
 
           {/* Cal AI Ring Cards */}
           <View style={styles.ringSection}>
@@ -190,28 +202,30 @@ function TriHabitApp() {
           </View>
 
 
-          {/* Quick Actions - Below the quadrant layout */}
-          <View style={styles.quickActions}>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.hydrationButton]}
-              onPress={() => addHydration(8)}
-            >
-              <Text style={styles.actionButtonText}>+8oz Water</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.sleepButton]}
-              onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
-            >
-              <Text style={styles.actionButtonText}>+15m Sleep</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.actionButton, styles.stepsButton]}
-              onPress={handleMoodCheckIn}
-            >
-              <Text style={styles.actionButtonText}>Mood</Text>
-              <Text style={styles.actionButtonSubtext}>Check-in</Text>
-            </TouchableOpacity>
-          </View>
+          {/* Quick Actions - Only show when viewing today */}
+          {!isViewingPastDate && (
+            <View style={styles.quickActions}>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.hydrationButton]}
+                onPress={() => addHydration(8)}
+              >
+                <Text style={styles.actionButtonText}>+8oz Water</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.sleepButton]}
+                onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
+              >
+                <Text style={styles.actionButtonText}>+15m Sleep</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.actionButton, styles.stepsButton]}
+                onPress={handleMoodCheckIn}
+              >
+                <Text style={styles.actionButtonText}>Mood</Text>
+                <Text style={styles.actionButtonSubtext}>Check-in</Text>
+              </TouchableOpacity>
+            </View>
+          )}
 
           <View style={styles.bottomSpacer} />
         </ScrollView>

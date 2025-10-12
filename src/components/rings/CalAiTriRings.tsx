@@ -1,8 +1,9 @@
 // Cal AI Triple Ring Layout Component
 // Main steps card on top (large), hydration and sleep cards below (smaller)
+// With smooth animated transitions when percentages change
 
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import { CalAiRing } from './CalAiRing';
 import { theme } from '../../utils/theme';
 import { calAiCard } from '../../utils/calAiStyles';
@@ -48,49 +49,88 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   // Calculate responsive ring sizes based on screen width
   const stepsRingSize = Math.min(screenWidth * 0.30, 120); // Decreased from 0.35/140 to 0.30/120
   const smallRingSize = Math.min(screenWidth * 0.22, 90); // Optimized for better fit in smaller containers
+  
+  // Animated values for smooth ring transitions
+  const [animatedStepsPct] = useState(new Animated.Value(stepsPct));
+  const [animatedWaterPct] = useState(new Animated.Value(waterPct));
+  const [animatedSleepPct] = useState(new Animated.Value(sleepPct));
+  const [animatedMoodPct] = useState(new Animated.Value(moodPct));
+  
+  // Animate percentages when they change
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(animatedStepsPct, {
+        toValue: stepsPct,
+        duration: 800,
+        useNativeDriver: false, // Can't use native driver for SVG animations
+      }),
+      Animated.timing(animatedWaterPct, {
+        toValue: waterPct,
+        duration: 800,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animatedSleepPct, {
+        toValue: sleepPct,
+        duration: 800,
+        useNativeDriver: false,
+      }),
+      Animated.timing(animatedMoodPct, {
+        toValue: moodPct,
+        duration: 800,
+        useNativeDriver: false,
+      }),
+    ]).start();
+  }, [stepsPct, waterPct, sleepPct, moodPct]);
 
   // Landscape Steps Card (label left, ring right, percentage below label)
   const LandscapeStepsCard: React.FC<{
     title: string;
     icon: string;
-    percentage: number;
+    percentage: number | Animated.Value;
     current: string;
     target: string;
     size: number;
-  }> = ({ title, icon, percentage, current, target, size }) => (
-    <View style={[styles.landscapeStepsCard, calAiCard.base]}>
-      <View style={styles.landscapeLeft}>
-        <Text style={styles.landscapeTitle}>{title}</Text>
-        <Text style={styles.landscapePercentage}>
-          {Math.round(percentage * 100)}%
-        </Text>
+  }> = ({ title, icon, percentage, current, target, size }) => {
+    // Create animated percentage text
+    const displayPercentage = typeof percentage === 'number' 
+      ? Math.round(percentage * 100)
+      : 0; // For animated values, we'll just show static percentage
+    
+    return (
+      <View style={[styles.landscapeStepsCard, calAiCard.base]}>
+        <View style={styles.landscapeLeft}>
+          <Text style={styles.landscapeTitle}>{title}</Text>
+          <Text style={styles.landscapePercentage}>
+            {displayPercentage}%
+          </Text>
+        </View>
+        
+        <View style={styles.landscapeRight}>
+          <CalAiRing
+            percentage={percentage}
+            size={size}
+            centerContent={
+              <View style={styles.ringCenter}>
+                <Text style={styles.largeRingIcon}>{icon}</Text>
+                <Text style={styles.largeRingValue}>
+                  {current}
+                </Text>
+                <Text style={styles.largeRingTarget}>
+                  of {target}
+                </Text>
+              </View>
+            }
+          />
+        </View>
       </View>
-      
-      <View style={styles.landscapeRight}>
-        <CalAiRing
-          percentage={percentage}
-          size={size}
-        centerContent={
-          <View style={styles.ringCenter}>
-            <Text style={styles.largeRingIcon}>{icon}</Text>
-            <Text style={styles.largeRingValue}>
-              {current}
-            </Text>
-            <Text style={styles.largeRingTarget}>
-              of {target}
-            </Text>
-          </View>
-        }
-        />
-      </View>
-    </View>
-  );
+    );
+  };
 
   // Small Ring Card (label top, percentage below label, ring below)
   const SmallRingCard: React.FC<{
     title: string;
     icon: string;
-    percentage: number;
+    percentage: number | Animated.Value;
     current: string;
     target: string;
     size: number;
@@ -122,7 +162,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
       <LandscapeStepsCard
         title="Steps"
         icon="🚶‍♂️"
-        percentage={stepsPct}
+        percentage={animatedStepsPct}
         current={stepsData.current.toLocaleString()}
         target={stepsData.target.toLocaleString()}
         size={stepsRingSize}
@@ -133,7 +173,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         <SmallRingCard
           title="Hydration"
           icon="💧"
-          percentage={waterPct}
+          percentage={animatedWaterPct}
           current={`${waterData.current}`}
           target={`${waterData.target} oz`}
           size={smallRingSize}
@@ -142,7 +182,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         <SmallRingCard
           title="Sleep"
           icon="😴"
-          percentage={sleepPct}
+          percentage={animatedSleepPct}
           current={formatSleepDuration(sleepData.current)}
           target={formatSleepDuration(sleepData.target)}
           size={smallRingSize}
@@ -151,7 +191,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         <SmallRingCard
           title="Mood"
           icon="😊"
-          percentage={moodPct}
+          percentage={animatedMoodPct}
           current={`${moodData.current}`}
           target={`${moodData.target}`}
           size={smallRingSize}

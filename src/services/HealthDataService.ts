@@ -53,6 +53,62 @@ class HealthDataService {
     }
   }
 
+  /**
+   * Fetch metrics for a specific date
+   * @param userId - User ID
+   * @param date - Date in YYYY-MM-DD format
+   * @returns DailyMetrics or null if not found
+   */
+  async getMetricsByDate(userId: string, date: string): Promise<DailyMetrics | null> {
+    try {
+      const { data, error } = await supabase
+        .from('daily_metrics')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('date', date)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('Error fetching metrics for date:', date, error);
+        return null;
+      }
+
+      return data;
+    } catch (error) {
+      console.error('Failed to get metrics by date:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Validate if date is within allowed range (past 3 weeks)
+   * @param dateString - Date in YYYY-MM-DD format
+   * @returns true if date is valid, false otherwise
+   */
+  isDateInValidRange(dateString: string): boolean {
+    try {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      const selectedDate = new Date(dateString);
+      selectedDate.setHours(0, 0, 0, 0);
+      
+      // Check if date is in the future
+      if (selectedDate > today) {
+        return false;
+      }
+      
+      // Check if date is older than 3 weeks (21 days)
+      const diffMs = today.getTime() - selectedDate.getTime();
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      
+      return diffDays >= 0 && diffDays <= 21;
+    } catch (error) {
+      console.error('Error validating date range:', error);
+      return false;
+    }
+  }
+
   async initializeDailyMetrics(userId: string, targets: {
     steps: number;
     waterOz: number;

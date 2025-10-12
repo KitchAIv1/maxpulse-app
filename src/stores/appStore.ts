@@ -2,11 +2,17 @@
 // Manages global app state including user data, metrics, and UI state
 
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { AppState, DailyMetrics, User, MoodCheckIn } from '../types';
-import { generateTargets } from '../utils';
+import { generateTargets, getTodayDate } from '../utils';
 import AppStoreActions from '../services/AppStoreActions';
+import HealthDataService from '../services/HealthDataService';
 
 interface AppStore extends AppState {
+  // Date navigation state
+  selectedDate: string; // YYYY-MM-DD format
+  isViewingPastDate: boolean;
+  
   // Actions
   setUser: (user: User | null) => void;
   setDailyMetrics: (metrics: DailyMetrics | null) => void;
@@ -19,6 +25,11 @@ interface AppStore extends AppState {
   setError: (error: string | null) => void;
   initializeTargets: (customTargets?: any) => Promise<void>;
   loadTodayData: () => Promise<void>;
+  
+  // Date navigation actions
+  setSelectedDate: (date: string) => Promise<void>;
+  loadDateMetrics: (date: string) => Promise<void>;
+  
   reset: () => void;
 }
 
@@ -47,6 +58,8 @@ const initialState: AppState = {
 
 export const useAppStore = create<AppStore>((set, get) => ({
   ...initialState,
+  selectedDate: getTodayDate(),
+  isViewingPastDate: false,
 
   setUser: (user) => set({ user }),
 
@@ -211,5 +224,95 @@ export const useAppStore = create<AppStore>((set, get) => ({
     console.log('✅ Targets set to:', targets);
   },
 
-  reset: () => set(initialState),
+  setSelectedDate: async (date: string) => {
+    const today = getTodayDate();
+    const isViewingPast = date !== today;
+    
+    // Validate date is within range (past 3 weeks)
+    const healthService = HealthDataService.getInstance();
+    if (!healthService.isDateInValidRange(date)) {
+      console.warn('Date is outside valid range (past 3 weeks):', date);
+      return;
+    }
+    
+    // Update selected date and viewing state
+    set({ 
+      selectedDate: date,
+      isViewingPastDate: isViewingPast
+    });
+    
+    // Persist to AsyncStorage
+    try {
+      await AsyncStorage.setItem('@selectedDate', date);
+    } catch (error) {
+      console.warn('Failed to persist selected date:', error);
+    }
+    
+    // Load metrics for selected date
+    await get().loadDateMetrics(date);
+  },
+
+  loadDateMetrics: async (date: string) => {
+    const { user } = get();
+    if (!user) {
+      console.warn('No user authenticated, cannot load date metrics');
+      return;
+    }
+    
+    set({ isLoading: true, error: null });
+    
+    try {
+      const healthService = HealthDataService.getInstance();
+      const metrics = await healthService.getMetricsByDate(user.id, date);
+      
+      if (metrics) {
+        // Update state with fetched metrics
+        set({
+          dailyMetrics: metrics,
+          currentState: {
+            steps: metrics.steps_actual,
+            waterOz: metrics.water_oz_actual,
+            sleepHr: metrics.sleep_hr_actual,
+          },
+          targets: {
+            steps: metrics.steps_target,
+            waterOz: metrics.water_oz_target,
+            sleepHr: metrics.sleep_hr_target,
+          },
+          moodCheckInFrequency: {
+            total_checkins: metrics.mood_checkins_actual,
+            target_checkins: metrics.mood_checkins_target,
+            current_streak: 0,
+            last_checkin: null,
+          },
+        });
+      } else {
+        // No data for this date - show zeros but keep targets
+        const currentTargets = get().targets;
+        set({
+          dailyMetrics: null,
+          currentState: { steps: 0, waterOz: 0, sleepHr: 0 },
+          moodCheckInFrequency: {
+            total_checkins: 0,
+            target_checkins: 7,
+            current_streak: 0,
+            last_checkin: null,
+          },
+          // Keep targets unchanged if no metrics exist
+          targets: currentTargets.steps > 0 ? currentTargets : {
+            steps: 10000,
+            waterOz: 64,
+            sleepHr: 8,
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load date metrics:', error);
+      set({ error: 'Failed to load data for selected date' });
+    } finally {
+      set({ isLoading: false });
+    }
+  },
+
+  reset: () => set({ ...initialState, selectedDate: getTodayDate(), isViewingPastDate: false }),
 }));
