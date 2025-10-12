@@ -180,20 +180,22 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
   
   return (
     <View style={styles.container}>
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        scrollEventThrottle={16}
-        onScroll={handleScroll}
-        contentContainerStyle={styles.scrollContent}
-        decelerationRate="fast"
-        snapToInterval={screenWidth}
-        snapToAlignment="center"
-      >
-        {threeWeeks.map((week, index) => renderWeek(week, index))}
-      </ScrollView>
+      <View style={styles.calendarWrapper}>
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          scrollEventThrottle={16}
+          onScroll={handleScroll}
+          contentContainerStyle={styles.scrollContent}
+          decelerationRate="fast"
+          snapToInterval={screenWidth}
+          snapToAlignment="start"
+        >
+          {threeWeeks.map((week, index) => renderWeek(week, index))}
+        </ScrollView>
+      </View>
       
       {/* Week indicator dots */}
       <View style={styles.indicatorContainer}>
@@ -225,15 +227,18 @@ const styles = StyleSheet.create({
     paddingVertical: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
   },
+  calendarWrapper: {
+    marginLeft: -(screenWidth / 7) * 0.25, // Shift left by 0.25 day width (was 0.5, moved right by 0.25)
+  },
   scrollContent: {
-    alignItems: 'center',
+    // Empty but required for proper alignment
   },
   weekContainer: {
     width: screenWidth,
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.sm,
+    paddingHorizontal: theme.spacing.base, // Match App.tsx scrollContent padding (16px)
   },
   dayButton: {
     flex: 1,

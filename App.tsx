@@ -174,10 +174,10 @@ function TriHabitApp() {
           {/* Cal AI Ring Cards */}
           <View style={styles.ringSection}>
             <CalAiTriRings
-              stepsPct={displayStepsPct}
-              waterPct={currentState.waterOz / finalTargets.waterOz}
-              sleepPct={currentState.sleepHr / finalTargets.sleepHr}
-              moodPct={moodCheckInPct}
+              stepsPct={Math.min(1, displayStepsPct)}
+              waterPct={Math.min(1, currentState.waterOz / finalTargets.waterOz)}
+              sleepPct={Math.min(1, currentState.sleepHr / finalTargets.sleepHr)}
+              moodPct={Math.min(1, moodCheckInPct)}
               stepsData={{
                 current: displaySteps,
                 target: displayStepTarget,
