@@ -1,0 +1,585 @@
+# Backend & Database Engineering Rules
+# Enforces production-grade standards from Day 0
+# Last Updated: October 2025
+
+## 🚨 MANDATORY ENFORCEMENT - NO EXCEPTIONS
+
+### Database Hygiene (Day 0)
+
+**REFUSE** any code that:
+- Creates tables without PRIMARY KEY
+- References foreign keys without index on FK column
+- Queries tables >50k rows without indexes on JOIN/WHERE/ORDER BY columns
+- Adds `created_at`/`updated_at` without indexes when used in sorting
+- Uses `SELECT *` in production code (explicitly list columns)
+- Creates compound queries without composite indexes
+
+**REQUIRED** for every migration:
+```sql
+-- Index all foreign keys
+CREATE INDEX idx_orders_user_id ON orders(user_id);
+
+-- Composite indexes for common query patterns
+CREATE INDEX idx_users_tenant_created ON users(tenant_id, created_at DESC);
+
+-- Partial indexes for filtered queries
+CREATE INDEX idx_orders_active ON orders(user_id, status) WHERE deleted_at IS NULL;
+```
+
+**DATABASE MONITORING** (Required Day 0):
+- Enable `pg_stat_statements` extension
+- Reject queries with `Seq Scan` on tables >50k rows
+- Set `statement_timeout = 30s` globally
+- Connection pool: 20-30 max for small instances
+
+**QUERY PERFORMANCE CHECKLIST**:
+```sql
+-- Every query must pass:
+EXPLAIN ANALYZE [your query];
+-- Check for:
+- [ ] No sequential scans on large tables
+- [ ] Index usage confirmed
+- [ ] Execution time <50ms for reads
+- [ ] Execution time <200ms for writes
+```
+
+---
+
+### Authentication & Security (Day 0)
+
+**REFUSE** any code that:
+- Implements auth without token expiry (Access: ≤15min, Refresh: ≤7 days)
+- Skips refresh token rotation on use
+- Creates user-data tables without RLS enabled
+- Adds endpoints without rate limiting (login: 5/min, writes: 30/min)
+- Exposes data across tenant boundaries
+- Stores passwords without bcrypt/argon2 (min 12 rounds)
+
+**REQUIRED** auth checklist for every protected endpoint:
+```typescript
+// Authentication Middleware Requirements:
+- [ ] Bearer token validation (JWT verify)
+- [ ] Token expiry check (reject expired tokens)
+- [ ] Tenant ID extracted from token claims
+- [ ] RLS policy enforces tenant_id match
+- [ ] Rate limit middleware applied
+- [ ] Revocation check (Redis lookup for logout)
+- [ ] CORS policy defined (no wildcard in production)
+```
+
+**ROW LEVEL SECURITY (RLS) Template**:
+```sql
+-- Enable RLS on all user-data tables
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
+
+-- Policy: Users can only see their own tenant's data
+CREATE POLICY tenant_isolation ON users
+  FOR ALL
+  USING (tenant_id = current_setting('app.current_tenant_id')::uuid);
+
+-- Service role bypass (for admin operations)
+CREATE POLICY service_role_all ON users
+  FOR ALL
+  USING (current_setting('role') = 'service_role');
+```
+
+**RATE LIMITING** (Required):
+```typescript
+// Rate limit configuration
+const rateLimits = {
+  login: { requests: 5, window: 60 },      // 5 attempts per minute
+  signup: { requests: 3, window: 3600 },   // 3 signups per hour
+  writes: { requests: 30, window: 60 },    // 30 writes per minute per user
+  reads: { requests: 100, window: 60 },    // 100 reads per minute per user
+};
+```
+
+---
+
+### Minimal Test Coverage (Day 0)
+
+**REFUSE** PRs that:
+- Remove or skip smoke tests
+- Break the smoke suite (must complete in <30s)
+- Don't include migration smoke tests for schema changes
+- Skip integration tests for payment flows
+
+**REQUIRED** smoke test flow:
+```gherkin
+Feature: Core Authentication & Authorization
+  Scenario: Complete auth flow with tenant isolation
+    Given clean database
+    When user signs up with email
+    And user logs in (receives access + refresh tokens)
+    And user creates resource with tenant_id
+    And user reads own resource
+    Then user can read own resource
+    And user CANNOT read other tenant's resources
+    And invalid tokens are rejected
+    And revoked tokens fail authentication
+    And expired tokens are rejected
+```
+
+**REQUIRED** for database migrations:
+```bash
+# Every migration must have:
+- [ ] Up migration (forward)
+- [ ] Down migration (rollback)
+- [ ] Seed data survives migration round-trip
+- [ ] Indexes created CONCURRENTLY (no table locks)
+- [ ] Migration tested on production-like data volume
+```
+
+---
+
+### Cost & Infrastructure Sanity (Day 0)
+
+**REFUSE** configurations that:
+- Deploy without autoscaling limits (min=1, max defined)
+- Create preview environments without TTL (max 48h)
+- Skip CDN/proxy layer (Cloudflare/Vercel Edge required)
+- Retain logs >14 days without explicit approval
+- Set connection pools >50 without justification
+- Create compute resources without monitoring alerts
+
+**ENFORCE** deployment configuration:
+```yaml
+# deployment.yml - Required for all environments
+compute:
+  min_instances: 1
+  max_instances: 3
+  cpu_threshold: 70%
+  memory_threshold: 80%
+  
+preview_environments:
+  ttl_hours: 24
+  auto_destroy: true
+  max_concurrent: 3
+
+logging:
+  retention_days: 14
+  level: "info"  # "debug" only in dev
+  
+database:
+  max_connections: 25
+  connection_timeout: 10s
+  statement_timeout: 30s
+  idle_in_transaction_timeout: 60s
+
+cdn:
+  provider: "cloudflare"  # or "vercel_edge"
+  cache_static: true
+  cache_api: false
+```
+
+**COST MONITORING** (Automated):
+```javascript
+// Auto-create tickets for cost optimization
+if (avgCPU < 15% && duration > 7 days) {
+  createTicket({
+    title: "🔻 Consider downsizing instance",
+    priority: "low",
+    savings: `$${estimateSavings()}/month`
+  });
+}
+
+if (avgMemory > 85% && duration > 3 days) {
+  createTicket({
+    title: "⚠️ Memory pressure detected",
+    priority: "high",
+    action: "Investigate memory leaks or scale up"
+  });
+}
+```
+
+---
+
+## 📊 MVP PHASE (Weeks 1-2) - Soft Gates
+
+### CI Quality Checks (Warnings Only)
+
+**ADD** these checks that **warn but don't fail builds**:
+
+```yaml
+# .github/workflows/quality-gates.yml
+quality_checks:
+  - name: Check FK Indexes
+    run: node scripts/check-fk-indexes.js || echo "⚠️ Missing FK indexes"
+    
+  - name: Secret Scanning
+    run: gitleaks detect --no-git || echo "⚠️ Potential secrets found"
+  
+  - name: Query Performance Audit
+    run: |
+      psql -f perf/explain-plans.sql > perf/current.txt
+      diff perf/baseline.txt perf/current.txt || echo "⚠️ Query plan changed"
+  
+  - name: Bundle Size Check
+    run: npm run build && du -sh dist || echo "⚠️ Bundle size increased"
+    
+  - name: Dependency Vulnerabilities
+    run: npm audit --audit-level=high || echo "⚠️ High-severity vulnerabilities"
+```
+
+### Observability Baseline (Non-Blocking)
+
+**REQUIRED** minimal monitoring:
+```javascript
+// middleware/observability.js
+const monitoring = {
+  uptime: {
+    endpoint: '/health',
+    interval: '1min',
+    alert_threshold: 3  // 3 consecutive failures
+  },
+  
+  error_rate: {
+    threshold: 5,  // 5% error rate
+    window: '5min',
+    alert: true
+  },
+  
+  slow_queries: {
+    threshold: 50,  // 50ms
+    log_to: 'stdout',
+    sample_rate: 1.0  // Log 100% during MVP
+  }
+};
+
+// Slow query logger
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const duration = Date.now() - start;
+    if (duration > 50) {
+      console.warn(`SLOW: ${req.method} ${req.path} ${duration}ms`, {
+        user_id: req.user?.id,
+        tenant_id: req.user?.tenant_id
+      });
+    }
+  });
+  next();
+});
+```
+
+### Expand Smoke Test Coverage
+
+**ADD** to smoke suite:
+```gherkin
+# Payment Flow (Mock Stripe)
+Scenario: Successful payment processing
+  Given user is authenticated
+  When user initiates payment with valid card
+  Then payment is processed successfully
+  And receipt is generated
+  And webhook is triggered
+
+# Role-Based Access Control
+Scenario: Role permissions enforced
+  Given admin user is authenticated
+  And regular user is authenticated
+  When admin accesses admin panel
+  Then access is granted
+  When regular user accesses admin panel
+  Then access is denied with 403
+
+# File Upload + Security
+Scenario: File upload with virus scan
+  Given user is authenticated
+  When user uploads file <2MB
+  Then file is scanned for viruses
+  And file is stored if clean
+  And upload fails if malicious
+```
+
+---
+
+## 🔒 POST-MVP HARDENING (Week 3) - Hard Enforcement
+
+### Flip Soft Gates to Hard Blocks
+
+```yaml
+# CI now BLOCKS merge if:
+checks:
+  - missing_fk_index: FAIL
+  - rls_not_enabled: FAIL
+  - smoke_tests_broken: FAIL
+  - secrets_detected: FAIL
+  - query_plan_regression: FAIL
+  - high_severity_vulnerabilities: FAIL
+```
+
+### Security Checklist Per Feature
+
+**REQUIRED** before marking feature "done":
+```markdown
+## Security Review Checklist
+- [ ] **Threat Model**: STRIDE analysis completed
+- [ ] **Audit Log**: Auth events + data exports logged
+- [ ] **Input Validation**: Zod/Joi schema on all inputs
+- [ ] **Output Encoding**: XSS protection on dynamic content
+- [ ] **CSRF Protection**: Token on state-changing operations
+- [ ] **SQL Injection**: Parameterized queries only (no string interpolation)
+- [ ] **Authorization**: Tenant isolation verified
+- [ ] **Rate Limiting**: Applied to all endpoints
+- [ ] **Error Messages**: No sensitive data in errors
+- [ ] **Logging**: No PII in logs
+```
+
+### Performance Review Checklist
+
+**REQUIRED** for all database-heavy features:
+```markdown
+## Performance Checklist
+- [ ] **Indexes**: All foreign keys indexed
+- [ ] **Query Plans**: EXPLAIN ANALYZE shows index usage
+- [ ] **N+1 Queries**: Eliminated via joins or batching
+- [ ] **Pagination**: Implemented for lists >100 items
+- [ ] **Caching**: Applied where appropriate (Redis)
+- [ ] **Connection Pooling**: Configured and tested
+- [ ] **Load Testing**: Tested at 2x expected load
+```
+
+---
+
+## 🚀 POST-MVP (Can Defer Until Traction)
+
+These are **explicitly okay to skip** until product-market fit:
+
+### Advanced Test Coverage
+- Unit test coverage: ≥60% (use `nyc` or `c8`)
+- Critical path coverage: ≥80% (payment, auth, core CRUD)
+- E2E test coverage: Core user journeys
+
+### Advanced Authorization
+- Full permission matrix for non-core features
+- Hierarchical roles (only if product needs it)
+- Fine-grained permissions (resource-level)
+
+### Production Hardening
+- Distributed tracing (OpenTelemetry)
+- Canary deployments (<5% traffic first)
+- Multi-region replication
+- Blue-green deployments
+- Circuit breakers for external services
+
+### Advanced Observability
+- APM (Application Performance Monitoring)
+- Real User Monitoring (RUM)
+- Custom dashboards per service
+- SLO/SLA tracking
+
+---
+
+## 🤖 AI Agent Instructions (For Cursor)
+
+### System Prompt Enforcement
+
+```
+You are a senior backend engineer enforcing production-grade standards.
+
+HARD BLOCKS - REFUSE to generate code that:
+1. Queries tables >50k rows without indexes on filter/join columns
+2. Creates API endpoints without rate limiting + authorization
+3. Uses auth tokens without expiry (access ≤15min, refresh ≤7d)
+4. Creates tables with user data without RLS enabled
+5. Removes or skips smoke tests
+6. Deploys without autoscaling limits or log retention policies
+7. Uses SELECT * in production code
+8. Stores secrets in code (must use env vars)
+
+When blocked, output:
+❌ BLOCKED: [specific reason]
+📋 REQUIRED FIXES:
+   - [ ] [specific action needed]
+   - [ ] [alternative approach]
+   - [ ] [example implementation]
+
+ALWAYS verify before generating code:
+✅ Every foreign key has an index
+✅ Every endpoint has tenant isolation check
+✅ Every query lists columns explicitly
+✅ Smoke tests pass in <30s
+✅ Query plans avoid sequential scans
+✅ Rate limiting applied to all endpoints
+✅ No secrets in code (use process.env)
+```
+
+### Code Generation Guidelines
+
+**When generating database migrations:**
+```sql
+-- ALWAYS include:
+-- 1. Descriptive comment explaining purpose
+-- 2. Rollback (DOWN) migration
+-- 3. Indexes created CONCURRENTLY (avoids locks)
+-- 4. Default values for new columns
+
+-- Example:
+-- UP Migration
+CREATE INDEX CONCURRENTLY idx_users_email ON users(email);
+
+-- DOWN Migration  
+DROP INDEX IF EXISTS idx_users_email;
+```
+
+**When generating API endpoints:**
+```typescript
+// ALWAYS include:
+// 1. Authentication middleware
+// 2. Rate limiting
+// 3. Input validation (Zod schema)
+// 4. Error handling
+// 5. Tenant isolation check
+
+router.post('/api/resource', 
+  authenticate,           // JWT validation
+  rateLimit(30, 60),     // 30 req/min
+  validateInput(schema),  // Zod validation
+  checkTenantAccess,     // RLS check
+  async (req, res) => {
+    try {
+      // Implementation
+    } catch (error) {
+      logger.error('Resource creation failed', { error, user_id: req.user.id });
+      res.status(500).json({ error: 'Internal server error' });
+    }
+  }
+);
+```
+
+---
+
+## 📁 Project Structure Template
+
+**REQUIRED** in every backend repository:
+
+```
+/
+├── .cursorrulesBE              # This file
+├── .env.example                # Env var template (NO SECRETS)
+├── tests/
+│   ├── smoke.test.ts          # Non-negotiable baseline (<30s)
+│   ├── integration/           # API integration tests
+│   └── unit/                  # Unit tests (defer until >60% coverage)
+├── migrations/
+│   ├── 001_enable_rls.sql     # RLS template
+│   ├── 002_create_users.sql   # Migration with UP + DOWN
+│   └── 003_add_indexes.sql    # Index migrations
+├── scripts/
+│   ├── check-fk-indexes.js    # CI gate script
+│   ├── seed-test-data.js      # Multi-tenant seed data
+│   └── verify-rls.js          # RLS policy checker
+├── perf/
+│   ├── baseline.txt           # Query plan snapshots
+│   └── explain-plans.sql      # Hot queries for monitoring
+├── config/
+│   ├── deployment.yml         # Cost guardrails
+│   └── database.yml           # Connection pool config
+├── middleware/
+│   ├── auth.ts                # Authentication
+│   ├── rate-limit.ts          # Rate limiting
+│   └── observability.ts       # Logging + monitoring
+└── docs/
+    ├── API.md                 # API documentation
+    ├── SECURITY.md            # Security policies
+    └── DEPLOYMENT.md          # Deployment guide
+```
+
+---
+
+## 📏 Success Metrics
+
+### Week 0-2 (MVP Phase)
+✅ **Target Metrics:**
+- Zero production incidents from missing indexes
+- Zero tenant data leaks
+- Preview env costs <$50/month
+- Smoke suite completes in <30s
+- API response time P95 <200ms
+
+### Week 3-4 (Hardening Phase)
+✅ **Target Metrics:**
+- CI blocks >80% of quality issues pre-merge
+- Mean time to deploy <10min
+- CPU utilization 15-40% (right-sized instances)
+- Database connection pool utilization <70%
+- Zero security vulnerabilities in dependencies
+
+### Month 2+ (Post-MVP Scale)
+✅ **Target Metrics:**
+- Test coverage ≥60% overall, ≥80% critical paths
+- P95 response time <200ms, P99 <500ms
+- Zero secrets in git history (verified by git-secrets)
+- Infrastructure costs scale linearly with users
+- Uptime ≥99.9% (measured monthly)
+
+---
+
+## 🎯 TL;DR - Quick Reference
+
+### DAY 0 ENFORCEMENT (No Exceptions)
+```
+✅ PRIMARY KEY on every table
+✅ INDEX on every foreign key
+✅ Composite indexes for top queries
+✅ pg_stat_statements enabled, no seq scans >50k rows
+✅ Access tokens ≤15min, refresh ≤7d with rotation
+✅ RLS enabled on all user-data tables
+✅ Rate limits: login 5/min, writes 30/min per user
+✅ Smoke test: signup→login→create→cross-tenant-block (<30s)
+✅ Autoscaling (min=1, max=3), preview TTL 48h
+✅ Logs retained 14 days max
+✅ Connection pool: 20-30 max
+```
+
+### MVP PHASE WARNINGS (Weeks 1-2)
+```
+⚠️ Missing FK indexes (warn only)
+⚠️ Secret scanning (warn only)
+⚠️ Query plan regressions (warn only)
+⚠️ Bundle size increases (warn only)
+⚠️ Dependency vulnerabilities (warn only)
+```
+
+### POST-MVP BLOCKS (Week 3+)
+```
+❌ Missing FK indexes (hard fail)
+❌ RLS disabled on user data (hard fail)
+❌ Broken smoke tests (hard fail)
+❌ Detected secrets in code (hard fail)
+❌ Query plan regressions (hard fail)
+❌ High-severity vulnerabilities (hard fail)
+```
+
+### DEFER UNTIL TRACTION
+```
+⏸️ Unit test coverage >60%
+⏸️ Full authorization matrix
+⏸️ Distributed tracing (OpenTelemetry)
+⏸️ Multi-region replication
+⏸️ Advanced monitoring (APM, RUM)
+```
+
+---
+
+## 🔄 Continuous Improvement Process
+
+**Every 2 weeks, review:**
+1. **What blocked us?** → Add to hard enforcement
+2. **What incidents occurred?** → Add to smoke tests
+3. **What costs surprised us?** → Add to cost guardrails
+4. **What slow queries appeared?** → Add indexes + explain plans
+
+**Keep rules LIVING:**
+- Ruthlessly remove rules that don't prevent real issues
+- Add rules immediately after production incidents
+- Update soft→hard enforcement based on pain points
+- Document exceptions with clear justification
+
+---
+
+**Last Updated:** October 2025  
+**Review Cadence:** Bi-weekly  
+**Enforcement:** Hard blocks from Day 0, soft gates during MVP, full enforcement Week 3+
+

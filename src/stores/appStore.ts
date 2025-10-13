@@ -106,30 +106,92 @@ export const useAppStore = create<AppStore>((set, get) => ({
     // First, try to restore today's persisted state from AsyncStorage
     const today = getTodayDate();
     if (__DEV__) console.log(`🔍 Looking for AsyncStorage key: @todayState_${today}`);
+    
+    // Check if we've rolled over to a new day by looking at last saved date
     let hasPersistedState = false;
     try {
-      const persistedState = await AsyncStorage.getItem(`@todayState_${today}`);
-      if (__DEV__) console.log('📱 AsyncStorage raw value:', persistedState ? persistedState.substring(0, 100) + '...' : 'NULL');
+      const lastSavedDate = await AsyncStorage.getItem('@lastSavedDate');
+      if (__DEV__) console.log(`📅 Last saved date: ${lastSavedDate}, Today: ${today}`);
       
-      if (persistedState) {
-        const state = JSON.parse(persistedState);
-        if (__DEV__) console.log('✅ Restored today\'s persisted state:', state);
+      // MIGRATION: If @lastSavedDate is null, we need to check if there's data for today
+      // and determine if it's valid or leftover from yesterday
+      if (!lastSavedDate) {
+        if (__DEV__) console.log('🔍 No lastSavedDate found - checking for existing data...');
+        
+        const todayData = await AsyncStorage.getItem(`@todayState_${today}`);
+        
+        if (todayData) {
+          // Data exists but no lastSavedDate - this could be yesterday's data!
+          // Load it to check if it should be kept or cleared
+          if (__DEV__) console.log('⚠️ Found data without lastSavedDate - likely yesterday\'s data');
+          
+          // For now, clear it and start fresh to ensure clean slate
+          await AsyncStorage.removeItem(`@todayState_${today}`);
+          if (__DEV__) console.log('🧹 Cleared potentially stale data');
+        }
+        
+        // Initialize lastSavedDate
+        await AsyncStorage.setItem('@lastSavedDate', today);
+        if (__DEV__) console.log(`📅 Initialized lastSavedDate to ${today}`);
+        
+        // Start with zeros for clean slate
         set({
-          currentState: {
-            steps: state.steps || 0,
-            waterOz: state.waterOz || 0,
-            sleepHr: state.sleepHr || 0,
-          },
-          moodCheckInFrequency: state.moodCheckInFrequency || {
+          currentState: { steps: 0, waterOz: 0, sleepHr: 0 },
+          moodCheckInFrequency: {
             total_checkins: 0,
             target_checkins: 7,
             current_streak: 0,
             last_checkin: null,
           }
         });
-        hasPersistedState = true;
+        hasPersistedState = false;
+      }
+      // If the last saved date is different from today, clear old data
+      else if (lastSavedDate !== today) {
+        if (__DEV__) console.log(`🆕 New day detected! Clearing yesterday's data (${lastSavedDate})`);
+        
+        // Clear yesterday's AsyncStorage key
+        await AsyncStorage.removeItem(`@todayState_${lastSavedDate}`);
+        
+        // Reset to zeros for the new day
+        set({
+          currentState: { steps: 0, waterOz: 0, sleepHr: 0 },
+          moodCheckInFrequency: {
+            total_checkins: 0,
+            target_checkins: 7,
+            current_streak: 0,
+            last_checkin: null,
+          }
+        });
+        
+        // Update last saved date to today
+        await AsyncStorage.setItem('@lastSavedDate', today);
+        hasPersistedState = false; // No persisted state for new day yet
       } else {
-        if (__DEV__) console.log('⚠️ No persisted state found in AsyncStorage for today');
+        // Same day - try to restore persisted state
+        const persistedState = await AsyncStorage.getItem(`@todayState_${today}`);
+        if (__DEV__) console.log('📱 AsyncStorage raw value:', persistedState ? persistedState.substring(0, 100) + '...' : 'NULL');
+        
+        if (persistedState) {
+          const state = JSON.parse(persistedState);
+          if (__DEV__) console.log('✅ Restored today\'s persisted state:', state);
+          set({
+            currentState: {
+              steps: state.steps || 0,
+              waterOz: state.waterOz || 0,
+              sleepHr: state.sleepHr || 0,
+            },
+            moodCheckInFrequency: state.moodCheckInFrequency || {
+              total_checkins: 0,
+              target_checkins: 7,
+              current_streak: 0,
+              last_checkin: null,
+            }
+          });
+          hasPersistedState = true;
+        } else {
+          if (__DEV__) console.log('⚠️ No persisted state found in AsyncStorage for today');
+        }
       }
     } catch (error) {
       console.warn('Failed to restore today state:', error);
@@ -201,6 +263,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         moodCheckInFrequency: get().moodCheckInFrequency,
       };
       await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify(stateToSave));
+      await AsyncStorage.setItem('@lastSavedDate', today); // Track last save date for day rollover detection
       if (__DEV__) console.log('💾 Saved to AsyncStorage:', stateToSave);
     } catch (error) {
       console.warn('Failed to persist today state:', error);
@@ -255,6 +318,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         moodCheckInFrequency: get().moodCheckInFrequency,
       };
       await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify(stateToSave));
+      await AsyncStorage.setItem('@lastSavedDate', today); // Track last save date for day rollover detection
       if (__DEV__) console.log('💾 Saved to AsyncStorage:', stateToSave);
     } catch (error) {
       console.warn('Failed to persist today state:', error);
@@ -302,6 +366,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
         sleepHr: get().currentState.sleepHr,
         moodCheckInFrequency: get().moodCheckInFrequency,
       }));
+      await AsyncStorage.setItem('@lastSavedDate', today); // Track last save date for day rollover detection
     } catch (error) {
       console.warn('Failed to persist today state:', error);
     }

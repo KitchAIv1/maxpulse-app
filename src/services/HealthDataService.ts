@@ -3,6 +3,7 @@
 
 import { supabase } from './supabase';
 import OfflineQueueService from './OfflineQueueService';
+import NetworkService from './NetworkService';
 import { DailyMetrics, HydrationLog, SleepSession, MoodCheckIn } from '../types';
 import { getTodayDate } from '../utils';
 
@@ -14,6 +15,7 @@ export interface HealthDataConfig {
 class HealthDataService {
   private static instance: HealthDataService;
   private offlineQueue: OfflineQueueService;
+  private networkService: NetworkService;
   private config: HealthDataConfig = {
     enableOfflineQueue: true,
     autoSyncInterval: 30000, // 30 seconds
@@ -28,6 +30,7 @@ class HealthDataService {
 
   constructor() {
     this.offlineQueue = OfflineQueueService.getInstance();
+    this.networkService = NetworkService.getInstance();
   }
 
   // Daily Metrics Operations
@@ -220,13 +223,29 @@ class HealthDataService {
 
       const logData = { ...hydrationLog, user_id: userId };
 
-      // Try real-time sync first
+      // Check network status first
+      const isOnline = await this.networkService.isOnline();
+      
+      if (!isOnline && this.config.enableOfflineQueue) {
+        // Offline - queue immediately without trying database
+        await this.offlineQueue.queueOperation({
+          type: 'hydration',
+          operation: 'insert',
+          data: logData,
+          timestamp: new Date().toISOString(),
+          userId,
+        });
+        if (__DEV__) console.log('📴 Offline: Queued hydration for later sync');
+        return true; // Optimistic success
+      }
+
+      // Online - try immediate database sync
       const { error } = await supabase
         .from('hydration_logs')
         .insert(logData);
 
       if (error) {
-        // Queue for offline sync if enabled
+        // Network request failed, queue for retry
         if (this.config.enableOfflineQueue) {
           await this.offlineQueue.queueOperation({
             type: 'hydration',
@@ -235,12 +254,14 @@ class HealthDataService {
             timestamp: new Date().toISOString(),
             userId,
           });
+          console.warn('⚠️ Database sync failed, queued for retry:', error.message);
           return true; // Optimistic success
         }
         console.error('Error logging hydration:', error);
         return false;
       }
 
+      if (__DEV__) console.log('✅ Hydration synced to database immediately');
       return true;
     } catch (error) {
       console.error('Failed to log hydration:', error);
@@ -299,13 +320,29 @@ class HealthDataService {
         health_context: moodData.health_context || null,
       };
 
-      // Try real-time sync first
+      // Check network status first
+      const isOnline = await this.networkService.isOnline();
+      
+      if (!isOnline && this.config.enableOfflineQueue) {
+        // Offline - queue immediately without trying database
+        await this.offlineQueue.queueOperation({
+          type: 'mood',
+          operation: 'insert',
+          data: moodCheckIn,
+          timestamp: new Date().toISOString(),
+          userId,
+        });
+        if (__DEV__) console.log('📴 Offline: Queued mood check-in for later sync');
+        return true; // Optimistic success
+      }
+
+      // Online - try immediate database sync
       const { error } = await supabase
         .from('mood_checkins')
         .insert(moodCheckIn);
 
       if (error) {
-        // Queue for offline sync if enabled
+        // Network request failed, queue for retry
         if (this.config.enableOfflineQueue) {
           await this.offlineQueue.queueOperation({
             type: 'mood',
@@ -314,12 +351,14 @@ class HealthDataService {
             timestamp: new Date().toISOString(),
             userId,
           });
+          console.warn('⚠️ Database sync failed, queued for retry:', error.message);
           return true; // Optimistic success
         }
         console.error('Error logging mood check-in:', error);
         return false;
       }
 
+      if (__DEV__) console.log('✅ Mood check-in synced to database immediately');
       return true;
     } catch (error) {
       console.error('Failed to log mood check-in:', error);

@@ -11,6 +11,8 @@ import { UserProfileFromActivation } from '../types';
 import SyncManager from '../services/SyncManager';
 import TargetManager from '../services/TargetManager';
 import DailyMetricsUpdater from '../services/DailyMetricsUpdater';
+import NetworkService from '../services/NetworkService';
+import HealthDataService from '../services/HealthDataService';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
@@ -63,6 +65,36 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       await loadTodayData();
       
       setIsAuthenticated(true);
+      
+      // Initialize network service and process any queued operations
+      setTimeout(async () => {
+        try {
+          // Initialize network monitoring
+          const networkService = NetworkService.getInstance();
+          await networkService.initialize();
+          console.log('✅ Network service initialized');
+          
+          // Add listener for when network comes back online
+          const healthService = HealthDataService.getInstance();
+          networkService.addListener(async (isOnline) => {
+            if (isOnline) {
+              console.log('🌐 Network reconnected - processing queued operations...');
+              try {
+                await healthService.syncPendingData();
+                console.log('✅ Queued operations synced successfully');
+              } catch (error) {
+                console.warn('Failed to sync queued operations:', error);
+              }
+            }
+          });
+          
+          // Process any queued offline operations from previous sessions
+          await healthService.syncPendingData();
+          console.log('✅ Processed queued operations');
+        } catch (error) {
+          console.warn('Network initialization failed (non-critical):', error);
+        }
+      }, 500); // Small delay to let critical startup complete
       
       // Initialize sync manager in background (non-blocking)
       setTimeout(async () => {
