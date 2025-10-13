@@ -136,7 +136,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 10,
-    color: 'rgba(255, 255, 255, 0.7)',
+    color: '#8A8A8A',                    // Medium gray instead of white
     marginTop: 4,
     textAlign: 'center',
   },

@@ -38,7 +38,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
     }, 100);
   }, []);
   
-  // Calculate which week the selected date belongs to
+  // Calculate which week the selected date belongs to (without auto-scrolling)
   useEffect(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
@@ -55,12 +55,9 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
     // Map to array index: current week (0 weeks ago) = index 2, last week (1 week ago) = index 1, etc.
     const arrayIndex = 2 - weeksAgo;
     
+    // Only update the offset, don't auto-scroll (let user swipe manually)
     if (arrayIndex !== currentWeekOffset && arrayIndex >= 0 && arrayIndex <= 2) {
       setCurrentWeekOffset(arrayIndex);
-      // Scroll to the correct week
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({ x: arrayIndex * screenWidth, animated: true });
-      }, 100);
     }
   }, [selectedDate]);
   
@@ -97,7 +94,15 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
         const dateString = formatDate(date);
         const isToday = date.toDateString() === today.toDateString();
         const isSelected = dateString === selectedDate;
-        const isFuture = date > today;
+        // Fix: Allow current week dates to be clickable, only disable future weeks
+        const dateOnly = new Date(date);
+        dateOnly.setHours(0, 0, 0, 0);
+        const todayOnly = new Date(today);
+        todayOnly.setHours(0, 0, 0, 0);
+        
+        // Calculate if this date is in a future week (not just future day)
+        const daysDiff = Math.floor((dateOnly.getTime() - todayOnly.getTime()) / (1000 * 60 * 60 * 24));
+        const isFuture = daysDiff > 6; // Only disable dates more than 6 days in the future
         
         week.push({
           day: dayNames[dayIndex],
@@ -149,6 +154,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
               dayItem.isSelected && styles.activeDayLabel,
               dayItem.isFuture && styles.disabledDayLabel,
               dayItem.isToday && !dayItem.isSelected && styles.todayDayLabel,
+              !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDayLabel,
             ]}
           >
             {dayItem.day}
@@ -160,6 +166,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
               dayItem.isSelected && styles.activeDateCircle,
               dayItem.isFuture && styles.disabledDateCircle,
               dayItem.isToday && !dayItem.isSelected && styles.todayDateCircle,
+              !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDateCircle,
             ]}
           >
             <Text
@@ -168,6 +175,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
                 dayItem.isSelected && styles.activeDateText,
                 dayItem.isFuture && styles.disabledDateText,
                 dayItem.isToday && !dayItem.isSelected && styles.todayDateText,
+                !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDateText,
               ]}
             >
               {dayItem.date}
@@ -257,7 +265,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   dayLabel: {
-    fontSize: theme.typography.xsmall,
+    fontSize: theme.typography.tiny, // Reduced from xsmall to tiny
     fontWeight: theme.typography.weights.light,
     color: '#9E9E9E',
     marginBottom: 4,
@@ -273,6 +281,10 @@ const styles = StyleSheet.create({
   },
   disabledDayLabel: {
     color: '#CFCFCF',
+  },
+  pastDayLabel: {
+    color: '#2D2D2D', // Much darker - almost black for clear visibility
+    fontWeight: theme.typography.weights.medium,
   },
   dateCircle: {
     width: 32,
@@ -297,6 +309,10 @@ const styles = StyleSheet.create({
   disabledDateCircle: {
     borderColor: '#CFCFCF',
   },
+  pastDateCircle: {
+    borderColor: '#8A8A8A', // Darker border for better visibility of clickable past dates
+    borderStyle: 'solid',
+  },
   dateText: {
     fontSize: theme.typography.small,
     fontWeight: theme.typography.weights.light,
@@ -312,6 +328,10 @@ const styles = StyleSheet.create({
   },
   disabledDateText: {
     color: '#CFCFCF',
+  },
+  pastDateText: {
+    color: '#2D2D2D', // Much darker - almost black for clear visibility
+    fontWeight: theme.typography.weights.medium,
   },
   indicatorContainer: {
     flexDirection: 'row',

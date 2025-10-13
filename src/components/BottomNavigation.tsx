@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { theme } from '../utils/theme';
 
 interface BottomNavigationProps {
@@ -15,10 +16,10 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
   onScreenChange,
 }) => {
   const tabs = [
-    { id: 'dashboard', label: 'Home', icon: '⌂' },
-    { id: 'coach', label: 'Coach', icon: '◉' },
-    { id: 'rewards', label: 'Rewards', icon: '♦' },
-    { id: 'settings', label: 'Profile', icon: '◐' },
+    { id: 'dashboard', label: 'Home', icon: 'home-outline', activeIcon: 'home' },
+    { id: 'coach', label: 'Coach', icon: 'chatbubble-outline', activeIcon: 'chatbubble' },
+    { id: 'rewards', label: 'Rewards', icon: 'gift-outline', activeIcon: 'gift' },
+    { id: 'settings', label: 'Profile', icon: 'person-outline', activeIcon: 'person' },
   ] as const;
 
   return (
@@ -32,12 +33,12 @@ export const BottomNavigation: React.FC<BottomNavigationProps> = ({
           ]}
           onPress={() => onScreenChange(tab.id)}
         >
-          <Text style={[
-            styles.tabIcon,
-            currentScreen === tab.id && styles.activeTabIcon
-          ]}>
-            {tab.icon}
-          </Text>
+          <Icon
+            name={currentScreen === tab.id ? tab.activeIcon : tab.icon}
+            size={24}
+            color={currentScreen === tab.id ? theme.colors.navActive : theme.colors.navInactive}
+            style={styles.tabIcon}
+          />
           <Text style={[
             styles.tabLabel,
             currentScreen === tab.id && styles.activeTabLabel
@@ -54,16 +55,15 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     backgroundColor: theme.colors.cardBackground,
-    borderTopWidth: 1,
-    borderTopColor: theme.colors.border,
+    borderTopWidth: 0.5, // Thinner border like Instagram/TikTok
+    borderTopColor: '#E0E0E0', // Lighter border
     paddingBottom: 34,
-    paddingTop: theme.spacing.md,
+    paddingTop: 10, // Reduced padding for cleaner look
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     zIndex: 1000,
-    ...theme.shadows.subtle,
   },
   tab: {
     flex: 1,
@@ -74,15 +74,10 @@ const styles = StyleSheet.create({
     // Active tab styling handled by text colors
   },
   tabIcon: {
-    fontSize: 24,
-    marginBottom: 4,
-    color: theme.colors.navInactive,
-  },
-  activeTabIcon: {
-    color: theme.colors.navActive,
+    marginBottom: 2, // Minimal spacing between icon and label
   },
   tabLabel: {
-    fontSize: theme.typography.xsmall,
+    fontSize: theme.typography.tiny, // Smaller text like TikTok
     color: theme.colors.navInactive,
     fontWeight: theme.typography.weights.medium,
   },

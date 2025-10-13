@@ -104,11 +104,7 @@ function TriHabitApp() {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
-        <CoachScreen />
-        <BottomNavigation 
-          currentScreen={currentScreen} 
-          onScreenChange={setCurrentScreen} 
-        />
+        <CoachScreen onClose={() => setCurrentScreen('dashboard')} />
       </View>
     );
   }
@@ -367,24 +363,24 @@ const styles = StyleSheet.create({
     ...theme.shadows.subtle,
   },
   hydrationButton: {
-    backgroundColor: '#C9E4FF', // Soft blue
+    backgroundColor: '#1E88E5', // Solid metallic blue (matches ring)
   },
   sleepButton: {
-    backgroundColor: '#E5D9FF', // Soft purple
+    backgroundColor: '#8E24AA', // Solid metallic purple (matches ring)
   },
   stepsButton: {
-    backgroundColor: '#FFC9C9', // Soft pink
+    backgroundColor: '#E91E63', // Solid metallic pink (matches ring)
   },
   actionButtonText: {
     fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
+    color: '#FFFFFF', // White text for better contrast on metallic backgrounds
     textAlign: 'center',
   },
   actionButtonSubtext: {
     fontSize: theme.typography.xsmall,
     fontWeight: theme.typography.weights.regular,
-    color: theme.colors.textSecondary,
+    color: 'rgba(255, 255, 255, 0.8)', // Semi-transparent white for subtext
     textAlign: 'center',
     marginTop: 2,
   },

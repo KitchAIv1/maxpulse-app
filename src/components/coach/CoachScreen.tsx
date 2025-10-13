@@ -9,16 +9,19 @@ import {
   StyleSheet,
   TouchableOpacity,
   StatusBar,
+  Keyboard,
+  Animated,
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
-import { WellnessPrompts } from './WellnessPrompts';
 import { CoachScreenProps, ChatMessage as ChatMessageType, QuickAction, HealthContextData } from '../../types/coach';
 import AICoachService from '../../services/AICoachService';
 import { useAppStore } from '../../stores/appStore';
 import { useLifeScore } from '../../hooks/useAppSelectors';
 import { useStepProgress } from '../../stores/stepTrackingStore';
 import { theme } from '../../utils/theme';
+import { coachTheme } from '../../utils/coachTheme';
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({
   initialContext,
@@ -27,9 +30,9 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  const [showWellnessPrompts, setShowWellnessPrompts] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const coachService = AICoachService.getInstance();
+  const keyboardHeight = useRef(new Animated.Value(0)).current;
 
   // Get current health context from stores
   const { currentState, targets } = useAppStore();
@@ -44,6 +47,33 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
     lifeScore,
     date: new Date().toISOString().split('T')[0],
   };
+
+  // Keyboard listeners for smooth animation
+  useEffect(() => {
+    const keyboardWillShow = (event: any) => {
+      Animated.timing(keyboardHeight, {
+        duration: coachTheme.animations.keyboard.duration,
+        toValue: event.endCoordinates.height,
+        useNativeDriver: false,
+      }).start();
+    };
+
+    const keyboardWillHide = (event: any) => {
+      Animated.timing(keyboardHeight, {
+        duration: coachTheme.animations.keyboard.duration,
+        toValue: 0,
+        useNativeDriver: false,
+      }).start();
+    };
+
+    const showSubscription = Keyboard.addListener('keyboardWillShow', keyboardWillShow);
+    const hideSubscription = Keyboard.addListener('keyboardWillHide', keyboardWillHide);
+
+    return () => {
+      showSubscription?.remove();
+      hideSubscription?.remove();
+    };
+  }, [keyboardHeight]);
 
   // Initialize chat with greeting
   useEffect(() => {
@@ -159,15 +189,9 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
   const handleQuickAction = async (action: QuickAction) => {
     if (isLoading) return;
 
-    // Hide wellness prompts when user takes action
-    setShowWellnessPrompts(false);
     setIsLoading(true);
 
     try {
-      // Show wellness prompts if this is a wellness check
-      if (action.action === 'wellness_check') {
-        setShowWellnessPrompts(true);
-      }
 
       // Process the quick action
       const response = await coachService.processQuickAction(action, healthContext);
@@ -195,10 +219,6 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
     }
   };
 
-  const handleWellnessPrompt = (prompt: string) => {
-    setShowWellnessPrompts(false);
-    handleSendMessage(prompt);
-  };
 
   const handleClearChat = () => {
     setMessages([]);
@@ -223,8 +243,16 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
+            {onClose && (
+              <TouchableOpacity 
+                style={styles.backButton}
+                onPress={onClose}
+              >
+                <Icon name="arrow-back" size={24} color={coachTheme.colors.primary} />
+              </TouchableOpacity>
+            )}
             <View style={styles.coachIndicator}>
-              <Text style={styles.coachIcon}>🤖</Text>
+              <Icon name="chatbubble-ellipses" size={20} color={coachTheme.colors.primary} />
             </View>
             <View>
               <Text style={styles.headerTitle}>Coach</Text>
@@ -237,22 +265,13 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
               style={styles.headerButton}
               onPress={handleClearChat}
             >
-              <Text style={styles.headerButtonText}>🗑️</Text>
+              <Icon name="trash-outline" size={18} color={theme.colors.textSecondary} />
             </TouchableOpacity>
-            
-            {onClose && (
-              <TouchableOpacity 
-                style={styles.headerButton}
-                onPress={onClose}
-              >
-                <Text style={styles.headerButtonText}>✕</Text>
-              </TouchableOpacity>
-            )}
           </View>
         </View>
 
         {/* Chat Messages */}
-        <View style={styles.chatContainer}>
+        <Animated.View style={[styles.chatContainer, { marginBottom: keyboardHeight }]}>
           <ScrollView
             ref={scrollViewRef}
             style={styles.messagesContainer}
@@ -279,13 +298,6 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
               />
             ))}
             
-            {/* Wellness Prompts */}
-            {showWellnessPrompts && (
-              <WellnessPrompts 
-                onPromptPress={handleWellnessPrompt}
-                visible={showWellnessPrompts}
-              />
-            )}
             
             {isLoading && (
               <View style={styles.typingIndicator}>
@@ -301,7 +313,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
             )}
           </ScrollView>
 
-        </View>
+        </Animated.View>
 
       </View>
       
@@ -341,17 +353,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     flex: 1,
   },
+  backButton: {
+    width: 40,
+    height: 40,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: theme.spacing.xsmall,
+  },
   coachIndicator: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: theme.colors.primary + '20',
+    backgroundColor: coachTheme.colors.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: theme.spacing.sm,
-  },
-  coachIcon: {
-    fontSize: 20,
   },
   headerTitle: {
     fontSize: theme.typography.medium,
@@ -387,7 +403,7 @@ const styles = StyleSheet.create({
   },
   messagesContent: {
     paddingTop: 16,
-    paddingBottom: 183, // Account for ChatComposer height + spacing + bottom nav (12+8+40+12+12+99)
+    paddingBottom: 84, // Account for ChatComposer height + spacing (12+8+40+12+12) - no bottom nav
   },
   emptyState: {
     flex: 1,

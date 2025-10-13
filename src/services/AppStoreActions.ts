@@ -23,10 +23,12 @@ export class AppStoreActions {
       const success = await this.healthService.logHydration(userId, amount);
       
       if (success) {
-        // Update daily metrics
-        const newTotal = currentWaterOz + amount;
+        // ✅ Calculate actual total from database instead of UI state
+        const todayLogs = await this.healthService.getTodayHydration(userId);
+        const actualTotal = todayLogs.reduce((sum, log) => sum + log.oz, 0);
+        
         await this.healthService.updateDailyMetrics(userId, {
-          water_oz_actual: newTotal,
+          water_oz_actual: actualTotal, // ✅ Use database sum, not UI state
         });
       } else {
         // Revert optimistic update on failure

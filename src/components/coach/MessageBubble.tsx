@@ -4,8 +4,10 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { MessageBubbleProps } from '../../types/coach';
 import { WellnessIndicators } from './WellnessIndicators';
+import { coachTheme } from '../../utils/coachTheme';
 
 export const MessageBubble: React.FC<MessageBubbleProps> = ({
   content,
@@ -22,19 +24,18 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  const getMessageIcon = (): string => {
-    if (!isCoach) return '';
+  const getMessageIcon = (): { name: string; color: string } | null => {
+    if (!isCoach) return null;
     
-    switch (messageType) {
-      case 'celebration':
-        return '🎉';
-      case 'suggestion':
-        return '💡';
-      case 'insight':
-        return '📊';
-      default:
-        return '🌟';
-    }
+    // Use consistent sparkles icon for all coach messages
+    return { name: 'sparkles', color: coachTheme.colors.primary };
+  };
+
+  const getBubbleGradient = (): string[] => {
+    if (!isCoach) return [coachTheme.colors.chat.userBubble, coachTheme.colors.chat.userBubble];
+    
+    // Use consistent default gradient for all coach messages
+    return coachTheme.colors.messageTypes.default;
   };
 
   if (isCoach) {
@@ -43,22 +44,33 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
         {/* Coach Avatar */}
         <View style={styles.coachAvatar}>
           <LinearGradient
-            colors={['#10B981', '#059669']}
+            colors={[coachTheme.colors.avatar.primary, coachTheme.colors.avatar.secondary]}
             style={styles.avatarGradient}
           >
-            <Text style={styles.avatarText}>🤖</Text>
+            <Icon 
+              name="chatbubble-ellipses" 
+              size={coachTheme.spacing.iconSize} 
+              color={coachTheme.colors.avatar.iconColor} 
+            />
           </LinearGradient>
         </View>
 
         {/* Message Content */}
         <View style={styles.coachBubbleContainer}>
           <LinearGradient
-            colors={['rgba(16, 185, 129, 0.1)', 'rgba(5, 150, 105, 0.05)']}
+            colors={getBubbleGradient()}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
             style={styles.coachBubble}
           >
             {/* Message Type Icon */}
             {getMessageIcon() && (
-              <Text style={styles.messageIcon}>{getMessageIcon()}</Text>
+              <Icon 
+                name={getMessageIcon()!.name} 
+                size={16} 
+                color={getMessageIcon()!.color}
+                style={styles.messageIcon}
+              />
             )}
             
             <Text style={styles.coachText}>{content}</Text>
@@ -67,19 +79,28 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
             {contextData && (
               <View style={styles.contextContainer}>
                 {contextData.steps && (
-                  <Text style={styles.contextChip}>
-                    🚶‍♂️ {contextData.steps.current.toLocaleString()}/{contextData.steps.target.toLocaleString()}
-                  </Text>
+                  <View style={styles.contextChip}>
+                    <Icon name="footsteps" size={12} color={coachTheme.colors.healthCard.steps} />
+                    <Text style={styles.contextText}>
+                      {contextData.steps.current.toLocaleString()}/{contextData.steps.target.toLocaleString()}
+                    </Text>
+                  </View>
                 )}
                 {contextData.hydration && (
-                  <Text style={styles.contextChip}>
-                    💧 {contextData.hydration.current}/{contextData.hydration.target}oz
-                  </Text>
+                  <View style={styles.contextChip}>
+                    <Icon name="water" size={12} color={coachTheme.colors.healthCard.hydration} />
+                    <Text style={styles.contextText}>
+                      {contextData.hydration.current}/{contextData.hydration.target}oz
+                    </Text>
+                  </View>
                 )}
                 {contextData.sleep && (
-                  <Text style={styles.contextChip}>
-                    😴 {contextData.sleep.current}h/{contextData.sleep.target}h
-                  </Text>
+                  <View style={styles.contextChip}>
+                    <Icon name="moon" size={12} color={coachTheme.colors.healthCard.sleep} />
+                    <Text style={styles.contextText}>
+                      {contextData.sleep.current}h/{contextData.sleep.target}h
+                    </Text>
+                  </View>
                 )}
               </View>
             )}
@@ -146,20 +167,19 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   coachBubble: {
-    borderRadius: 16,
+    borderRadius: coachTheme.borderRadius.bubble,
     borderTopLeftRadius: 4,
-    padding: 12,
+    padding: coachTheme.spacing.bubblePadding,
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.2)',
   },
   messageIcon: {
-    fontSize: 16,
     marginBottom: 4,
   },
   coachText: {
-    fontSize: 15,
-    lineHeight: 20,
-    color: 'white',
+    fontSize: 14,                                 // Reduced from 15
+    lineHeight: coachTheme.spacing.textLineHeight, // Tighter line height
+    color: coachTheme.colors.chat.coachText,
   },
   contextContainer: {
     flexDirection: 'row',
@@ -168,14 +188,20 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   contextChip: {
-    fontSize: 12,
-    color: 'rgba(16, 185, 129, 0.9)',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.08)',     // Light dark background for better contrast
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 12,
+    gap: 4,
     borderWidth: 1,
-    borderColor: 'rgba(16, 185, 129, 0.2)',
+    borderColor: 'rgba(0, 0, 0, 0.1)',
+  },
+  contextText: {
+    fontSize: 11,
+    color: '#5A5A5A',                           // Dark gray text for better visibility
+    fontWeight: '500',
   },
   wellnessContainer: {
     marginTop: 8,
@@ -195,23 +221,22 @@ const styles = StyleSheet.create({
     maxWidth: '85%',
   },
   userBubble: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+    backgroundColor: coachTheme.colors.chat.userBubble,  // Solid purple background
     borderRadius: 16,
     borderTopRightRadius: 4,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    padding: coachTheme.spacing.bubblePadding,
+    ...coachTheme.shadows.bubble,  // Add shadow for depth
   },
   userText: {
-    fontSize: 15,
-    lineHeight: 20,
-    color: 'white',
+    fontSize: 14,                                 // Reduced from 15 to match coach text
+    lineHeight: coachTheme.spacing.textLineHeight, // Consistent line height
+    color: coachTheme.colors.chat.userText,
   },
 
   // Shared styles
   timestamp: {
     fontSize: 11,
-    color: 'rgba(255, 255, 255, 0.5)',
+    color: '#9A9A9A',                    // Light gray instead of white
     marginTop: 4,
     textAlign: 'right',
   },

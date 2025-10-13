@@ -17,11 +17,11 @@ export const theme = {
     carbs: '#FFE4C9', // Soft orange/peach
     fat: '#C9E4FF', // Soft blue
     
-    // Ring colors (match action buttons)
+    // Ring colors (solid metallic versions for better visibility)
     ringSteps: '#000000', // Black (default Cal AI ring color)
-    ringHydration: '#C9E4FF', // Soft blue (matches +8oz Water button)
-    ringSleep: '#E5D9FF', // Soft purple (matches +15m Sleep button)
-    ringMood: '#FFC9C9', // Soft pink (matches Mood Check-in button)
+    ringHydration: '#1E88E5', // Solid metallic blue - vibrant and visible
+    ringSleep: '#8E24AA', // Solid metallic purple - rich and bold
+    ringMood: '#E91E63', // Solid metallic pink - bright and energetic
     
     // Functional colors
     success: '#7ED957', // Soft green

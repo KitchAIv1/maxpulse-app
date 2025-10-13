@@ -7,10 +7,14 @@ import {
   TextInput, 
   TouchableOpacity, 
   StyleSheet, 
-  ActivityIndicator 
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform
 } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { QuickActionChips } from './QuickActionChips';
 import { ChatComposerProps, QuickAction } from '../../types/coach';
+import { coachTheme } from '../../utils/coachTheme';
 
 export const ChatComposer: React.FC<ChatComposerProps> = ({
   onSendMessage,
@@ -33,84 +37,92 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
       id: 'wellness_check',
       label: 'Wellness Check',
       action: 'wellness_check',
-      icon: '🩺'
+      icon: 'medical'
     },
     {
       id: 'check_score',
       label: 'Check my Life Score',
       action: 'check_score',
-      icon: '🔋'
+      icon: 'battery-charging'
     },
     {
       id: 'boost_score',
       label: 'Boost my score',
       action: 'boost_score',
-      icon: '⚡'
+      icon: 'flash'
     },
     {
       id: 'plan_week',
       label: 'Plan week',
       action: 'plan_tomorrow',
-      icon: '📅'
+      icon: 'calendar'
     },
     {
       id: 'log_water',
       label: 'Log hydration',
       action: 'log_hydration',
       params: { amount: 8 },
-      icon: '💧'
+      icon: 'water'
     },
   ];
 
   return (
-    <View style={styles.container}>
-      {/* Input Row */}
-      <View style={styles.inputContainer}>
-        <View style={styles.inputWrapper}>
-          <TextInput
-            style={styles.textInput}
-            value={message}
-            onChangeText={setMessage}
-            placeholder={placeholder}
-            placeholderTextColor="rgba(255, 255, 255, 0.5)"
-            multiline
-            maxLength={500}
-            editable={!isLoading}
-          />
-        </View>
+    <KeyboardAvoidingView 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      style={styles.keyboardAvoidingView}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+    >
+      <View style={styles.container}>
+        {/* Input Row */}
+        <View style={styles.inputContainer}>
+          <View style={styles.inputWrapper}>
+            <TextInput
+              style={styles.textInput}
+              value={message}
+              onChangeText={setMessage}
+              placeholder={placeholder}
+              placeholderTextColor={coachTheme.colors.chat.placeholderText}
+              multiline
+              maxLength={500}
+              editable={!isLoading}
+            />
+          </View>
 
-        <TouchableOpacity
-          style={[
-            styles.sendButton,
-            (!message.trim() || isLoading) && styles.sendButtonDisabled
-          ]}
-          onPress={handleSend}
-          disabled={!message.trim() || isLoading}
-          activeOpacity={0.7}
-        >
+          <TouchableOpacity
+            style={[
+              styles.sendButton,
+              (!message.trim() || isLoading) && styles.sendButtonDisabled
+            ]}
+            onPress={handleSend}
+            disabled={!message.trim() || isLoading}
+            activeOpacity={0.7}
+          >
           {isLoading ? (
-            <ActivityIndicator size="small" color="white" />
+            <ActivityIndicator size="small" color="#FFFFFF" />
           ) : (
-            <View style={styles.sendIcon}>
-              <View style={styles.sendArrow} />
-            </View>
+            <Icon name="send" size={18} color="#FFFFFF" />
           )}
-        </TouchableOpacity>
+          </TouchableOpacity>
+        </View>
       </View>
-    </View>
+    </KeyboardAvoidingView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    backgroundColor: 'rgba(0, 0, 0, 0.3)',
-    paddingTop: 12,
-    paddingBottom: 12, // Add breathing room between input and nav bar
+  keyboardAvoidingView: {
     position: 'absolute',
-    bottom: 99, // Position above bottom navigation (1+8+8+24+4+12+8+34)
+    bottom: 0,
     left: 0,
     right: 0,
-    zIndex: 999, // Below bottom navigation (1000) but above content
+    zIndex: 999,
+  },
+  container: {
+    backgroundColor: coachTheme.colors.chat.background,
+    paddingTop: 12,
+    paddingBottom: 12,
+    borderTopWidth: 1,
+    borderTopColor: '#E0E0E0',
   },
   inputContainer: {
     flexDirection: 'row',
@@ -122,17 +134,18 @@ const styles = StyleSheet.create({
   },
   inputWrapper: {
     flex: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    backgroundColor: coachTheme.colors.chat.inputBackground,
+    borderRadius: coachTheme.borderRadius.input,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: coachTheme.colors.chat.inputBorder,
     paddingHorizontal: 16,
     paddingVertical: 8,
     minHeight: 40,
     maxHeight: 100,
+    ...coachTheme.shadows.card,
   },
   textInput: {
-    color: 'white',
+    color: coachTheme.colors.chat.inputText,
     fontSize: 15,
     lineHeight: 20,
     textAlignVertical: 'center',
@@ -141,29 +154,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: '#10B981',
+    backgroundColor: coachTheme.colors.chat.sendButton,
     alignItems: 'center',
     justifyContent: 'center',
+    ...coachTheme.shadows.card,
   },
   sendButtonDisabled: {
-    backgroundColor: 'rgba(255, 255, 255, 0.2)',
-  },
-  sendIcon: {
-    width: 16,
-    height: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  sendArrow: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 8,
-    borderRightWidth: 0,
-    borderBottomWidth: 4,
-    borderTopWidth: 4,
-    borderLeftColor: 'white',
-    borderRightColor: 'transparent',
-    borderBottomColor: 'transparent',
-    borderTopColor: 'transparent',
+    backgroundColor: coachTheme.colors.chat.sendButtonDisabled,
   },
 });

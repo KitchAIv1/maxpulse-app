@@ -4,6 +4,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { CalAiRing } from './CalAiRing';
 import { theme } from '../../utils/theme';
 import { calAiCard } from '../../utils/calAiStyles';
@@ -131,7 +132,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   // Small Ring Card (label top, percentage below label, ring below)
   const SmallRingCard: React.FC<{
     title: string;
-    icon: string;
+    icon: string | { name: string; size?: number };
     percentage: number | Animated.Value;
     current: string;
     target: string;
@@ -147,7 +148,16 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         accentColor={accentColor}
         centerContent={
           <View style={styles.ringCenter}>
-            <Text style={styles.smallRingIcon}>{icon}</Text>
+            {typeof icon === 'string' ? (
+              <Text style={styles.smallRingIcon}>{icon}</Text>
+            ) : (
+              <Icon 
+                name={icon.name} 
+                size={icon.size || 20} 
+                color={accentColor || theme.colors.textPrimary}
+                style={styles.smallRingIconVector}
+              />
+            )}
             <Text style={styles.ringValue}>
               {current}
             </Text>
@@ -177,7 +187,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
       <View style={styles.threeCardRow}>
         <SmallRingCard
           title="Hydration"
-          icon="💧"
+          icon={{ name: 'water-outline', size: 18 }}
           percentage={animatedWaterPct}
           current={`${waterData.current}`}
           target={`${waterData.target} oz`}
@@ -187,7 +197,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         
         <SmallRingCard
           title="Sleep"
-          icon="😴"
+          icon={{ name: 'moon-outline', size: 18 }}
           percentage={animatedSleepPct}
           current={formatSleepDuration(sleepData.current)}
           target={formatSleepDuration(sleepData.target)}
@@ -197,7 +207,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         
         <SmallRingCard
           title="Mood"
-          icon="😊"
+          icon={{ name: 'happy-outline', size: 18 }}
           percentage={animatedMoodPct}
           current={`${moodData.current}`}
           target={`${moodData.target}`}
@@ -281,6 +291,9 @@ const styles = StyleSheet.create({
   },
   smallRingIcon: {
     fontSize: 18, // Decreased from 24 to 18 for smaller cards
+    marginBottom: theme.spacing.tiny,
+  },
+  smallRingIconVector: {
     marginBottom: theme.spacing.tiny,
   },
   ringValue: {

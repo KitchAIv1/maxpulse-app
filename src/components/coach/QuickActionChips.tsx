@@ -4,6 +4,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
 import { QuickActionChipsProps } from '../../types/coach';
+import { coachTheme } from '../../utils/coachTheme';
 
 export const QuickActionChips: React.FC<QuickActionChipsProps> = ({
   actions,
@@ -55,14 +56,15 @@ const styles = StyleSheet.create({
   chip: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    borderRadius: 20,
+    backgroundColor: coachTheme.colors.quickActions.background,  // Solid white background
+    borderRadius: coachTheme.borderRadius.quickAction,
     paddingHorizontal: 12,
     paddingVertical: 8,
     marginRight: 8,
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
+    borderColor: coachTheme.colors.quickActions.border,
     minHeight: 36,
+    ...coachTheme.shadows.card,  // Add subtle shadow
   },
   firstChip: {
     marginLeft: 0,
@@ -73,10 +75,11 @@ const styles = StyleSheet.create({
   chipIcon: {
     fontSize: 14,
     marginRight: 6,
+    color: coachTheme.colors.quickActions.iconColor,  // Purple icon color
   },
   chipText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '500',
-    color: 'white',
+    color: coachTheme.colors.quickActions.textColor,  // Dark text on white background
   },
 });
