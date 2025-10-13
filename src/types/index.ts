@@ -26,7 +26,7 @@ export interface DailyMetrics {
 export interface HydrationLog {
   user_id: string;
   ts: string; // ISO timestamp
-  amount_oz: number;
+  oz: number; // ✅ Matches database schema (not amount_oz)
   source: 'manual' | 'healthkit' | 'googlefit';
 }
 

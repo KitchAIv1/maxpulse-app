@@ -42,7 +42,7 @@ ORDER BY date DESC;
 -- Check today's hydration logs for a user
 SELECT 
     ts,
-    amount_oz,
+    oz, -- ✅ Matches actual database schema
     source,
     created_at
 FROM hydration_logs 
@@ -55,14 +55,14 @@ SELECT
     dm.user_id,
     dm.date,
     dm.water_oz_actual as metrics_total,
-    COALESCE(SUM(hl.amount_oz), 0) as logs_total,
-    dm.water_oz_actual - COALESCE(SUM(hl.amount_oz), 0) as difference
+    COALESCE(SUM(hl.oz), 0) as logs_total, -- ✅ Matches actual database schema
+    dm.water_oz_actual - COALESCE(SUM(hl.oz), 0) as difference
 FROM daily_metrics dm
 LEFT JOIN hydration_logs hl ON dm.user_id = hl.user_id 
     AND dm.date = DATE(hl.ts)
 WHERE dm.date = CURRENT_DATE
 GROUP BY dm.user_id, dm.date, dm.water_oz_actual
-HAVING dm.water_oz_actual != COALESCE(SUM(hl.amount_oz), 0);
+HAVING dm.water_oz_actual != COALESCE(SUM(hl.oz), 0);
 
 -- ============================================================================
 -- MOOD CHECK-INS VERIFICATION

@@ -217,7 +217,7 @@ class HealthDataService {
     try {
       const hydrationLog: Omit<HydrationLog, 'user_id'> = {
         ts: new Date().toISOString(),
-        amount_oz: amountOz,
+        oz: amountOz, // ✅ Matches database schema
         source: 'manual',
       };
 
