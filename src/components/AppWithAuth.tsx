@@ -10,6 +10,7 @@ import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
 import SyncManager from '../services/SyncManager';
 import TargetManager from '../services/TargetManager';
+import DailyMetricsUpdater from '../services/DailyMetricsUpdater';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
@@ -44,6 +45,19 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
       // Load user's dynamic targets from their plan
       await loadUserTargets(currentUser.id);
+      
+      // Fix any existing daily_metrics rows with wrong targets
+      setTimeout(async () => {
+        try {
+          console.log('🔧 Running daily_metrics audit and fix...');
+          const result = await DailyMetricsUpdater.auditAndFix(currentUser.id);
+          if (result.success) {
+            console.log(`✅ Daily metrics fixed: ${result.rowsUpdated} updated, ${result.rowsCreated} ensured`);
+          }
+        } catch (error) {
+          console.warn('⚠️ Daily metrics fix failed (non-critical):', error);
+        }
+      }, 2000); // Run after 2 seconds to not block startup
       
       // Load today's data (will restore from AsyncStorage if available)
       await loadTodayData();

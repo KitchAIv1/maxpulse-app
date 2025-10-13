@@ -73,7 +73,18 @@ class HealthDataService {
         return null;
       }
 
-      return data;
+      // If row exists, check if it has wrong targets and needs updating
+      if (data) {
+        // Check if targets are the old defaults (8000, 80, 8)
+        if (data.steps_target === 8000 || data.water_oz_target === 80 || data.sleep_hr_target === 8.0) {
+          if (__DEV__) console.log(`⚠️ Row for ${date} has wrong targets, will be fixed on next audit run`);
+        }
+        return data;
+      }
+
+      // Row doesn't exist - return null (will be created by DailyMetricsUpdater on next audit)
+      if (__DEV__) console.log(`📝 No row found for ${date}, returning null`);
+      return null;
     } catch (error) {
       console.error('Failed to get metrics by date:', error);
       return null;
