@@ -90,7 +90,8 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     current: string;
     target: string;
     size: number;
-  }> = ({ title, icon, percentage, current, target, size }) => {
+    accentColor?: string;
+  }> = ({ title, icon, percentage, current, target, size, accentColor }) => {
     // Create animated percentage text
     const displayPercentage = typeof percentage === 'number' 
       ? Math.round(percentage * 100)
@@ -109,6 +110,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           <CalAiRing
             percentage={percentage}
             size={size}
+            accentColor={accentColor}
             centerContent={
               <View style={styles.ringCenter}>
                 <Text style={styles.largeRingIcon}>{icon}</Text>
@@ -134,13 +136,15 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     current: string;
     target: string;
     size: number;
-  }> = ({ title, icon, percentage, current, target, size }) => (
+    accentColor?: string;
+  }> = ({ title, icon, percentage, current, target, size, accentColor }) => (
     <View style={[styles.smallRingCard, calAiCard.base]}>
       <Text style={styles.smallCardTitle}>{title}</Text>
       
       <CalAiRing
         percentage={percentage}
         size={size}
+        accentColor={accentColor}
         centerContent={
           <View style={styles.ringCenter}>
             <Text style={styles.smallRingIcon}>{icon}</Text>
@@ -166,6 +170,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         current={stepsData.current.toLocaleString()}
         target={stepsData.target.toLocaleString()}
         size={stepsRingSize}
+        accentColor={theme.colors.ringSteps}
       />
       
       {/* Bottom - Three Cards in a Row: Hydration, Sleep, Mood */}
@@ -177,6 +182,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           current={`${waterData.current}`}
           target={`${waterData.target} oz`}
           size={smallRingSize}
+          accentColor={theme.colors.ringHydration}
         />
         
         <SmallRingCard
@@ -186,6 +192,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           current={formatSleepDuration(sleepData.current)}
           target={formatSleepDuration(sleepData.target)}
           size={smallRingSize}
+          accentColor={theme.colors.ringSleep}
         />
         
         <SmallRingCard
@@ -195,6 +202,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           current={`${moodData.current}`}
           target={`${moodData.target}`}
           size={smallRingSize}
+          accentColor={theme.colors.ringMood}
         />
       </View>
       

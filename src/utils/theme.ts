@@ -17,10 +17,11 @@ export const theme = {
     carbs: '#FFE4C9', // Soft orange/peach
     fat: '#C9E4FF', // Soft blue
     
-    // Ring colors (preserved from original)
-    ringSteps: '#FFFFFF', // White
-    ringHydration: '#00FF88', // Neon green
-    ringSleep: '#3B82F6', // Blue
+    // Ring colors (match action buttons)
+    ringSteps: '#000000', // Black (default Cal AI ring color)
+    ringHydration: '#C9E4FF', // Soft blue (matches +8oz Water button)
+    ringSleep: '#E5D9FF', // Soft purple (matches +15m Sleep button)
+    ringMood: '#FFC9C9', // Soft pink (matches Mood Check-in button)
     
     // Functional colors
     success: '#7ED957', // Soft green

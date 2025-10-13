@@ -367,13 +367,13 @@ const styles = StyleSheet.create({
     ...theme.shadows.subtle,
   },
   hydrationButton: {
-    backgroundColor: theme.colors.fat, // Soft blue for hydration
+    backgroundColor: '#C9E4FF', // Soft blue
   },
   sleepButton: {
-    backgroundColor: '#E5D9FF', // Soft purple for sleep
+    backgroundColor: '#E5D9FF', // Soft purple
   },
   stepsButton: {
-    backgroundColor: theme.colors.protein, // Soft pink for mood
+    backgroundColor: '#FFC9C9', // Soft pink
   },
   actionButtonText: {
     fontSize: theme.typography.regular,
