@@ -12,6 +12,9 @@ This directory contains technical documentation for the MaxPulse app, including 
 ### 🤖 **AI & Intelligence Features**
 - **[AI Coach & Wellbeing System](AI_COACH_WELLBEING_SYSTEM.md)** - AI Coach and dashboard implementation
 
+### 📅 **Data & Calendar System**
+- **[Calendar & Data Persistence](CALENDAR_DATA_PERSISTENCE.md)** - Date navigation and offline-first data persistence
+
 ### 🎨 **UI/UX Documentation**
 - **[UI/UX Guidelines](ui/ux.md)** - Design system and component specifications
 

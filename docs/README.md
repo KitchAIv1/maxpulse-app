@@ -11,6 +11,7 @@ Welcome to the MaxPulse app documentation. This directory contains comprehensive
 ### 🔧 **Technical Documentation**
 - **[Activation Code System](technical/ACTIVATION_CODE_SYSTEM.md)** - Authentication and onboarding system
 - **[AI Coach & Wellbeing System](technical/AI_COACH_WELLBEING_SYSTEM.md)** - AI features and dashboard
+- **[Calendar & Data Persistence](technical/CALENDAR_DATA_PERSISTENCE.md)** - Date navigation and offline-first architecture
 - **[UI/UX Guidelines](technical/ui/ux.md)** - Design system and component specifications
 - **[Project Status](technical/PROJECT_STATUS.md)** - Development progress and resume guide
 - **[Cursor AI Rules](technical/CURSOR_AI_RULES.md)** - Development guidelines and constraints
