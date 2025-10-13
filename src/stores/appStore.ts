@@ -351,9 +351,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
     const isViewingPast = date !== today;
     const currentState = get();
     
-    // Prevent unnecessary re-execution if already on this date
-    if (currentState.selectedDate === date) {
-      if (__DEV__) console.log(`Already viewing ${date}, skipping...`);
+    // Prevent unnecessary re-execution ONLY if we're already on this date AND the data is loaded
+    // This allows restoration to happen when returning from a past date
+    if (currentState.selectedDate === date && 
+        currentState.isViewingPastDate === isViewingPast &&
+        (isViewingPast || currentState.currentState.waterOz > 0 || currentState.currentState.sleepHr > 0)) {
+      if (__DEV__) console.log(`Already viewing ${date} with data loaded, skipping...`);
       return;
     }
     
