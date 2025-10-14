@@ -5,6 +5,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContainer } from '../screens/auth';
+import { WelcomeScreen } from '../screens/WelcomeScreen';
 import { authService, supabase } from '../services/supabase';
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
@@ -21,7 +22,11 @@ interface AppWithAuthProps {
 export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = loading
   const [user, setUser] = useState<any>(null);
+  const [showWelcome, setShowWelcome] = useState(false);
   const { setUser: setStoreUser, initializeTargets, loadTodayData } = useAppStore();
+
+  // Development flag - set to true for testing, false for production
+  const ALWAYS_SHOW_WELCOME = true;
 
   // Check authentication status on app start and set up auth listener
   useEffect(() => {
@@ -52,6 +57,12 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
           // Load user data
           await loadUserTargets(session.user.id);
           await loadTodayData();
+          
+          // Show welcome screen if testing flag is enabled
+          if (ALWAYS_SHOW_WELCOME) {
+            setShowWelcome(true);
+          }
+          
           setIsAuthenticated(true);
         }
       }
@@ -98,6 +109,11 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
       
       // Load today's data (will restore from AsyncStorage if available)
       await loadTodayData();
+      
+      // Show welcome screen if testing flag is enabled
+      if (ALWAYS_SHOW_WELCOME) {
+        setShowWelcome(true);
+      }
       
       setIsAuthenticated(true);
       
@@ -242,6 +258,11 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
         await loadUserTargets(authenticatedUser.id);
       }
 
+      // Show welcome screen for new users or if testing
+      if (ALWAYS_SHOW_WELCOME || profile) { // profile exists for new signups
+        setShowWelcome(true);
+      }
+      
       setIsAuthenticated(true);
     } catch (error) {
       console.error('Error completing authentication:', error);
@@ -275,9 +296,35 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
     );
   }
 
+  // Handle welcome screen completion
+  const handleWelcomeComplete = () => {
+    setShowWelcome(false);
+  };
+
+  // Get user display name for welcome screen
+  const getUserDisplayName = () => {
+    if (user?.user_metadata?.name) {
+      return user.user_metadata.name.split(' ')[0]; // First name only
+    }
+    if (user?.email) {
+      return user.email.split('@')[0]; // Email username
+    }
+    return 'Friend'; // Fallback
+  };
+
   // Not authenticated - show auth screens
   if (!isAuthenticated) {
     return <AuthContainer onAuthComplete={handleAuthComplete} />;
+  }
+
+  // Authenticated but showing welcome screen
+  if (showWelcome) {
+    return (
+      <WelcomeScreen 
+        userName={getUserDisplayName()}
+        onComplete={handleWelcomeComplete}
+      />
+    );
   }
 
   // Authenticated - show main app

@@ -81,12 +81,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       <View style={styles.content}>
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <Image 
-            source={require('../../assets/images/ax.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.appName}>MaxPulse</Text>
+          <View style={styles.brandRow}>
+            <Image 
+              source={require('../../assets/images/ax.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.appName}>MaxPulse</Text>
+          </View>
           <Text style={styles.tagline}>Live your best life, every day</Text>
         </View>
 
@@ -209,28 +211,32 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: 60,
+    paddingTop: 140,
     paddingBottom: theme.spacing.lg,
     justifyContent: 'space-between',
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.lg,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginBottom: theme.spacing.sm,
+    width: 36,
+    height: 36,
+    marginRight: theme.spacing.sm,
   },
   appName: {
     fontSize: 30.5, // Exact match with dashboard titleText
     fontWeight: '500', // Exact match with dashboard (medium)
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
     letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: theme.typography.regular,
+    fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     fontWeight: theme.typography.weights.regular,
@@ -244,7 +250,7 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.xlarge, // 32px - larger but not overwhelming
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
     letterSpacing: -0.5,
   },
   inputWrapper: {

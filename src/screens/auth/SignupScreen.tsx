@@ -226,18 +226,20 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
       >
         {/* Logo Section */}
         <View style={styles.logoSection}>
-          <Image 
-            source={require('../../assets/images/ax.png')} 
-            style={styles.logo}
-            resizeMode="contain"
-          />
-          <Text style={styles.appName}>MaxPulse</Text>
+          <View style={styles.brandRow}>
+            <Image 
+              source={require('../../assets/images/ax.png')} 
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <Text style={styles.appName}>MaxPulse</Text>
+          </View>
           <Text style={styles.tagline}>Start your wellness journey</Text>
         </View>
 
         {/* Form Section */}
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Create account</Text>
+          <View style={styles.formSpacer} />
 
           {/* Activation Code Input */}
           <View>
@@ -385,27 +387,31 @@ const styles = StyleSheet.create({
   scrollContent: {
     flexGrow: 1,
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: 60,
+    paddingTop: 140,
     paddingBottom: theme.spacing.lg,
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.lg,
+  },
+  brandRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
   },
   logo: {
-    width: 60,
-    height: 60,
-    marginBottom: theme.spacing.sm,
+    width: 36,
+    height: 36,
+    marginRight: theme.spacing.sm,
   },
   appName: {
     fontSize: 30.5, // Exact match with dashboard titleText
     fontWeight: '500', // Exact match with dashboard (medium)
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
     letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: theme.typography.regular,
+    fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     fontWeight: theme.typography.weights.regular,
@@ -414,11 +420,14 @@ const styles = StyleSheet.create({
     gap: theme.spacing.base,
     marginBottom: theme.spacing.xl,
   },
+  formSpacer: {
+    height: 48, // Equivalent to the removed formTitle height + marginBottom
+  },
   formTitle: {
     fontSize: theme.typography.xlarge, // 32px - consistent with login
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
     letterSpacing: -0.5,
   },
   inputWrapper: {
