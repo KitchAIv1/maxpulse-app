@@ -82,7 +82,7 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         {/* Logo Section */}
         <View style={styles.logoSection}>
           <Image 
-            source={require('../../../assets/icon.png')} 
+            source={require('../../assets/images/ax.png')} 
             style={styles.logo}
             resizeMode="contain"
           />
