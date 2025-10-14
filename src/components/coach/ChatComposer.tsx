@@ -12,7 +12,6 @@ import {
   Platform
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
-import { QuickActionChips } from './QuickActionChips';
 import { ChatComposerProps, QuickAction } from '../../types/coach';
 import { coachTheme } from '../../utils/coachTheme';
 

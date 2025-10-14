@@ -3,6 +3,7 @@ export * from './ui';
 export * from './wellbeing';
 export * from './coach';
 export * from './mood';
+export * from './rewards';
 export { KPICard } from './cards/KPICard';
 export { TriRings } from './rings/TriRings';
 export { CalAiRing } from './rings/CalAiRing';
