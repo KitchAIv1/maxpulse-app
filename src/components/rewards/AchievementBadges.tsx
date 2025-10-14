@@ -29,26 +29,34 @@ const BADGE_COLORS = {
 } as const;
 
 const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
-  const badgeColor = BADGE_COLORS[badge.category];
-  const progress = badge.progress || (badge.earned ? 1 : 0);
+  // Defensive checks
+  if (!badge || !badge.id || !badge.name || !badge.category) {
+    return null;
+  }
+  
+  const badgeColor = BADGE_COLORS[badge.category] || theme.colors.textTertiary;
+  const progress = typeof badge.progress === 'number' ? badge.progress : (badge.earned ? 1 : 0);
+  
+  // Ensure progress is a valid number
+  const safeProgress = isNaN(progress) ? 0 : Math.max(0, Math.min(1, progress));
   
   return (
     <View style={[
       styles.badgeCard,
-      badge.earned && styles.badgeCardEarned
+      badge.earned ? styles.badgeCardEarned : null
     ]}>
       <View style={styles.badgeRingContainer}>
         <MoodRing
           size={60}
           strokeWidth={6}
-          progress={progress}
+          progress={safeProgress}
           color={badgeColor}
           isSelected={badge.earned}
           animated={true}
         />
         <View style={styles.badgeIconContainer}>
           <Icon
-            name={badge.icon}
+            name={badge.icon || 'help-circle'}
             size={20}
             color={badge.earned ? badgeColor : theme.colors.textTertiary}
           />
@@ -58,56 +66,57 @@ const BadgeCard: React.FC<{ badge: Badge }> = ({ badge }) => {
       <View style={styles.badgeContent}>
         <Text style={[
           styles.badgeName,
-          badge.earned && { color: badgeColor }
+          badge.earned ? { color: badgeColor } : null
         ]}>
-          {badge.name}
+          {badge.name || 'Badge'}
         </Text>
         <Text style={[
           styles.badgeDescription,
-          !badge.earned && styles.badgeDescriptionLocked
+          !badge.earned ? styles.badgeDescriptionLocked : null
         ]}>
-          {badge.description}
+          {badge.description || 'No description'}
         </Text>
         
-        {badge.earned && (
+        {badge.earned ? (
           <View style={[styles.earnedBadge, { backgroundColor: badgeColor }]}>
             <Icon name="checkmark" size={12} color={theme.colors.cardBackground} />
             <Text style={styles.earnedText}>Earned</Text>
           </View>
-        )}
+        ) : null}
         
-        {!badge.earned && badge.progress && badge.progress > 0 && (
+        {!badge.earned && safeProgress > 0 ? (
           <View style={styles.progressContainer}>
             <Text style={styles.progressText}>
-              {Math.round(badge.progress * 100)}% complete
+              {Math.round(safeProgress * 100)}% complete
             </Text>
           </View>
-        )}
+        ) : null}
         
-        {!badge.earned && (!badge.progress || badge.progress === 0) && (
+        {!badge.earned && safeProgress === 0 ? (
           <View style={styles.lockedBadge}>
             <Icon name="lock-closed" size={10} color={theme.colors.textTertiary} />
             <Text style={styles.lockedText}>Locked</Text>
           </View>
-        )}
+        ) : null}
       </View>
     </View>
   );
 };
 
-export const AchievementBadges: React.FC<AchievementBadgesProps> = ({
-  badges,
-}) => {
-  const earnedBadges = badges.filter(b => b.earned);
-  const inProgressBadges = badges.filter(b => !b.earned && b.progress && b.progress > 0);
-  const lockedBadges = badges.filter(b => !b.earned && (!b.progress || b.progress === 0));
+export const AchievementBadges: React.FC<AchievementBadgesProps> = ({ badges }) => {
+  // Filter out invalid badges
+  const validBadges = badges.filter(b => b && b.id && b.name && b.category);
+  
+  const earnedBadges = validBadges.filter(b => b.earned);
+  const inProgressBadges = validBadges.filter(b => !b.earned && b.progress && b.progress > 0);
+  const lockedBadges = validBadges.filter(b => !b.earned && (!b.progress || b.progress === 0));
   
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.title}>Achievements</Text>
         <Text style={styles.summary}>
-          {earnedBadges.length}/{badges.length} earned
+          {earnedBadges.length}/{validBadges.length} earned
         </Text>
       </View>
       

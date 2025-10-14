@@ -8,11 +8,33 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Rewards UI Redesign**
+  - Starbucks partnership reward card with optimized image (14KB)
+  - Today's earnings grid with mini ring visualizations
+  - Rewards hero card with animated progress ring
+  - Streak visualization with milestone tracking
+  - Achievement badges with vector icons
+  - Partner rewards section header outside card container
+  
+- **Performance Optimizations**
+  - React.memo for all rewards components
+  - useMemo for expensive calculations
+  - useCallback for event handlers
+  - GPU acceleration with renderToHardwareTextureAndroid
+  - Image optimization (98.8% size reduction)
+
+- **Design System Updates**
+  - Solid metallic ring colors (hydration, sleep, mood)
+  - Consistent Cal AI design language across rewards
+  - Section headers for better content hierarchy
+  - Improved typography and spacing
+  
 - Comprehensive documentation organization
 - Technical documentation for all major systems
 - User guide structure (in development)
 - Architecture documentation framework
 - API documentation framework
+- Rewards UI/UX documentation
 
 ## [1.0.0] - 2025-01-XX
 

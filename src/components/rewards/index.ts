@@ -5,3 +5,4 @@ export { EarningsRingCard } from './EarningsRingCard';
 export { TodayEarningsGrid } from './TodayEarningsGrid';
 export { StreakVisualization } from './StreakVisualization';
 export { AchievementBadges } from './AchievementBadges';
+export { StarbucksRewardCard } from './StarbucksRewardCard';

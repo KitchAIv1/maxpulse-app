@@ -15,8 +15,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {
   RewardsHeroCard,
   TodayEarningsGrid,
-  StreakVisualization,
-  AchievementBadges,
+  StarbucksRewardCard,
 } from '../components/rewards';
 import { useAppStore } from '../stores/appStore';
 import { useLifeScore } from '../hooks/useAppSelectors';
@@ -44,44 +43,6 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
     totalPoints: 1247,
     todayPoints: 85,
     weeklyProgress: 0.68, // 68% of weekly goal
-    currentStreak: 5,
-    longestStreak: 12,
-    badges: [
-      { 
-        id: '1', 
-        name: 'Hydration Hat-Trick', 
-        description: '3 days of hydration goals', 
-        icon: 'water', 
-        earned: true,
-        category: 'hydration' as const
-      },
-      { 
-        id: '2', 
-        name: 'Early Lights', 
-        description: '3 nights >90% sleep target', 
-        icon: 'moon', 
-        earned: true,
-        category: 'sleep' as const
-      },
-      { 
-        id: '3', 
-        name: 'Step Master', 
-        description: '7 days of step goals', 
-        icon: 'footsteps', 
-        earned: false,
-        progress: 5/7, // 5 out of 7 days completed
-        category: 'steps' as const
-      },
-      { 
-        id: '4', 
-        name: 'Balanced Week', 
-        description: 'All three hit 5/7 days', 
-        icon: 'fitness', 
-        earned: false,
-        progress: 0.4, // 40% progress
-        category: 'balanced' as const
-      },
-    ],
     todayBreakdown: [
       { type: 'Steps' as const, points: Math.round(stepsPct * 40), max: 40, pct: stepsPct },
       { type: 'Hydration' as const, points: Math.round(waterPct * 40), max: 40, pct: waterPct },
@@ -130,16 +91,25 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
           allTargetsMet={allTargetsMet}
         />
 
-        {/* Streak Visualization */}
-        <StreakVisualization
-          currentStreak={mockRewards.currentStreak}
-          longestStreak={mockRewards.longestStreak}
-          nextMilestone={7} // Next milestone at 7 days
-          nextMilestoneBonus={30} // 30 points bonus
-        />
+        {/* Partner Rewards Section Header */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Partner Rewards</Text>
+          <Text style={styles.sectionSubtitle}>Redeem your points</Text>
+        </View>
 
-        {/* Achievement Badges */}
-        <AchievementBadges badges={mockRewards.badges} />
+        {/* Starbucks Partnership Reward */}
+        <StarbucksRewardCard
+          pointsRequired={500}
+          currentPoints={mockRewards.totalPoints}
+          onRedeem={() => {
+            try {
+              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            } catch (error) {
+              // Haptics not available
+            }
+            console.log('Redeeming Starbucks reward...');
+          }}
+        />
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
@@ -177,6 +147,21 @@ const styles = StyleSheet.create({
   },
   headerSpacer: {
     width: 40, // Match back button width
+  },
+  sectionHeader: {
+    marginTop: theme.spacing.lg,
+    marginBottom: theme.spacing.base,
+    paddingHorizontal: theme.spacing.xs,
+  },
+  sectionTitle: {
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+  },
+  sectionSubtitle: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
   },
   bottomSpacer: {
     height: theme.spacing.xl,

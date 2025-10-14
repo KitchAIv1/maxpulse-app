@@ -39,10 +39,14 @@ A comprehensive React Native health transformation platform that combines **Step
 - **Module Navigation**: Direct links to improve specific health areas
 
 ### 🏆 **Rewards & Gamification**
-- **Points System**: Earn points for consistent healthy behaviors
-- **Streak Tracking**: Maintain streaks for bonus rewards
-- **Badge System**: Achievement unlocking for milestones
-- **Progress Visualization**: Clear progress indicators and celebrations
+- **Points System**: Earn points for consistent healthy behaviors (steps, hydration, sleep)
+- **Animated Progress Rings**: Visual feedback with mini rings for each metric
+- **Streak Tracking**: Maintain streaks for bonus rewards with milestone progress
+- **Badge System**: Achievement unlocking with vector icons and categories
+- **Partner Rewards**: Starbucks integration with redeemable points
+- **Weekly Progress**: Animated hero card showing total points and weekly completion
+- **Today's Earnings**: 2x2 grid displaying daily point breakdown
+- **Performance Optimized**: React.memo, GPU acceleration for smooth animations
 
 ## 🛠 Tech Stack
 
@@ -128,9 +132,16 @@ maxpulse-app/
 │   │   │   └── CalendarBar.tsx # 7-day week selector
 │   │   ├── wellbeing/         # Wellbeing Dashboard components
 │   │   ├── coach/             # AI Coach chat interface
-│   │   ├── mood/              # Mood check-in components
+│   │   ├── mood/              # Mood check-in components (MoodRing, MoodSelector, etc.)
+│   │   ├── rewards/           # Rewards & gamification components
+│   │   │   ├── RewardsHeroCard.tsx # Total points with animated ring
+│   │   │   ├── EarningsRingCard.tsx # Individual metric earning cards
+│   │   │   ├── TodayEarningsGrid.tsx # 2x2 grid for daily earnings
+│   │   │   ├── StarbucksRewardCard.tsx # Partnership reward card
+│   │   │   ├── StreakVisualization.tsx # Streak tracking with milestones
+│   │   │   └── AchievementBadges.tsx # Badge system with progress rings
 │   │   ├── auth/              # Authentication components
-│   │   ├── BottomNavigation.tsx # Cal AI styled bottom nav
+│   │   ├── BottomNavigation.tsx # Cal AI styled bottom nav with Ionicons
 │   │   └── AppWithAuth.tsx    # Authentication wrapper with V2 Engine
 │   ├── screens/               # Screen components
 │   │   ├── auth/              # Authentication screens
@@ -533,6 +544,7 @@ Visit the **[docs/](docs/)** directory for comprehensive documentation:
 - **[Database Schema](docs/technical/supabase_schema.sql)** - Complete database structure
 - **[Activation System](docs/technical/ACTIVATION_CODE_SYSTEM.md)** - Authentication flow
 - **[AI Coach System](docs/technical/AI_COACH_WELLBEING_SYSTEM.md)** - AI features
+- **[Rewards UI Updates](docs/technical/ui/REWARDS_UI_UPDATES.md)** - Rewards redesign documentation
 
 ### 📋 **Project Information**
 - **[Changelog](CHANGELOG.md)** - Version history and changes

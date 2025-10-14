@@ -15,12 +15,7 @@ interface RewardsHeroCardProps {
 
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
 
-export const RewardsHeroCard: React.FC<RewardsHeroCardProps> = ({
-  totalPoints,
-  weeklyProgress,
-  todayPoints,
-  animated = true,
-}) => {
+export const RewardsHeroCard: React.FC<RewardsHeroCardProps> = ({ totalPoints, weeklyProgress, todayPoints, animated = true }) => {
   const animatedValue = useRef(new Animated.Value(0)).current;
   
   const size = 100; // Optimized size for left section

@@ -67,9 +67,6 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
 
   return (
     <View style={[styles.container, { width: size, height: size }]}>
-      {/* Background circle */}
-      <View style={[styles.background, { backgroundColor: colors.bg }]} />
-      
       {/* SVG Progress Circle */}
       <Svg width={size} height={size} style={styles.svg}>
         <Defs>
@@ -84,7 +81,7 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
           cx={size / 2}
           cy={size / 2}
           r={radius}
-          stroke="rgba(255, 255, 255, 0.1)"
+          stroke="#E5E5E5"
           strokeWidth={8}
           fill="none"
         />
@@ -164,13 +161,13 @@ const styles = StyleSheet.create({
   },
   percentText: {
     fontSize: 16,
-    color: 'rgba(255, 255, 255, 0.8)',
+    color: '#8A8A8A',
     fontWeight: '500',
     marginTop: -8,
   },
   levelText: {
     fontSize: 14,
-    color: 'rgba(255, 255, 255, 0.9)',
+    color: '#6A6A6A',
     fontWeight: '500',
     marginTop: 4,
   },

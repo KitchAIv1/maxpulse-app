@@ -38,13 +38,7 @@ const EARNINGS_CONFIG = {
   },
 } as const;
 
-export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({
-  type,
-  points,
-  maxPoints,
-  progress,
-  isCompleted = false,
-}) => {
+export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({ type, points, maxPoints, progress, isCompleted = false }) => {
   const config = EARNINGS_CONFIG[type];
   const progressValue = Math.min(progress, 1); // Cap at 100%
   
@@ -55,7 +49,7 @@ export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({
     <View style={[
       styles.container,
       isCompleted && styles.containerCompleted
-    ]}>
+    ]} renderToHardwareTextureAndroid={true}>
       <View style={styles.ringContainer}>
         <MoodRing
           size={60}
@@ -98,14 +92,13 @@ export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
     backgroundColor: theme.colors.cardBackground,
     borderRadius: theme.borderRadius.md,
-    padding: theme.spacing.base, // Increased from sm to base for better touch targets
+    padding: theme.spacing.base,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.border,
+    minHeight: 130,
     position: 'relative',
-    minHeight: 130, // Increased from 120 for better proportions
     ...theme.shadows.subtle,
   },
   containerCompleted: {
@@ -113,7 +106,7 @@ const styles = StyleSheet.create({
   },
   ringContainer: {
     position: 'relative',
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm,
   },
   iconContainer: {
     position: 'absolute',
@@ -126,23 +119,25 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     alignItems: 'center',
+    flex: 1,
   },
   typeLabel: {
-    fontSize: theme.typography.xsmall,
-    fontWeight: theme.typography.weights.medium,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.tiny,
-    textAlign: 'center',
-  },
-  pointsText: {
     fontSize: theme.typography.small,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.tiny,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  pointsText: {
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
   },
   progressText: {
-    fontSize: theme.typography.tiny,
-    color: theme.colors.textTertiary,
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.tiny,
   },
   completedBadge: {
     position: 'absolute',
