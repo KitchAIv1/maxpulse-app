@@ -215,35 +215,36 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xxl,
   },
   logo: {
-    width: 100,
-    height: 100,
-    marginBottom: theme.spacing.base,
+    width: 60,
+    height: 60,
+    marginBottom: theme.spacing.sm,
   },
   appName: {
-    fontSize: theme.typography.xlarge,
-    fontWeight: theme.typography.weights.bold,
+    fontSize: 30.5, // Exact match with dashboard titleText
+    fontWeight: '500', // Exact match with dashboard (medium)
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
     letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: theme.typography.small,
+    fontSize: theme.typography.regular,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+    fontWeight: theme.typography.weights.regular,
   },
   form: {
     flex: 1,
     justifyContent: 'center',
-    gap: theme.spacing.lg,
+    gap: theme.spacing.base,
   },
   formTitle: {
-    fontSize: 28,
+    fontSize: theme.typography.xlarge, // 32px - larger but not overwhelming
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.lg,
     letterSpacing: -0.5,
   },
   inputWrapper: {

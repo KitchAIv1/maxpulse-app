@@ -393,31 +393,32 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xxl,
   },
   logo: {
-    width: 80,
-    height: 80,
+    width: 60,
+    height: 60,
     marginBottom: theme.spacing.sm,
   },
   appName: {
-    fontSize: theme.typography.xlarge,
-    fontWeight: theme.typography.weights.bold,
+    fontSize: 30.5, // Exact match with dashboard titleText
+    fontWeight: '500', // Exact match with dashboard (medium)
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
     letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: theme.typography.small,
+    fontSize: theme.typography.regular,
     color: theme.colors.textSecondary,
     textAlign: 'center',
+    fontWeight: theme.typography.weights.regular,
   },
   form: {
     gap: theme.spacing.base,
-    marginBottom: theme.spacing.xxl,
+    marginBottom: theme.spacing.xl,
   },
   formTitle: {
-    fontSize: 28,
+    fontSize: theme.typography.xlarge, // 32px - consistent with login
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.lg,
     letterSpacing: -0.5,
   },
   inputWrapper: {
