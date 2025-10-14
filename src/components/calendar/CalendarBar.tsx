@@ -236,7 +236,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.xs,
   },
   calendarWrapper: {
-    marginLeft: -(screenWidth / 7) * 0.25, // Shift left by 0.25 day width (was 0.5, moved right by 0.25)
+    // No margin shift - align naturally with scroll content padding
   },
   scrollContent: {
     // Empty but required for proper alignment
@@ -246,7 +246,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-evenly',
     alignItems: 'center',
-    paddingHorizontal: theme.spacing.base, // Match App.tsx scrollContent padding (16px)
+    paddingLeft: 11, // 11px left spacing for precise alignment
+    paddingRight: 39, // 39px right spacing for balance
   },
   dayButton: {
     flex: 1,
@@ -265,7 +266,7 @@ const styles = StyleSheet.create({
     opacity: 0.4,
   },
   dayLabel: {
-    fontSize: theme.typography.tiny, // Reduced from xsmall to tiny
+    fontSize: 9, // Further reduced from tiny (10px) to 9px
     fontWeight: theme.typography.weights.light,
     color: '#9E9E9E',
     marginBottom: 4,
@@ -314,7 +315,7 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
   },
   dateText: {
-    fontSize: theme.typography.small,
+    fontSize: theme.typography.xsmall, // Reduced from small (14px) to xsmall (12px)
     fontWeight: theme.typography.weights.light,
     color: '#9E9E9E',
   },

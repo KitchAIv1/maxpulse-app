@@ -66,11 +66,11 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
     <Modal
       visible={visible}
       animationType="slide"
-      presentationStyle="formSheet"
+      transparent={true}
       onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
-        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={true} />
+        <StatusBar barStyle="dark-content" backgroundColor="transparent" translucent={true} />
         
         {/* Backdrop */}
         <TouchableOpacity 
@@ -142,8 +142,15 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
 };
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, justifyContent: 'flex-end' },
-  backdrop: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.4)' },
+  overlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'transparent' },
+  backdrop: { 
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
   bottomSheet: {
     backgroundColor: theme.colors.background,
     borderTopLeftRadius: theme.borderRadius.xl,

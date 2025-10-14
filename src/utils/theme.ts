@@ -24,6 +24,8 @@ export const theme = {
     ringMood: '#E91E63', // Solid metallic pink - bright and energetic
     
     // Functional colors
+    primary: '#FF6B6B', // Primary brand color (soft red)
+    secondary: '#1E88E5', // Secondary brand color (blue)
     success: '#7ED957', // Soft green
     warning: '#FFB547', // Soft amber
     error: '#FF6B6B', // Soft red
@@ -41,8 +43,9 @@ export const theme = {
   typography: {
     // Font sizes
     hero: 64, // Extra large numbers (Cal AI style)
-    xlarge: 48, // Large numbers
-    large: 32, // Section headers
+    xxlarge: 48, // Extra extra large
+    xlarge: 32, // Extra large numbers
+    large: 20, // Large numbers
     medium: 18, // Body text
     regular: 16, // Regular text
     small: 14, // Small labels
@@ -84,6 +87,7 @@ export const theme = {
     lg: 16,
     xl: 20,
     xxl: 24,
+    full: 9999,
     round: 9999,
   },
   

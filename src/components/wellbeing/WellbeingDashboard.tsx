@@ -64,14 +64,44 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            {/* Life Score Display - Hero */}
-            <View style={styles.heroSection}>
-              <BatteryGauge score={currentScore} size={220} animated />
+            {/* Life Score & Streak - Two Column Layout */}
+            <View style={styles.twoColumnLayout}>
+              {/* Left Column - Life Score */}
+              <View style={styles.lifeScoreContainer}>
+                <BatteryGauge score={currentScore} size={160} animated />
+              </View>
+
+              {/* Right Column - Streak Info */}
+              <View style={styles.rightColumn}>
+                {/* Day Streak Card */}
+                <View style={styles.dayStreakCard}>
+                  <Icon name="flame" size={28} color="#FF6B35" style={styles.streakIcon} />
+                  <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>DAY STREAK</Text>
+                  <Text style={styles.streakValue}>{mockStreakData.currentStreak}</Text>
+                  <Text style={styles.streakLabel} numberOfLines={1}>days in a row</Text>
+                </View>
+
+                {/* Personal Best Card */}
+                <View style={styles.personalBestCard}>
+                  <Icon name="trophy" size={28} color="#FFD700" style={styles.streakIcon} />
+                  <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>BEST</Text>
+                  <Text style={styles.streakValue}>{mockStreakData.longestStreak}</Text>
+                  <Text style={styles.streakLabel} numberOfLines={1}>days total</Text>
+                </View>
+              </View>
             </View>
 
-            {/* Streak Status - Compact */}
-            <View style={styles.streakSection}>
-              <StreakVisualization {...mockStreakData} />
+            {/* Days to Next Milestone - Simplified without progress bar */}
+            <View style={styles.milestoneSection}>
+              <View style={styles.milestoneCard}>
+                <View style={styles.milestoneHeader}>
+                  <Icon name="flag" size={16} color={theme.colors.ringMood} />
+                  <Text style={styles.milestoneText}>
+                    {mockStreakData.nextMilestone - mockStreakData.currentStreak} days until next milestone
+                  </Text>
+                </View>
+                <Text style={styles.milestoneBonus}>+{mockStreakData.nextMilestoneBonus} bonus points</Text>
+              </View>
             </View>
 
             {/* Achievements */}
@@ -112,12 +142,106 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xl,
     paddingBottom: theme.spacing.xl,
   },
-  heroSection: {
-    alignItems: 'center', marginBottom: theme.spacing.xxl,
-    paddingVertical: theme.spacing.lg,
+  // Two-column layout
+  twoColumnLayout: {
+    flexDirection: 'row',
+    alignItems: 'stretch', // Ensure both columns have same height
+    gap: theme.spacing.base,
+    marginBottom: theme.spacing.base,
   },
-  streakSection: {
+  // Left column - Life Score (main highlight)
+  lifeScoreContainer: {
+    flex: 1.5, // Further decreased width for more compact design
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.base,
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: 180, // Decreased to 180px
+    ...theme.shadows.subtle,
+  },
+  // Right column - Compact streak cards
+  rightColumn: {
+    flex: 1,
+    justifyContent: 'space-between', // Distribute cards evenly
+    gap: theme.spacing.sm,
+  },
+  // Day Streak Card
+  dayStreakCard: {
+    flex: 1, // Take equal space in right column
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.sm, // Reduced horizontal padding to prevent text wrapping
+    alignItems: 'center',
+    justifyContent: 'center', // Center content vertically
+    minHeight: 120, // Ensure consistent card height
+    ...theme.shadows.subtle,
+  },
+  // Personal Best Card
+  personalBestCard: {
+    flex: 1, // Take equal space in right column
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.sm, // Reduced horizontal padding to prevent text wrapping
+    alignItems: 'center',
+    justifyContent: 'center', // Center content vertically
+    minHeight: 120, // Ensure consistent card height
+    ...theme.shadows.subtle,
+  },
+  streakIcon: {
+    marginBottom: theme.spacing.sm,
+  },
+  streakTitle: {
+    fontSize: theme.typography.tiny, // Reduced from xsmall to tiny
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textSecondary,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    marginBottom: theme.spacing.sm, // Increased spacing
+    textAlign: 'center',
+  },
+  streakValue: {
+    fontSize: theme.typography.medium, // Decreased - should not compete with Life Score
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    lineHeight: theme.typography.medium * 1.2,
+    marginBottom: theme.spacing.xs, // Add space before label
+  },
+  streakLabel: {
+    fontSize: theme.typography.tiny,
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: theme.typography.tiny * 1.2,
+  },
+  // Milestone section
+  milestoneSection: {
     marginBottom: theme.spacing.lg,
+  },
+  milestoneCard: {
+    backgroundColor: theme.colors.cardBackground,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+    borderStyle: 'dashed',
+  },
+  milestoneHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: theme.spacing.xs,
+    marginBottom: theme.spacing.xs,
+  },
+  milestoneText: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+  },
+  milestoneBonus: {
+    fontSize: theme.typography.small,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.ringMood,
   },
   bottomSpacer: { height: theme.spacing.xl },
 });

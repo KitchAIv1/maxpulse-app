@@ -66,76 +66,88 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
   };
 
   return (
-    <View style={[styles.container, { width: size, height: size }]}>
-      {/* SVG Progress Circle */}
-      <Svg width={size} height={size} style={styles.svg}>
-        <Defs>
-          <LinearGradient id="batteryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-            <Stop offset="0%" stopColor={colors.primary} />
-            <Stop offset="100%" stopColor={colors.secondary} />
-          </LinearGradient>
-        </Defs>
-        
-        {/* Background circle */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#E5E5E5"
-          strokeWidth={8}
-          fill="none"
-        />
-        
-        {/* Progress circle */}
-        <Circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="url(#batteryGradient)"
-          strokeWidth={8}
-          fill="none"
-          strokeLinecap="round"
-          strokeDasharray={strokeDasharray}
-          strokeDashoffset={strokeDashoffset}
-          transform={`rotate(-90 ${size / 2} ${size / 2})`}
-        />
-      </Svg>
-
-      {/* Center content */}
-      <View style={styles.centerContent}>
-        <Text style={[styles.scoreText, { color: colors.primary }]}>
-          {Math.round(score)}
-        </Text>
-        <Text style={styles.percentText}>%</Text>
-        <Text style={styles.levelText}>{getScoreLevel(score)}</Text>
-        
-        {/* Battery icon indicator */}
-        <View style={[styles.batteryIcon, { borderColor: colors.primary }]}>
-          <View 
-            style={[
-              styles.batteryFill, 
-              { 
-                backgroundColor: colors.primary,
-                height: `${progress * 100}%`
-              }
-            ]} 
+    <View style={styles.wrapper}>
+      {/* Ring container with fixed size */}
+      <View style={[styles.ringContainer, { width: size, height: size }]}>
+        {/* SVG Progress Circle */}
+        <Svg width={size} height={size} style={styles.svg}>
+          <Defs>
+            <LinearGradient id="batteryGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+              <Stop offset="0%" stopColor={colors.primary} />
+              <Stop offset="100%" stopColor={colors.secondary} />
+            </LinearGradient>
+          </Defs>
+          
+          {/* Background circle */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="#E5E5E5"
+            strokeWidth={8}
+            fill="none"
           />
-          <View style={[styles.batteryTip, { backgroundColor: colors.primary }]} />
-        </View>
-      </View>
+          
+          {/* Progress circle */}
+          <Circle
+            cx={size / 2}
+            cy={size / 2}
+            r={radius}
+            stroke="url(#batteryGradient)"
+            strokeWidth={8}
+            fill="none"
+            strokeLinecap="round"
+            strokeDasharray={strokeDasharray}
+            strokeDashoffset={strokeDashoffset}
+            transform={`rotate(-90 ${size / 2} ${size / 2})`}
+          />
+        </Svg>
 
-      {/* Charging animation effect */}
-      {animated && progress > 0 && (
-        <View style={styles.chargingEffect}>
-          <Text style={[styles.chargingText, { color: colors.primary }]}>⚡</Text>
+        {/* Center content - Score only */}
+        <View style={styles.centerContent}>
+          <Text style={[styles.scoreText, { color: colors.primary }]}>
+            {Math.round(score)}
+          </Text>
+          
+          {/* Battery icon indicator */}
+          <View style={[styles.batteryIcon, { borderColor: colors.primary }]}>
+            <View 
+              style={[
+                styles.batteryFill, 
+                { 
+                  backgroundColor: colors.primary,
+                  height: `${progress * 100}%`
+                }
+              ]} 
+            />
+            <View style={[styles.batteryTip, { backgroundColor: colors.primary }]} />
+          </View>
         </View>
-      )}
+
+        {/* Charging animation effect */}
+        {animated && progress > 0 && (
+          <View style={styles.chargingEffect}>
+            <Text style={[styles.chargingText, { color: colors.primary }]}>⚡</Text>
+          </View>
+        )}
+      </View>
+      
+      {/* Level text OUTSIDE ring container - below everything */}
+      <View style={styles.belowRingContent}>
+        <Text style={[styles.levelText, { color: colors.primary }]}>
+          {getScoreLevel(score)}
+        </Text>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  wrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ringContainer: {
     position: 'relative',
     alignItems: 'center',
     justifyContent: 'center',
@@ -155,21 +167,19 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   scoreText: {
-    fontSize: 48,
+    fontSize: 56,
     fontWeight: '700',
-    lineHeight: 52,
+    lineHeight: 60,
   },
-  percentText: {
-    fontSize: 16,
-    color: '#8A8A8A',
-    fontWeight: '500',
-    marginTop: -8,
+  belowRingContent: {
+    marginTop: 8,
+    alignItems: 'center',
   },
   levelText: {
-    fontSize: 14,
-    color: '#6A6A6A',
-    fontWeight: '500',
-    marginTop: 4,
+    fontSize: 12,
+    fontWeight: '600',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   batteryIcon: {
     width: 20,

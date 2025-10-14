@@ -113,7 +113,7 @@ function TriHabitApp() {
     return (
       <View style={styles.container}>
         <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
-        <ProfileScreen />
+        <ProfileScreen onBack={() => setCurrentScreen('dashboard')} />
         <BottomNavigation 
           currentScreen={currentScreen} 
           onScreenChange={setCurrentScreen} 

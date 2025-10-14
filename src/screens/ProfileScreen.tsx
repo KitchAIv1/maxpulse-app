@@ -1,7 +1,7 @@
 // Profile Screen Component
-// Displays current user profile and backend data for verification
+// Modern user profile with Cal AI design language
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import {
   View,
   Text,
@@ -9,119 +9,336 @@ import {
   TouchableOpacity,
   StyleSheet,
   RefreshControl,
+  StatusBar,
+  Alert,
 } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import Icon from 'react-native-vector-icons/Ionicons';
+import {
+  UserProfileCard,
+  HealthSummaryCard,
+  SubscriptionCard,
+  PreferencesCard,
+  SupportCard,
+  AccountActionsCard,
+} from '../components/profile';
 import { useAppStore } from '../stores/appStore';
-import { supabase, authService } from '../services/supabase';
-import { DailyMetrics, UserProfileFromActivation } from '../types';
-import { formatSleepDuration } from '../utils';
-import DatabaseInitializer from '../services/DatabaseInitializer';
-import TargetManager from '../services/TargetManager';
+import { useLifeScore } from '../hooks/useAppSelectors';
+import { authService } from '../services/supabase';
 import { theme } from '../utils/theme';
-import { calAiCard } from '../utils/calAiStyles';
 
 interface ProfileScreenProps {
   onBack?: () => void;
 }
 
-export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
-  const { user, targets, currentState } = useAppStore();
-  const [profileData, setProfileData] = useState<UserProfileFromActivation | null>(null);
-  const [dailyMetrics, setDailyMetrics] = useState<DailyMetrics | null>(null);
-  const [planProgress, setPlanProgress] = useState<any>(null);
-  const [personalizedTargets, setPersonalizedTargets] = useState<{
-    steps: number;
-    waterOz: number;
-    sleepHr: number;
-    source: 'personalized' | 'default';
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack }) => {
+  const { user, targets, currentState, moodCheckInFrequency } = useAppStore();
+  const { stepsPct, waterPct, sleepPct, score: lifeScore } = useLifeScore();
   const [refreshing, setRefreshing] = useState(false);
+  const [preferences, setPreferences] = useState({
+    notifications: true,
+    weeklyReports: true,
+    dataSharing: false,
+    units: 'imperial' as 'metric' | 'imperial',
+    privacy: 'friends' as 'public' | 'friends' | 'private',
+  });
 
-  useEffect(() => {
-    loadProfileData();
-  }, [user]);
+  // Mock user data - in production, this would come from the backend
+  const profileData = useMemo(() => ({
+    name: user?.display_name || 'Health Enthusiast',
+    email: 'user@maxpulse.com', // Would come from user profile in production
+    planType: 'Premium',
+    joinDate: '2024-01-15',
+    nextBillingDate: '2025-01-15',
+  }), [user]);
 
-  const loadProfileData = async () => {
-    if (!user) return;
-    
-    setIsLoading(true);
-    
-    try {
-      // Load user profile from app_user_profiles
-      const { data: profile, error: profileError } = await supabase
-        .from('app_user_profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
+  // Health metrics for summary (no rings)
+  const healthMetrics = useMemo(() => [
+    {
+      icon: 'footsteps',
+      label: 'Steps',
+      current: ((currentState?.steps ?? 0)).toLocaleString(),
+      target: ((targets?.steps ?? 0)).toLocaleString(),
+      percentage: stepsPct * 100,
+    },
+    {
+      icon: 'water',
+      label: 'Hydration',
+      current: ((currentState?.waterOz ?? 0)).toString(),
+      target: ((targets?.waterOz ?? 0)).toString(),
+      percentage: waterPct * 100,
+      unit: 'oz',
+    },
+    {
+      icon: 'moon',
+      label: 'Sleep',
+      current: ((currentState?.sleepHr ?? 0)).toFixed(1),
+      target: ((targets?.sleepHr ?? 0)).toString(),
+      percentage: sleepPct * 100,
+      unit: 'hr',
+    },
+    {
+      icon: 'happy',
+      label: 'Mood',
+      current: ((moodCheckInFrequency?.total_checkins ?? 0)).toString(),
+      target: '7',
+      percentage: ((moodCheckInFrequency?.total_checkins ?? 0) / 7) * 100,
+      unit: 'check-ins',
+    },
+  ], [currentState, targets, moodCheckInFrequency, stepsPct, waterPct, sleepPct]);
 
-      if (profileError) {
-        console.error('Error loading profile:', profileError);
-      } else {
-        setProfileData(profile);
-        
-        // Load personalized targets directly from activation code
-        if (profile.activation_code_id) {
-          const targets = await TargetManager.getUserTargets(profile.activation_code_id);
-          setPersonalizedTargets(targets);
-          console.log('🎯 Loaded personalized targets:', targets);
+  // Subscription features
+  const subscriptionFeatures = useMemo(() => [
+    'Unlimited health tracking',
+    'AI-powered insights & coaching',
+    'Advanced analytics & trends',
+    'Priority customer support',
+    'Export your health data',
+    'Sync with wearable devices',
+  ], []);
+
+  // User preferences
+  const preferenceItems = useMemo(() => [
+    {
+      id: 'notifications',
+      icon: 'notifications-outline',
+      label: 'Push Notifications',
+      description: 'Reminders and goal celebrations',
+      type: 'toggle' as const,
+      value: preferences.notifications,
+      onToggle: (value: boolean) => setPreferences(prev => ({ ...prev, notifications: value })),
+    },
+    {
+      id: 'reports',
+      icon: 'document-text-outline',
+      label: 'Weekly Reports',
+      description: 'Email summary of your progress',
+      type: 'toggle' as const,
+      value: preferences.weeklyReports,
+      onToggle: (value: boolean) => setPreferences(prev => ({ ...prev, weeklyReports: value })),
+    },
+    {
+      id: 'units',
+      icon: 'speedometer-outline',
+      label: 'Units',
+      description: 'Measurement system preference',
+      type: 'select' as const,
+      value: preferences.units === 'metric' ? 'Metric' : 'Imperial',
+      onPress: () => {
+        Alert.alert(
+          'Units',
+          'Choose your preferred measurement system',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Metric', 
+              onPress: () => setPreferences(prev => ({ ...prev, units: 'metric' }))
+            },
+            { 
+              text: 'Imperial', 
+              onPress: () => setPreferences(prev => ({ ...prev, units: 'imperial' }))
+            },
+          ]
+        );
+      },
+    },
+    {
+      id: 'privacy',
+      icon: 'shield-outline',
+      label: 'Privacy Level',
+      description: 'Who can see your health data',
+      type: 'select' as const,
+      value: preferences.privacy.charAt(0).toUpperCase() + preferences.privacy.slice(1),
+      onPress: () => {
+        Alert.alert(
+          'Privacy Level',
+          'Choose who can see your health data',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Private', 
+              onPress: () => setPreferences(prev => ({ ...prev, privacy: 'private' }))
+            },
+            { 
+              text: 'Friends Only', 
+              onPress: () => setPreferences(prev => ({ ...prev, privacy: 'friends' }))
+            },
+            { 
+              text: 'Public', 
+              onPress: () => setPreferences(prev => ({ ...prev, privacy: 'public' }))
+            },
+          ]
+        );
+      },
+    },
+    {
+      id: 'data-sharing',
+      icon: 'share-outline',
+      label: 'Anonymous Data Sharing',
+      description: 'Help improve MaxPulse for everyone',
+      type: 'toggle' as const,
+      value: preferences.dataSharing,
+      onToggle: (value: boolean) => setPreferences(prev => ({ ...prev, dataSharing: value })),
+    },
+  ], [preferences]);
+
+  // Support options
+  const supportOptions = useMemo(() => [
+    {
+      id: 'help-center',
+      icon: 'library-outline',
+      label: 'Help Center',
+      description: 'Browse articles and guides',
+      action: 'url' as const,
+      value: 'https://help.maxpulse.com',
+    },
+    {
+      id: 'contact-support',
+      icon: 'mail-outline',
+      label: 'Contact Support',
+      description: 'Get help from our team',
+      action: 'email' as const,
+      value: 'support@maxpulse.com',
+    },
+    {
+      id: 'feature-request',
+      icon: 'bulb-outline',
+      label: 'Feature Request',
+      description: 'Suggest new features',
+      action: 'email' as const,
+      value: 'feedback@maxpulse.com',
+    },
+    {
+      id: 'community',
+      icon: 'people-outline',
+      label: 'Community Forum',
+      description: 'Connect with other users',
+      action: 'url' as const,
+      value: 'https://community.maxpulse.com',
+    },
+  ], []);
+
+  // Account actions
+  const accountActions = useMemo(() => [
+    {
+      id: 'export-data',
+      icon: 'download-outline',
+      label: 'Export Data',
+      description: 'Download your health data',
+      type: 'normal' as const,
+      onPress: () => {
+        try {
+          Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        } catch (error) {
+          // Haptics not available
         }
-      }
+        Alert.alert('Export Data', 'Your data export will be emailed to you within 24 hours.');
+      },
+    },
+    {
+      id: 'sign-out',
+      icon: 'log-out-outline',
+      label: 'Sign Out',
+      description: 'Sign out of your account',
+      type: 'warning' as const,
+      onPress: handleSignOut,
+    },
+    {
+      id: 'delete-account',
+      icon: 'trash-outline',
+      label: 'Delete Account',
+      description: 'Permanently delete your account and data',
+      type: 'danger' as const,
+      onPress: () => {
+        Alert.alert(
+          'Delete Account',
+          'This will permanently delete your account and all your health data. This action cannot be undone.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            { 
+              text: 'Delete Account', 
+              style: 'destructive',
+              onPress: () => {
+                // In production, this would call a delete account API
+                Alert.alert('Account Deletion', 'Account deletion request submitted. You will receive a confirmation email.');
+              }
+            },
+          ]
+        );
+      },
+    },
+  ], []);
 
-      // Load today's daily metrics
-      const today = new Date().toISOString().split('T')[0];
-      const { data: metrics, error: metricsError } = await supabase
-        .from('daily_metrics')
-        .select('*')
-        .eq('user_id', user.id)
-        .eq('date', today)
-        .single();
-
-      if (metricsError && metricsError.code !== 'PGRST116') {
-        console.error('Error loading daily metrics:', metricsError);
-      } else {
-        setDailyMetrics(metrics);
-      }
-
-      // Load plan progress
-      const { data: progress, error: progressError } = await supabase
-        .from('plan_progress')
-        .select('*')
-        .eq('user_id', user.id)
-        .single();
-
-      if (progressError && progressError.code !== 'PGRST116') {
-        console.error('Error loading plan progress:', progressError);
-      } else {
-        setPlanProgress(progress);
-      }
-
-    } catch (error) {
-      console.error('Failed to load profile data:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    setRefreshing(true);
-    await loadProfileData();
-    setRefreshing(false);
-  };
-
-  const handleSignOut = async () => {
+  const handleBackPress = useCallback(() => {
     try {
-      await authService.signOut();
-      // AppWithAuth will handle the state change
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     } catch (error) {
-      console.error('Sign out failed:', error);
+      // Haptics not available
     }
-  };
+    
+    if (onBack) {
+      onBack();
+    } else {
+      // Fallback: If no onBack prop provided, just log (shouldn't happen in normal flow)
+      console.warn('ProfileScreen: No onBack handler provided');
+    }
+  }, [onBack]);
+
+  const handleRefresh = useCallback(async () => {
+    setRefreshing(true);
+    // Simulate refresh delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    setRefreshing(false);
+  }, []);
+
+  async function handleSignOut() {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      // Haptics not available
+    }
+    
+    console.log('🔐 ProfileScreen: Initiating sign out...');
+    
+    try {
+      const result = await authService.signOut();
+      if (result.error) {
+        throw new Error(result.error.message);
+      }
+      console.log('✅ ProfileScreen: Sign out successful - AppWithAuth will handle state change');
+      // AppWithAuth auth listener will handle the state change
+    } catch (error) {
+      console.error('❌ ProfileScreen: Sign out failed:', error);
+      Alert.alert('Error', 'Failed to sign out. Please try again.');
+    }
+  }
+
+  const handleManageBilling = useCallback(() => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      // Haptics not available
+    }
+    Alert.alert('Manage Billing', 'Redirecting to billing portal...');
+  }, []);
+
+  const handleUpgrade = useCallback(() => {
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      // Haptics not available
+    }
+    Alert.alert('Upgrade Plan', 'Upgrade options coming soon!');
+  }, []);
 
   return (
-    <View style={styles.gradient}>
-      <ScrollView
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={true} />
+      
+      <ScrollView 
         style={styles.scrollView}
         contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}
@@ -132,200 +349,59 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({ onBack }) => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <Text style={styles.title}>Profile & Data</Text>
-          <Text style={styles.subtitle}>Backend data verification</Text>
-        </View>
-
-        {/* User Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>User Information</Text>
-          <View style={styles.dataCard}>
-            <Text style={styles.dataLabel}>User ID</Text>
-            <Text style={styles.dataValue}>{user?.id || 'Not loaded'}</Text>
-          </View>
-          <View style={styles.dataCard}>
-            <Text style={styles.dataLabel}>Display Name</Text>
-            <Text style={styles.dataValue}>{user?.display_name || 'Not set'}</Text>
-          </View>
-        </View>
-
-        {/* Profile Data from Database */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Profile Data (app_user_profiles)</Text>
-          {profileData ? (
-            <>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Name</Text>
-                <Text style={styles.dataValue}>{profileData.name}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Age</Text>
-                <Text style={styles.dataValue}>{profileData.age}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>BMI</Text>
-                <Text style={styles.dataValue}>{profileData.bmi}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Activation Code ID</Text>
-                <Text style={styles.dataValue}>{profileData.activation_code_id}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Plan Type</Text>
-                <Text style={styles.dataValue}>{profileData.plan_type || 'Not set'}</Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noData}>
-              {isLoading ? 'Loading...' : 'No profile data found'}
-            </Text>
-          )}
-        </View>
-
-        {/* Personalized Targets (Source of Truth) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Personalized Targets ({personalizedTargets?.source || 'loading'})</Text>
-          <Text style={styles.sectionSubtitle}>Direct from activation code</Text>
-          {personalizedTargets ? (
-            <>
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>🚶‍♂️</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Steps Target</Text>
-                  <Text style={styles.targetValue}>{personalizedTargets.steps.toLocaleString()}</Text>
-                  <Text style={styles.targetCurrent}>UI Shows: {targets.steps.toLocaleString()}</Text>
-                </View>
-              </View>
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>💧</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Hydration Target</Text>
-                  <Text style={styles.targetValue}>{personalizedTargets.waterOz} oz</Text>
-                  <Text style={styles.targetCurrent}>UI Shows: {targets.waterOz} oz</Text>
-                </View>
-              </View>
-              <View style={styles.targetCard}>
-                <Text style={styles.targetIcon}>😴</Text>
-                <View style={styles.targetInfo}>
-                  <Text style={styles.targetLabel}>Sleep Target</Text>
-                  <Text style={styles.targetValue}>{personalizedTargets.sleepHr}h</Text>
-                  <Text style={styles.targetCurrent}>UI Shows: {targets.sleepHr}h</Text>
-                </View>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noData}>
-              {isLoading ? 'Loading personalized targets...' : 'No activation code found'}
-            </Text>
-          )}
-        </View>
-
-        {/* Database Status (Simplified) */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Database Status</Text>
-          <Text style={styles.sectionSubtitle}>Connection and sync status</Text>
-          {dailyMetrics ? (
-            <View style={styles.dataCard}>
-              <Text style={styles.dataLabel}>✅ Database Connected</Text>
-              <Text style={styles.dataValue}>Daily metrics record found</Text>
-            </View>
-          ) : (
-            <View style={styles.dataCard}>
-              <Text style={styles.dataLabel}>⚠️ Database Status</Text>
-              <Text style={styles.dataValue}>
-                {isLoading ? 'Checking connection...' : 'No daily metrics - may need initialization'}
-              </Text>
-            </View>
-          )}
-        </View>
-
-
-        {/* 90-Day Plan Progress */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>90-Day Plan Progress</Text>
-          {planProgress ? (
-            <>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Current Week</Text>
-                <Text style={styles.dataValue}>Week {planProgress.current_week}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Current Phase</Text>
-                <Text style={styles.dataValue}>Phase {planProgress.current_phase}</Text>
-              </View>
-              <View style={styles.dataCard}>
-                <Text style={styles.dataLabel}>Weekly Scores</Text>
-                <Text style={styles.dataValue}>
-                  {JSON.stringify(planProgress.weekly_scores, null, 2)}
-                </Text>
-              </View>
-            </>
-          ) : (
-            <Text style={styles.noData}>
-              {isLoading ? 'Loading...' : 'No plan progress found'}
-            </Text>
-          )}
-        </View>
-
-        {/* Actions */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.refreshButton} onPress={handleRefresh}>
-            <Text style={styles.refreshButtonText}>Refresh Data</Text>
+          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+            <Icon name="arrow-back" size={24} color={theme.colors.textPrimary} />
           </TouchableOpacity>
-          
-          {personalizedTargets && personalizedTargets.source === 'personalized' && (
-            <TouchableOpacity 
-              style={styles.applyButton} 
-              onPress={async () => {
-                if (personalizedTargets) {
-                  console.log('🎯 Applying personalized targets to UI:', personalizedTargets);
-                  const { initializeTargets } = useAppStore.getState();
-                  await initializeTargets({
-                    steps: personalizedTargets.steps,
-                    waterOz: personalizedTargets.waterOz,
-                    sleepHr: personalizedTargets.sleepHr,
-                  });
-                  console.log('✅ Targets applied successfully!');
-                }
-              }}
-            >
-              <Text style={styles.applyButtonText}>Apply Personalized Targets to UI</Text>
-            </TouchableOpacity>
-          )}
-          
-          {profileData && !dailyMetrics && (
-            <TouchableOpacity 
-              style={styles.initButton} 
-              onPress={async () => {
-                if (user && profileData) {
-                  console.log('Manual database initialization...');
-                  const success = await DatabaseInitializer.initializeUserData(
-                    user.id, 
-                    profileData.activation_code_id
-                  );
-                  if (success) {
-                    await handleRefresh();
-                  }
-                }
-              }}
-            >
-              <Text style={styles.initButtonText}>Initialize Database</Text>
-            </TouchableOpacity>
-          )}
-          
-          <TouchableOpacity style={styles.signOutButton} onPress={handleSignOut}>
-            <Text style={styles.signOutButtonText}>Sign Out</Text>
-          </TouchableOpacity>
+          <Text style={styles.title}>Profile</Text>
+          <View style={styles.headerSpacer} />
         </View>
+
+        {/* User Profile Card */}
+        <UserProfileCard
+          name={profileData.name}
+          email={profileData.email}
+          planType={profileData.planType}
+          joinDate={profileData.joinDate}
+          onEditProfile={() => Alert.alert('Edit Profile', 'Profile editing coming soon!')}
+        />
+
+        {/* Health Summary */}
+        <HealthSummaryCard
+          lifeScore={Math.round(lifeScore)}
+          metrics={healthMetrics}
+        />
+
+        {/* Subscription & Billing */}
+        <SubscriptionCard
+          planName="MaxPulse Premium"
+          planPrice="$9.99"
+          billingCycle="monthly"
+          nextBillingDate={profileData.nextBillingDate}
+          features={subscriptionFeatures}
+          onManageBilling={handleManageBilling}
+          onUpgrade={handleUpgrade}
+        />
+
+        {/* Preferences */}
+        <PreferencesCard preferences={preferenceItems} />
+
+        {/* Support & Help */}
+        <SupportCard supportOptions={supportOptions} appVersion="1.0.0" />
+
+        {/* Account Actions */}
+        <AccountActionsCard actions={accountActions} />
 
         <View style={styles.bottomSpacer} />
       </ScrollView>
     </View>
   );
-};
+});
+
+// Add display name for better debugging
+ProfileScreen.displayName = 'ProfileScreen';
 
 const styles = StyleSheet.create({
-  gradient: {
+  container: {
     flex: 1,
     backgroundColor: theme.colors.background,
   },
@@ -334,161 +410,29 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: theme.spacing.base,
-    paddingTop: 50,
-    paddingBottom: 100,
+    paddingTop: 50, // Account for status bar
+    paddingBottom: 100, // Account for bottom navigation
   },
   header: {
-    marginBottom: theme.spacing.lg,
-  },
-  title: {
-    fontSize: theme.typography.xxlarge,
-    fontWeight: theme.typography.weights.bold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: theme.typography.regular,
-    color: theme.colors.textSecondary,
-  },
-  section: {
-    marginBottom: theme.spacing.lg,
-  },
-  sectionTitle: {
-    fontSize: theme.typography.medium,
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.sm,
-  },
-  dataCard: {
-    ...calAiCard.base,
-    marginBottom: theme.spacing.xsmall,
-  },
-  dataLabel: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-    fontWeight: theme.typography.weights.medium,
-  },
-  dataValue: {
-    fontSize: theme.typography.regular,
-    color: theme.colors.textPrimary,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  targetCard: {
-    ...calAiCard.base,
-    marginBottom: theme.spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: theme.spacing.lg,
+    paddingTop: theme.spacing.sm,
   },
-  targetIcon: {
-    fontSize: 24,
-    marginRight: theme.spacing.base,
+  backButton: {
+    padding: theme.spacing.xs,
   },
-  targetInfo: {
-    flex: 1,
-  },
-  targetLabel: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  targetValue: {
-    fontSize: theme.typography.medium,
-    color: theme.colors.textPrimary,
+  title: {
+    fontSize: theme.typography.large,
     fontWeight: theme.typography.weights.bold,
-    marginBottom: 2,
-  },
-  targetCurrent: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textTertiary,
-  },
-  comparisonCard: {
-    backgroundColor: theme.colors.background,
-    borderRadius: theme.borderRadius.sm,
-    padding: theme.spacing.sm,
-    marginBottom: theme.spacing.xsmall,
-    borderWidth: 1,
-    borderColor: theme.colors.border,
-  },
-  comparisonLabel: {
-    fontSize: theme.typography.xsmall,
-    color: theme.colors.textSecondary,
-    marginBottom: 4,
-  },
-  comparisonValue: {
-    fontSize: theme.typography.small,
     color: theme.colors.textPrimary,
-    fontFamily: 'monospace',
   },
-  noData: {
-    fontSize: theme.typography.small,
-    color: theme.colors.textTertiary,
-    fontStyle: 'italic',
-    textAlign: 'center',
-    padding: theme.spacing.md,
-  },
-  refreshButton: {
-    backgroundColor: theme.colors.primary + '20',
-    borderRadius: theme.borderRadius.sm,
-    paddingVertical: theme.spacing.base,
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.primary,
-  },
-  refreshButtonText: {
-    color: theme.colors.primary,
-    fontSize: theme.typography.regular,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  initButton: {
-    backgroundColor: theme.colors.success + '20',
-    borderRadius: theme.borderRadius.sm,
-    paddingVertical: theme.spacing.base,
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.success,
-  },
-  initButtonText: {
-    color: theme.colors.success,
-    fontSize: theme.typography.regular,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  applyButton: {
-    backgroundColor: theme.colors.secondary + '20',
-    borderRadius: theme.borderRadius.sm,
-    paddingVertical: theme.spacing.base,
-    alignItems: 'center',
-    marginBottom: theme.spacing.sm,
-    borderWidth: 1,
-    borderColor: theme.colors.secondary,
-  },
-  applyButtonText: {
-    color: theme.colors.secondary,
-    fontSize: theme.typography.regular,
-    fontWeight: theme.typography.weights.semibold,
-  },
-  signOutButton: {
-    backgroundColor: theme.colors.error + '20',
-    borderRadius: theme.borderRadius.sm,
-    paddingVertical: theme.spacing.base,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: theme.colors.error,
-  },
-  signOutButtonText: {
-    color: theme.colors.error,
-    fontSize: theme.typography.regular,
-    fontWeight: theme.typography.weights.semibold,
+  headerSpacer: {
+    width: 40, // Match back button width
   },
   bottomSpacer: {
-    height: theme.spacing.md,
+    height: theme.spacing.xl,
   },
 });
 

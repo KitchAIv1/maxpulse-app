@@ -23,9 +23,44 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
   const [user, setUser] = useState<any>(null);
   const { setUser: setStoreUser, initializeTargets, loadTodayData } = useAppStore();
 
-  // Check authentication status on app start
+  // Check authentication status on app start and set up auth listener
   useEffect(() => {
     checkAuthStatus();
+    
+    // Listen for authentication state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        console.log('🔐 Auth state changed:', event, session?.user?.id || 'no user');
+        
+        if (event === 'SIGNED_OUT' || !session?.user) {
+          // User signed out or session expired
+          setUser(null);
+          setStoreUser(null);
+          setIsAuthenticated(false);
+          console.log('👋 User signed out - redirecting to auth');
+        } else if (event === 'SIGNED_IN' && session?.user) {
+          // User signed in
+          console.log('👋 User signed in:', session.user.id);
+          setUser(session.user);
+          setStoreUser({
+            id: session.user.id,
+            created_at: session.user.created_at,
+            tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            display_name: session.user.user_metadata?.name || session.user.email,
+          });
+          
+          // Load user data
+          await loadUserTargets(session.user.id);
+          await loadTodayData();
+          setIsAuthenticated(true);
+        }
+      }
+    );
+
+    // Cleanup subscription on unmount
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const checkAuthStatus = async () => {

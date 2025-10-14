@@ -4,6 +4,7 @@ export * from './wellbeing';
 export * from './coach';
 export * from './mood';
 export * from './rewards';
+export * from './profile';
 export { KPICard } from './cards/KPICard';
 export { TriRings } from './rings/TriRings';
 export { CalAiRing } from './rings/CalAiRing';
