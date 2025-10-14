@@ -80,7 +80,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
               <View style={styles.contextContainer}>
                 {contextData.steps && (
                   <View style={styles.contextChip}>
-                    <Icon name="footsteps" size={12} color={coachTheme.colors.healthCard.steps} />
+                    <Icon name="footsteps-outline" size={14} color={coachTheme.colors.healthCard.steps} />
                     <Text style={styles.contextText}>
                       {contextData.steps.current.toLocaleString()}/{contextData.steps.target.toLocaleString()}
                     </Text>
@@ -88,7 +88,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 )}
                 {contextData.hydration && (
                   <View style={styles.contextChip}>
-                    <Icon name="water" size={12} color={coachTheme.colors.healthCard.hydration} />
+                    <Icon name="water-outline" size={14} color={coachTheme.colors.healthCard.hydration} />
                     <Text style={styles.contextText}>
                       {contextData.hydration.current}/{contextData.hydration.target}oz
                     </Text>
@@ -96,7 +96,7 @@ export const MessageBubble: React.FC<MessageBubbleProps> = ({
                 )}
                 {contextData.sleep && (
                   <View style={styles.contextChip}>
-                    <Icon name="moon" size={12} color={coachTheme.colors.healthCard.sleep} />
+                    <Icon name="moon-outline" size={14} color={coachTheme.colors.healthCard.sleep} />
                     <Text style={styles.contextText}>
                       {contextData.sleep.current}h/{contextData.sleep.target}h
                     </Text>

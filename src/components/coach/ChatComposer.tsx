@@ -30,38 +30,38 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
     }
   };
 
-  // Default quick actions always available
+  // Default quick actions always available (using Ionicons matching dashboard style)
   const defaultQuickActions: QuickAction[] = [
     {
       id: 'wellness_check',
       label: 'Wellness Check',
       action: 'wellness_check',
-      icon: 'medical'
+      icon: 'medical-outline'
     },
     {
       id: 'check_score',
       label: 'Check my Life Score',
       action: 'check_score',
-      icon: 'battery-charging'
+      icon: 'battery-charging-outline'
     },
     {
       id: 'boost_score',
       label: 'Boost my score',
       action: 'boost_score',
-      icon: 'flash'
+      icon: 'flash-outline'
     },
     {
       id: 'plan_week',
       label: 'Plan week',
       action: 'plan_tomorrow',
-      icon: 'calendar'
+      icon: 'calendar-outline'
     },
     {
       id: 'log_water',
       label: 'Log hydration',
       action: 'log_hydration',
       params: { amount: 8 },
-      icon: 'water'
+      icon: 'water-outline'
     },
   ];
 

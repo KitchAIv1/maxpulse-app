@@ -3,6 +3,7 @@
 
 import React from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { QuickActionChipsProps } from '../../types/coach';
 import { coachTheme } from '../../utils/coachTheme';
 
@@ -33,7 +34,12 @@ export const QuickActionChips: React.FC<QuickActionChipsProps> = ({
             activeOpacity={0.7}
           >
             {action.icon && (
-              <Text style={styles.chipIcon}>{action.icon}</Text>
+              <Icon 
+                name={action.icon} 
+                size={16} 
+                color={coachTheme.colors.quickActions.iconColor}
+                style={styles.chipIcon}
+              />
             )}
             <Text style={styles.chipText}>{action.label}</Text>
           </TouchableOpacity>
@@ -73,9 +79,7 @@ const styles = StyleSheet.create({
     marginRight: 0,
   },
   chipIcon: {
-    fontSize: 14,
     marginRight: 6,
-    color: coachTheme.colors.quickActions.iconColor,  // Purple icon color
   },
   chipText: {
     fontSize: 12,

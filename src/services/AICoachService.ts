@@ -154,7 +154,7 @@ class AICoachService {
             id: 'walk_reminder',
             label: 'Set walk reminder',
             action: 'boost_score',
-            icon: '🚶‍♂️'
+            icon: 'walk-outline'
           }]
         });
       }
@@ -282,7 +282,7 @@ class AICoachService {
         label: `Improve ${weakest.name}`,
         action: 'boost_score',
         params: { focus: weakest.name },
-        icon: weakest.name === 'steps' ? '🚶‍♂️' : weakest.name === 'hydration' ? '💧' : '😴'
+        icon: weakest.name === 'steps' ? 'walk-outline' : weakest.name === 'hydration' ? 'water-outline' : 'moon-outline'
       });
     }
 
@@ -325,8 +325,8 @@ class AICoachService {
         message: "Let's track your hydration! How much water have you had today?",
         contextData: healthContext,
         quickActions: [
-          { id: 'log_8oz', label: '+8oz', action: 'log_hydration', params: { amount: 8 }, icon: '💧' },
-          { id: 'log_16oz', label: '+16oz', action: 'log_hydration', params: { amount: 16 }, icon: '💧' }
+          { id: 'log_8oz', label: '+8oz', action: 'log_hydration', params: { amount: 8 }, icon: 'water-outline' },
+          { id: 'log_16oz', label: '+16oz', action: 'log_hydration', params: { amount: 16 }, icon: 'water-outline' }
         ],
         messageType: 'suggestion',
       };
@@ -347,7 +347,7 @@ class AICoachService {
       message,
       contextData: healthContext,
       quickActions: pct < 1.0 ? [
-        { id: 'log_8oz', label: '+8oz', action: 'log_hydration', params: { amount: 8 }, icon: '💧' }
+        { id: 'log_8oz', label: '+8oz', action: 'log_hydration', params: { amount: 8 }, icon: 'water-outline' }
       ] : [],
       messageType: 'suggestion',
     };
@@ -412,9 +412,9 @@ class AICoachService {
   private handleScoreBoost(healthContext: HealthContextData): CoachResponse {
     // Find the metric that needs most attention
     const metrics = [
-      { name: 'steps', pct: healthContext.steps ? healthContext.steps.current / healthContext.steps.target : 1, icon: '🚶‍♂️' },
-      { name: 'hydration', pct: healthContext.hydration ? healthContext.hydration.current / healthContext.hydration.target : 1, icon: '💧' },
-      { name: 'sleep', pct: healthContext.sleep ? healthContext.sleep.current / healthContext.sleep.target : 1, icon: '😴' },
+      { name: 'steps', pct: healthContext.steps ? healthContext.steps.current / healthContext.steps.target : 1, icon: 'walk-outline' },
+      { name: 'hydration', pct: healthContext.hydration ? healthContext.hydration.current / healthContext.hydration.target : 1, icon: 'water-outline' },
+      { name: 'sleep', pct: healthContext.sleep ? healthContext.sleep.current / healthContext.sleep.target : 1, icon: 'moon-outline' },
     ].sort((a, b) => a.pct - b.pct);
 
     const weakest = metrics[0];
@@ -437,8 +437,8 @@ class AICoachService {
       message,
       contextData: healthContext,
       quickActions: [
-        { id: 'log_water', label: 'Log water', action: 'log_hydration', params: { amount: 8 }, icon: '💧' },
-        { id: 'plan_tomorrow', label: 'Plan tomorrow', action: 'plan_tomorrow', icon: '📅' }
+        { id: 'log_water', label: 'Log water', action: 'log_hydration', params: { amount: 8 }, icon: 'water-outline' },
+        { id: 'plan_tomorrow', label: 'Plan tomorrow', action: 'plan_tomorrow', icon: 'calendar-outline' }
       ],
       messageType: 'suggestion',
     };
@@ -449,7 +449,7 @@ class AICoachService {
       message: "Great idea! Let's set you up for success tomorrow 📅\n\nI recommend keeping your current targets and focusing on consistency. Small daily wins build lasting habits!",
       contextData: healthContext,
       quickActions: [
-        { id: 'adjust_targets', label: 'Adjust targets', action: 'adjust_target', icon: '🎯' }
+        { id: 'adjust_targets', label: 'Adjust targets', action: 'adjust_target', icon: 'flag-outline' }
       ],
       messageType: 'suggestion',
     };
@@ -472,10 +472,10 @@ class AICoachService {
     const message = `${disclaimer}\n\n🌟 **Tell me how you're feeling** — describe any symptoms, energy changes, or moods you're experiencing today.\n\nYou can type freely about what you're noticing, or use the quick options below. I'll help connect what you're experiencing to your wellness habits.`;
 
     const quickActions: QuickAction[] = [
-      { id: 'feeling_tired', label: "I'm feeling tired", action: 'symptom_log', params: { type: 'energy', level: 'low' }, icon: '😴' },
-      { id: 'feeling_stressed', label: "I'm stressed", action: 'symptom_log', params: { type: 'stress', level: 'high' }, icon: '😰' },
-      { id: 'feeling_low', label: "Mood is low", action: 'symptom_log', params: { type: 'mood', level: 'low' }, icon: '😔' },
-      { id: 'physical_symptoms', label: "Physical symptoms", action: 'symptom_log', params: { type: 'physical' }, icon: '🩺' },
+      { id: 'feeling_tired', label: "I'm feeling tired", action: 'symptom_log', params: { type: 'energy', level: 'low' }, icon: 'moon-outline' },
+      { id: 'feeling_stressed', label: "I'm stressed", action: 'symptom_log', params: { type: 'stress', level: 'high' }, icon: 'alert-circle-outline' },
+      { id: 'feeling_low', label: "Mood is low", action: 'symptom_log', params: { type: 'mood', level: 'low' }, icon: 'sad-outline' },
+      { id: 'physical_symptoms', label: "Physical symptoms", action: 'symptom_log', params: { type: 'physical' }, icon: 'medical-outline' },
     ];
 
     return {
@@ -548,13 +548,13 @@ class AICoachService {
         label: 'Drink water now',
         action: 'log_hydration',
         params: { amount: 16 },
-        icon: '💧'
+        icon: 'water-outline'
       });
     }
     
     quickActions.push(
-      { id: 'gentle_care', label: 'Self-care tips', action: 'plan_tomorrow', params: { focus: 'selfcare' }, icon: '🤗' },
-      { id: 'track_more', label: 'Tell me more', action: 'wellness_check', icon: '💬' }
+      { id: 'gentle_care', label: 'Self-care tips', action: 'plan_tomorrow', params: { focus: 'selfcare' }, icon: 'heart-outline' },
+      { id: 'track_more', label: 'Tell me more', action: 'wellness_check', icon: 'chatbubble-outline' }
     );
 
     return {
@@ -604,13 +604,13 @@ class AICoachService {
         label: 'Drink water',
         action: 'log_hydration',
         params: { amount: 12 },
-        icon: '💧'
+        icon: 'water-outline'
       });
     }
     
     quickActions.push(
-      { id: 'gentle_movement', label: 'Light activity', action: 'boost_score', params: { focus: 'gentle' }, icon: '🧘‍♀️' },
-      { id: 'rest_suggestion', label: 'Rest tips', action: 'plan_tomorrow', params: { focus: 'recovery' }, icon: '😴' }
+      { id: 'gentle_movement', label: 'Light activity', action: 'boost_score', params: { focus: 'gentle' }, icon: 'body-outline' },
+      { id: 'rest_suggestion', label: 'Rest tips', action: 'plan_tomorrow', params: { focus: 'recovery' }, icon: 'moon-outline' }
     );
 
     return {
@@ -640,7 +640,7 @@ class AICoachService {
           label: 'Drink 16oz water',
           action: 'log_hydration',
           params: { amount: 16 },
-          icon: '💧'
+          icon: 'water-outline'
         }
       });
     }
@@ -658,7 +658,7 @@ class AICoachService {
           label: 'Plan early bedtime',
           action: 'plan_tomorrow',
           params: { focus: 'sleep' },
-          icon: '😴'
+          icon: 'moon-outline'
         }
       });
     }
@@ -675,7 +675,7 @@ class AICoachService {
           label: '5-min walk',
           action: 'boost_score',
           params: { focus: 'mood' },
-          icon: '🚶‍♀️'
+          icon: 'walk-outline'
         }
       });
     }
@@ -685,8 +685,8 @@ class AICoachService {
 
   private generateContextualActions(healthContext: HealthContextData): QuickAction[] {
     const actions: QuickAction[] = [
-      { id: 'check_score', label: 'Check my Life Score', action: 'check_score', icon: '🔋' },
-      { id: 'wellness_check', label: 'Wellness Check', action: 'wellness_check', icon: '🩺' },
+      { id: 'check_score', label: 'Check my Life Score', action: 'check_score', icon: 'battery-charging-outline' },
+      { id: 'wellness_check', label: 'Wellness Check', action: 'wellness_check', icon: 'medical-outline' },
     ];
 
     // Add hydration action if not complete
@@ -696,7 +696,7 @@ class AICoachService {
         label: '+8oz water',
         action: 'log_hydration',
         params: { amount: 8 },
-        icon: '💧'
+        icon: 'water-outline'
       });
     }
 
@@ -706,12 +706,12 @@ class AICoachService {
         id: 'boost_score',
         label: 'Boost my score',
         action: 'boost_score',
-        icon: '⚡'
+        icon: 'flash-outline'
       });
     }
 
     actions.push(
-      { id: 'plan_week', label: 'Plan week', action: 'plan_tomorrow', icon: '📅' }
+      { id: 'plan_week', label: 'Plan week', action: 'plan_tomorrow', icon: 'calendar-outline' }
     );
 
     return actions;
