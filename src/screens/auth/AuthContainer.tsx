@@ -84,7 +84,7 @@ export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthComplete }) 
 
   return (
     <>
-      <StatusBar barStyle="light-content" backgroundColor="#7f1d1d" translucent={true} />
+      <StatusBar barStyle="dark-content" backgroundColor="#F5F1ED" translucent={true} />
       {renderCurrentScreen()}
     </>
   );

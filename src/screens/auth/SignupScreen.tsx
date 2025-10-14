@@ -1,5 +1,5 @@
 // Signup Screen Component
-// Handles user registration with activation code validation
+// Modern Cal AI-branded registration interface with activation code validation
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -12,10 +12,14 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  ActivityIndicator,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { activationService, authService } from '../../services/supabase';
 import { ActivationCode } from '../../types';
+import { theme } from '../../utils/theme';
 
 interface SignupScreenProps {
   onSignupSuccess: (user: any, activationCode: ActivationCode) => void;
@@ -33,6 +37,9 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
     activationCode: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [activationCodeStatus, setActivationCodeStatus] = useState<{
     isValid: boolean;
     isChecking: boolean;
@@ -64,7 +71,7 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
         setActivationCodeStatus({
           isValid: result.isValid,
           isChecking: false,
-          message: result.error || (result.isValid ? 'Valid activation code' : 'Invalid code'),
+          message: result.error || (result.isValid ? '✓ Valid code' : 'Invalid code'),
           activationData: result.activationCode,
         });
       } catch (error) {
@@ -76,33 +83,38 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
       }
     };
 
-    const timeoutId = setTimeout(validateCode, 500); // Debounce validation
+    const timeoutId = setTimeout(validateCode, 500);
     return () => clearTimeout(timeoutId);
   }, [formData.activationCode]);
 
   const handleSignup = async () => {
     // Validation
     if (!formData.email || !formData.password || !formData.confirmPassword || !formData.activationCode) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Required Fields', 'Please fill in all fields');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
       return;
     }
 
     if (formData.password !== formData.confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
+      Alert.alert('Password Mismatch', 'Passwords do not match');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
       return;
     }
 
     if (formData.password.length < 6) {
-      Alert.alert('Error', 'Password must be at least 6 characters');
+      Alert.alert('Weak Password', 'Password must be at least 6 characters');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
       return;
     }
 
     if (!activationCodeStatus.isValid || !activationCodeStatus.activationData) {
-      Alert.alert('Error', 'Please enter a valid activation code');
+      Alert.alert('Invalid Code', 'Please enter a valid activation code');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
       return;
     }
 
     setIsLoading(true);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
 
     try {
       // Create user account
@@ -129,12 +141,13 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
         throw new Error(consumeResult.error || 'Failed to activate code');
       }
 
-      // Success - pass user and activation data to parent
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       onSignupSuccess(authData.user, activationCodeStatus.activationData);
 
     } catch (error) {
       console.error('Signup error:', error);
       Alert.alert('Signup Failed', error instanceof Error ? error.message : 'An error occurred');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
     } finally {
       setIsLoading(false);
     }
@@ -144,124 +157,222 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const renderInputWithIcon = (
+    icon: string,
+    placeholder: string,
+    value: string,
+    field: keyof typeof formData,
+    options: {
+      keyboardType?: 'email-address' | 'default';
+      autoCapitalize?: 'none' | 'characters';
+      maxLength?: number;
+      secureTextEntry?: boolean;
+      showPasswordToggle?: boolean;
+      showPasswordValue?: boolean;
+      setShowPassword?: (show: boolean) => void;
+    } = {}
+  ) => {
+    const isFocused = focusedField === field;
+    const iconColor = isFocused ? theme.colors.textPrimary : theme.colors.textSecondary;
+
+    return (
+      <View style={styles.inputWrapper}>
+        <View style={styles.inputIconContainer}>
+          <Icon name={icon} size={20} color={iconColor} />
+        </View>
+        <TextInput
+          style={[styles.input, isFocused && styles.inputFocused]}
+          placeholder={placeholder}
+          placeholderTextColor={theme.colors.textTertiary}
+          value={value}
+          onChangeText={(val) => updateFormData(field, val)}
+          onFocus={() => setFocusedField(field)}
+          onBlur={() => setFocusedField(null)}
+          keyboardType={options.keyboardType || 'default'}
+          autoCapitalize={options.autoCapitalize || 'none'}
+          maxLength={options.maxLength}
+          secureTextEntry={options.secureTextEntry && !options.showPasswordValue}
+          autoComplete="off"
+          textContentType="none"
+        />
+        {options.showPasswordToggle && options.setShowPassword && (
+          <TouchableOpacity 
+            style={styles.eyeIcon}
+            onPress={() => {
+              options.setShowPassword!(!options.showPasswordValue);
+              try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+            }}
+          >
+            <Icon 
+              name={options.showPasswordValue ? 'eye-off-outline' : 'eye-outline'} 
+              size={20} 
+              color={theme.colors.textSecondary}
+            />
+          </TouchableOpacity>
+        )}
+      </View>
+    );
+  };
+
   return (
     <KeyboardAvoidingView 
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient
-        colors={['#7f1d1d', '#991b1b', '#1f2937']}
-        style={styles.gradient}
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
       >
-        <ScrollView 
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}
-        >
-          <View style={styles.header}>
-            <Text style={styles.title}>Create Account</Text>
-            <Text style={styles.subtitle}>Join MaxPulse with your activation code</Text>
-          </View>
+        {/* Logo Section */}
+        <View style={styles.logoSection}>
+          <Image 
+            source={require('../../../assets/icon.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>MaxPulse</Text>
+          <Text style={styles.tagline}>Start your wellness journey</Text>
+        </View>
 
-          <View style={styles.form}>
-            {/* Activation Code Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Activation Code</Text>
+        {/* Form Section */}
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Create account</Text>
+
+          {/* Activation Code Input */}
+          <View>
+            <View style={[
+              styles.inputWrapper,
+              activationCodeStatus.isValid && styles.inputWrapperValid,
+              activationCodeStatus.message && !activationCodeStatus.isValid && styles.inputWrapperError
+            ]}>
+              <View style={styles.inputIconContainer}>
+                <Icon 
+                  name="key-outline" 
+                  size={20} 
+                  color={
+                    activationCodeStatus.isValid 
+                      ? theme.colors.success 
+                      : focusedField === 'activationCode' 
+                        ? theme.colors.textPrimary 
+                        : theme.colors.textSecondary
+                  }
+                />
+              </View>
               <TextInput
                 style={[
                   styles.input,
-                  activationCodeStatus.isChecking && styles.inputChecking,
-                  activationCodeStatus.isValid && styles.inputValid,
-                  activationCodeStatus.message && !activationCodeStatus.isValid && styles.inputError
+                  focusedField === 'activationCode' && styles.inputFocused
                 ]}
-                placeholder="Enter your activation code"
-                placeholderTextColor="rgba(255,255,255,0.5)"
+                placeholder="Activation code"
+                placeholderTextColor={theme.colors.textTertiary}
                 value={formData.activationCode}
-                onChangeText={(value) => updateFormData('activationCode', value.toUpperCase())}
+                onChangeText={(val) => updateFormData('activationCode', val.toUpperCase())}
+                onFocus={() => setFocusedField('activationCode')}
+                onBlur={() => setFocusedField(null)}
                 autoCapitalize="characters"
                 maxLength={10}
                 autoComplete="off"
                 textContentType="none"
-                selectionColor="white"
               />
-              {activationCodeStatus.message && (
-                <Text style={[
-                  styles.validationMessage,
-                  activationCodeStatus.isValid ? styles.validMessage : styles.errorMessage
-                ]}>
-                  {activationCodeStatus.message}
-                </Text>
+              {activationCodeStatus.isChecking && (
+                <View style={styles.validationIcon}>
+                  <ActivityIndicator size="small" color={theme.colors.textSecondary} />
+                </View>
+              )}
+              {!activationCodeStatus.isChecking && activationCodeStatus.isValid && (
+                <View style={styles.validationIcon}>
+                  <Icon name="checkmark-circle" size={24} color={theme.colors.success} />
+                </View>
               )}
             </View>
+            {activationCodeStatus.message && !activationCodeStatus.isChecking && (
+              <Text style={[
+                styles.validationMessage,
+                activationCodeStatus.isValid ? styles.validMessage : styles.errorMessage
+              ]}>
+                {activationCodeStatus.message}
+              </Text>
+            )}
+          </View>
 
-            {/* Email Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="off"
-                textContentType="none"
-                selectionColor="white"
-              />
-            </View>
+          {/* Email Input */}
+          {renderInputWithIcon(
+            'mail-outline',
+            'Email address',
+            formData.email,
+            'email',
+            { keyboardType: 'email-address' }
+          )}
 
-            {/* Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Create a password"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={formData.password}
-                onChangeText={(value) => updateFormData('password', value)}
-                secureTextEntry
-                autoComplete="off"
-                textContentType="none"
-                selectionColor="white"
-              />
-            </View>
+          {/* Password Input */}
+          {renderInputWithIcon(
+            'lock-closed-outline',
+            'Password (min. 6 characters)',
+            formData.password,
+            'password',
+            { 
+              secureTextEntry: true,
+              showPasswordToggle: true,
+              showPasswordValue: showPassword,
+              setShowPassword: setShowPassword
+            }
+          )}
 
-            {/* Confirm Password Input */}
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Confirm Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Confirm your password"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={formData.confirmPassword}
-                onChangeText={(value) => updateFormData('confirmPassword', value)}
-                secureTextEntry
-                autoComplete="off"
-                textContentType="none"
-                selectionColor="white"
-              />
-            </View>
+          {/* Confirm Password Input */}
+          {renderInputWithIcon(
+            'lock-closed-outline',
+            'Confirm password',
+            formData.confirmPassword,
+            'confirmPassword',
+            { 
+              secureTextEntry: true,
+              showPasswordToggle: true,
+              showPasswordValue: showConfirmPassword,
+              setShowPassword: setShowConfirmPassword
+            }
+          )}
 
-            {/* Signup Button */}
-            <TouchableOpacity
-              style={[styles.signupButton, isLoading && styles.buttonDisabled]}
-              onPress={handleSignup}
-              disabled={isLoading || !activationCodeStatus.isValid}
+          {/* Signup Button */}
+          <TouchableOpacity
+            style={[
+              styles.signupButton, 
+              (isLoading || !activationCodeStatus.isValid) && styles.buttonDisabled
+            ]}
+            onPress={handleSignup}
+            disabled={isLoading || !activationCodeStatus.isValid}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <Text style={styles.signupButtonText}>Creating account...</Text>
+            ) : (
+              <>
+                <Text style={styles.signupButtonText}>Create account</Text>
+                <Icon name="arrow-forward" size={20} color="#FFFFFF" />
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Switch to Login */}
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchText}>Already have an account?</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                onSwitchToLogin();
+              }}
+              activeOpacity={0.7}
             >
-              <Text style={styles.signupButtonText}>
-                {isLoading ? 'Creating Account...' : 'Create Account'}
-              </Text>
-            </TouchableOpacity>
-
-            {/* Switch to Login */}
-            <TouchableOpacity style={styles.switchButton} onPress={onSwitchToLogin}>
-              <Text style={styles.switchButtonText}>
-                Already have an account? <Text style={styles.switchButtonLink}>Sign In</Text>
-              </Text>
+              <Text style={styles.switchLink}>Sign in</Text>
             </TouchableOpacity>
           </View>
-        </ScrollView>
-      </LinearGradient>
+        </View>
+
+        {/* Footer */}
+        <Text style={styles.footer}>
+          By creating an account, you agree to our{'\n'}Terms of Service & Privacy Policy
+        </Text>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -269,95 +380,137 @@ export const SignupScreen: React.FC<SignupScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: theme.colors.background,
   },
   scrollContent: {
     flexGrow: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
-    paddingVertical: 40,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: 60,
+    paddingBottom: theme.spacing.lg,
   },
-  header: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: theme.spacing.xxl,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 8,
+  logo: {
+    width: 80,
+    height: 80,
+    marginBottom: theme.spacing.sm,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+  appName: {
+    fontSize: theme.typography.xlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   form: {
-    gap: 20,
+    gap: theme.spacing.base,
+    marginBottom: theme.spacing.xxl,
   },
-  inputGroup: {
-    gap: 8,
+  formTitle: {
+    fontSize: 28,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+    letterSpacing: -0.5,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
+  inputWrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    ...theme.shadows.subtle,
+  },
+  inputWrapperValid: {
+    borderColor: theme.colors.success,
+  },
+  inputWrapperError: {
+    borderColor: theme.colors.error,
+  },
+  inputIconContainer: {
+    paddingLeft: theme.spacing.base,
+    paddingRight: theme.spacing.xs,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: 'white',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    flex: 1,
+    paddingVertical: theme.spacing.base,
+    paddingRight: theme.spacing.base,
+    fontSize: theme.typography.regular,
+    color: theme.colors.textPrimary,
   },
-  inputChecking: {
-    borderColor: 'rgba(255,255,255,0.5)',
+  inputFocused: {
+    borderColor: theme.colors.textPrimary,
   },
-  inputValid: {
-    borderColor: '#10B981',
+  eyeIcon: {
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.base,
   },
-  inputError: {
-    borderColor: '#EF4444',
+  validationIcon: {
+    paddingHorizontal: theme.spacing.base,
   },
   validationMessage: {
-    fontSize: 12,
-    marginTop: 4,
+    fontSize: theme.typography.tiny,
+    marginTop: theme.spacing.xs,
+    marginLeft: theme.spacing.xs,
   },
   validMessage: {
-    color: '#10B981',
+    color: theme.colors.success,
   },
   errorMessage: {
-    color: '#EF4444',
+    color: theme.colors.error,
   },
   signupButton: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.textPrimary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 18,
+    paddingHorizontal: theme.spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.base,
+    ...theme.shadows.soft,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: theme.colors.textSecondary,
+    opacity: 0.6,
   },
   signupButtonText: {
-    color: '#7f1d1d',
-    fontSize: 16,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    letterSpacing: 0.3,
   },
-  switchButton: {
+  switchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
-  switchButtonText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+  switchText: {
+    fontSize: theme.typography.regular,
+    color: theme.colors.textSecondary,
   },
-  switchButtonLink: {
-    color: 'white',
-    fontWeight: '600',
+  switchLink: {
+    fontSize: theme.typography.regular,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  footer: {
+    fontSize: theme.typography.tiny,
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: theme.spacing.lg,
   },
 });

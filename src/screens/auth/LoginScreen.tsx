@@ -1,5 +1,5 @@
 // Login Screen Component
-// Handles user authentication for existing accounts
+// Modern Cal AI-branded authentication interface
 
 import React, { useState } from 'react';
 import {
@@ -11,9 +11,13 @@ import {
   Alert,
   KeyboardAvoidingView,
   Platform,
+  Image,
+  Animated,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import * as Haptics from 'expo-haptics';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { authService } from '../../services/supabase';
+import { theme } from '../../utils/theme';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: any) => void;
@@ -29,14 +33,19 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
     password: '',
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleLogin = async () => {
     if (!formData.email || !formData.password) {
-      Alert.alert('Error', 'Please fill in all fields');
+      Alert.alert('Required Fields', 'Please fill in all fields');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
       return;
     }
 
     setIsLoading(true);
+    try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
 
     try {
       const { data, error } = await authService.signIn(formData.email, formData.password);
@@ -49,10 +58,12 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
         throw new Error('Login failed');
       }
 
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success); } catch {}
       onLoginSuccess(data.user);
     } catch (error) {
       console.error('Login error:', error);
       Alert.alert('Login Failed', error instanceof Error ? error.message : 'An error occurred');
+      try { Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error); } catch {}
     } finally {
       setIsLoading(false);
     }
@@ -67,66 +78,125 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
       style={styles.container} 
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
     >
-      <LinearGradient
-        colors={['#7f1d1d', '#991b1b', '#1f2937']}
-        style={styles.gradient}
-      >
-        <View style={styles.content}>
-          <View style={styles.header}>
-            <Text style={styles.title}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue your health journey</Text>
+      <View style={styles.content}>
+        {/* Logo Section */}
+        <View style={styles.logoSection}>
+          <Image 
+            source={require('../../../assets/icon.png')} 
+            style={styles.logo}
+            resizeMode="contain"
+          />
+          <Text style={styles.appName}>MaxPulse</Text>
+          <Text style={styles.tagline}>Live your best life, every day</Text>
+        </View>
+
+        {/* Form Section */}
+        <View style={styles.form}>
+          <Text style={styles.formTitle}>Welcome back</Text>
+
+          {/* Email Input */}
+          <View style={styles.inputWrapper}>
+            <View style={styles.inputIconContainer}>
+              <Icon 
+                name="mail-outline" 
+                size={20} 
+                color={emailFocused ? theme.colors.textPrimary : theme.colors.textSecondary}
+              />
+            </View>
+            <TextInput
+              style={[
+                styles.input,
+                emailFocused && styles.inputFocused
+              ]}
+              placeholder="Email address"
+              placeholderTextColor={theme.colors.textTertiary}
+              value={formData.email}
+              onChangeText={(value) => updateFormData('email', value)}
+              onFocus={() => setEmailFocused(true)}
+              onBlur={() => setEmailFocused(false)}
+              keyboardType="email-address"
+              autoCapitalize="none"
+              autoComplete="off"
+              textContentType="none"
+            />
           </View>
 
-          <View style={styles.form}>
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Email</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your email"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={formData.email}
-                onChangeText={(value) => updateFormData('email', value)}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                autoComplete="off"
-                textContentType="none"
-                selectionColor="white"
+          {/* Password Input */}
+          <View style={styles.inputWrapper}>
+            <View style={styles.inputIconContainer}>
+              <Icon 
+                name="lock-closed-outline" 
+                size={20} 
+                color={passwordFocused ? theme.colors.textPrimary : theme.colors.textSecondary}
               />
             </View>
-
-            <View style={styles.inputGroup}>
-              <Text style={styles.label}>Password</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="Enter your password"
-                placeholderTextColor="rgba(255,255,255,0.5)"
-                value={formData.password}
-                onChangeText={(value) => updateFormData('password', value)}
-                secureTextEntry
-                autoComplete="off"
-                textContentType="none"
-                selectionColor="white"
-              />
-            </View>
-
-            <TouchableOpacity
-              style={[styles.loginButton, isLoading && styles.buttonDisabled]}
-              onPress={handleLogin}
-              disabled={isLoading}
+            <TextInput
+              style={[
+                styles.input,
+                passwordFocused && styles.inputFocused
+              ]}
+              placeholder="Password"
+              placeholderTextColor={theme.colors.textTertiary}
+              value={formData.password}
+              onChangeText={(value) => updateFormData('password', value)}
+              onFocus={() => setPasswordFocused(true)}
+              onBlur={() => setPasswordFocused(false)}
+              secureTextEntry={!showPassword}
+              autoComplete="off"
+              textContentType="none"
+            />
+            <TouchableOpacity 
+              style={styles.eyeIcon}
+              onPress={() => {
+                setShowPassword(!showPassword);
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+              }}
             >
-              <Text style={styles.loginButtonText}>
-                {isLoading ? 'Signing In...' : 'Sign In'}
-              </Text>
+              <Icon 
+                name={showPassword ? 'eye-off-outline' : 'eye-outline'} 
+                size={20} 
+                color={theme.colors.textSecondary}
+              />
             </TouchableOpacity>
+          </View>
 
-            <TouchableOpacity style={styles.switchButton} onPress={onSwitchToSignup}>
-              <Text style={styles.switchButtonText}>
-                Don't have an account? <Text style={styles.switchButtonLink}>Sign Up</Text>
-              </Text>
+          {/* Login Button */}
+          <TouchableOpacity
+            style={[styles.loginButton, isLoading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={isLoading}
+            activeOpacity={0.8}
+          >
+            {isLoading ? (
+              <Text style={styles.loginButtonText}>Signing in...</Text>
+            ) : (
+              <>
+                <Text style={styles.loginButtonText}>Sign in</Text>
+                <Icon name="arrow-forward" size={20} color="#FFFFFF" />
+              </>
+            )}
+          </TouchableOpacity>
+
+          {/* Switch to Signup */}
+          <View style={styles.switchContainer}>
+            <Text style={styles.switchText}>Don't have an account?</Text>
+            <TouchableOpacity 
+              onPress={() => {
+                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+                onSwitchToSignup();
+              }}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.switchLink}>Sign up</Text>
             </TouchableOpacity>
           </View>
         </View>
-      </LinearGradient>
+
+        {/* Footer */}
+        <Text style={styles.footer}>
+          By continuing, you agree to our Terms & Privacy Policy
+        </Text>
+      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -134,75 +204,119 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-  },
-  gradient: {
-    flex: 1,
+    backgroundColor: theme.colors.background,
   },
   content: {
     flex: 1,
-    justifyContent: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: theme.spacing.xl,
+    paddingTop: 60,
+    paddingBottom: theme.spacing.lg,
+    justifyContent: 'space-between',
   },
-  header: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: 40,
+    marginBottom: theme.spacing.xl,
   },
-  title: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: 'white',
-    marginBottom: 8,
+  logo: {
+    width: 100,
+    height: 100,
+    marginBottom: theme.spacing.base,
   },
-  subtitle: {
-    fontSize: 16,
-    color: 'rgba(255,255,255,0.8)',
+  appName: {
+    fontSize: theme.typography.xlarge,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
     textAlign: 'center',
   },
   form: {
-    gap: 20,
+    flex: 1,
+    justifyContent: 'center',
+    gap: theme.spacing.lg,
   },
-  inputGroup: {
-    gap: 8,
+  formTitle: {
+    fontSize: 28,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.sm,
+    letterSpacing: -0.5,
   },
-  label: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: 'white',
+  inputWrapper: {
+    position: 'relative',
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: theme.borderRadius.md,
+    borderWidth: 2,
+    borderColor: theme.colors.border,
+    ...theme.shadows.subtle,
+  },
+  inputIconContainer: {
+    paddingLeft: theme.spacing.base,
+    paddingRight: theme.spacing.xs,
   },
   input: {
-    backgroundColor: 'rgba(255,255,255,0.1)',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: 'white',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    flex: 1,
+    paddingVertical: theme.spacing.base,
+    paddingRight: theme.spacing.base,
+    fontSize: theme.typography.regular,
+    color: theme.colors.textPrimary,
+  },
+  inputFocused: {
+    borderColor: theme.colors.textPrimary,
+  },
+  eyeIcon: {
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.base,
   },
   loginButton: {
-    backgroundColor: 'white',
-    borderRadius: 12,
-    paddingVertical: 16,
+    backgroundColor: theme.colors.textPrimary,
+    borderRadius: theme.borderRadius.md,
+    paddingVertical: 18,
+    paddingHorizontal: theme.spacing.lg,
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    gap: theme.spacing.sm,
+    marginTop: theme.spacing.base,
+    ...theme.shadows.soft,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(255,255,255,0.5)',
+    backgroundColor: theme.colors.textSecondary,
+    opacity: 0.6,
   },
   loginButtonText: {
-    color: '#7f1d1d',
-    fontSize: 16,
-    fontWeight: '700',
+    color: '#FFFFFF',
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    letterSpacing: 0.3,
   },
-  switchButton: {
+  switchContainer: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 20,
+    justifyContent: 'center',
+    gap: theme.spacing.xs,
+    marginTop: theme.spacing.sm,
   },
-  switchButtonText: {
-    color: 'rgba(255,255,255,0.8)',
-    fontSize: 14,
+  switchText: {
+    fontSize: theme.typography.regular,
+    color: theme.colors.textSecondary,
   },
-  switchButtonLink: {
-    color: 'white',
-    fontWeight: '600',
+  switchLink: {
+    fontSize: theme.typography.regular,
+    color: theme.colors.textPrimary,
+    fontWeight: theme.typography.weights.semibold,
+  },
+  footer: {
+    fontSize: theme.typography.tiny,
+    color: theme.colors.textTertiary,
+    textAlign: 'center',
+    lineHeight: 16,
+    marginTop: theme.spacing.lg,
   },
 });
