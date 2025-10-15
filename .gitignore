@@ -37,3 +37,7 @@ yarn-error.*
 
 # typescript
 *.tsbuildinfo
+
+# Firebase config files (contains API keys)
+ios/MaxPulse/GoogleService-Info.plist
+android/app/google-services.json

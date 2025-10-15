@@ -177,8 +177,8 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
         title="Steps"
         icon="🚶‍♂️"
         percentage={animatedStepsPct}
-        current={stepsData.current.toLocaleString()}
-        target={stepsData.target.toLocaleString()}
+        current={(stepsData.current || 0).toLocaleString()}
+        target={(stepsData.target || 0).toLocaleString()}
         size={stepsRingSize}
         accentColor={theme.colors.ringSteps}
       />
@@ -189,8 +189,8 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           title="Hydration"
           icon={{ name: 'water-outline', size: 18 }}
           percentage={animatedWaterPct}
-          current={`${waterData.current}`}
-          target={`${waterData.target} oz`}
+          current={`${waterData.current || 0}`}
+          target={`${waterData.target || 0} oz`}
           size={smallRingSize}
           accentColor={theme.colors.ringHydration}
         />
@@ -199,8 +199,8 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           title="Sleep"
           icon={{ name: 'moon-outline', size: 18 }}
           percentage={animatedSleepPct}
-          current={formatSleepDuration(sleepData.current)}
-          target={formatSleepDuration(sleepData.target)}
+          current={formatSleepDuration(sleepData.current || 0)}
+          target={formatSleepDuration(sleepData.target || 0)}
           size={smallRingSize}
           accentColor={theme.colors.ringSleep}
         />
@@ -209,8 +209,8 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
           title="Mood"
           icon={{ name: 'happy-outline', size: 18 }}
           percentage={animatedMoodPct}
-          current={`${moodData.current}`}
-          target={`${moodData.target}`}
+          current={`${moodData.current || 0}`}
+          target={`${moodData.target || 0}`}
           size={smallRingSize}
           accentColor={theme.colors.ringMood}
         />

@@ -2,18 +2,9 @@
 // Full-screen video welcome with 3-second auto-fade to dashboard
 
 import React, { useEffect, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  Dimensions,
-  StatusBar,
-  Animated,
-} from 'react-native';
-import Video from 'react-native-video';
-import { theme } from '../utils/theme';
-
-const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+import { View, StyleSheet, StatusBar, Animated } from 'react-native';
+import { WelcomeVideo, WelcomeFallback, WelcomeTextOverlay } from '../components/welcome';
+import FirebaseService from '../services/FirebaseService';
 
 interface WelcomeScreenProps {
   userName?: string;
@@ -24,12 +15,53 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
   userName = 'Welcome',
   onComplete,
 }) => {
+  console.log('🎬 WelcomeScreen rendered for user:', userName, '(Production build - video enabled)');
+  
   const fadeAnim = useRef(new Animated.Value(1)).current;
   const dashboardFadeAnim = useRef(new Animated.Value(0)).current;
   const textFadeAnim = useRef(new Animated.Value(0)).current;
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  const [videoError, setVideoError] = useState(false);
   const [showDashboard, setShowDashboard] = useState(false);
+  
+  // Firebase Analytics
+  const firebase = FirebaseService.getInstance();
+  const viewStartTime = useRef(Date.now());
+  const videoLoadStartTime = useRef(Date.now());
+  const performanceTrace = useRef<any>(null);
 
   useEffect(() => {
+    let pulseAnimation: Animated.CompositeAnimation | null = null;
+    
+    // 🔥 Track welcome screen view
+    const initializeTracking = async () => {
+      await firebase.trackWelcomeScreenView(userName, false); // TODO: detect if first time
+      await firebase.logScreenView('WelcomeScreen', 'WelcomeScreen');
+      
+      // Start performance trace
+      performanceTrace.current = await firebase.startTrace('welcome_screen_display');
+    };
+    initializeTracking();
+    
+    // If using fallback, start pulsing animation
+    if (videoError) {
+      pulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnimation.start();
+    }
+
     // Show welcome text after 1 second
     const textTimer = setTimeout(() => {
       Animated.timing(textFadeAnim, {
@@ -41,144 +73,108 @@ export const WelcomeScreen: React.FC<WelcomeScreenProps> = ({
 
     // Start fade out at 3 seconds
     const fadeTimer = setTimeout(() => {
-      setShowDashboard(true);
+      console.log('🎬 Starting video fade out animation');
+      const animationStartTime = Date.now();
       
-      // Fade out video and fade in dashboard simultaneously
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(dashboardFadeAnim, {
-          toValue: 1,
-          duration: 1000,
-          useNativeDriver: true,
-        }),
-      ]).start();
+      // Fade out video layer to reveal dashboard behind it
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 1000,
+        useNativeDriver: true,
+      }).start(() => {
+        console.log('🎬 Video fade animation completed');
+        
+        // 🔥 Track animation performance
+        const animationDuration = Date.now() - animationStartTime;
+        firebase.trackAnimationPerformance('crossfade', animationDuration, true);
+      });
     }, 3000);
 
-    // Complete transition at 4 seconds
+    // Complete transition at 4 seconds (after fade completes)
     const completeTimer = setTimeout(() => {
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
+      console.log('🎬 WelcomeScreen calling onComplete');
+      
+      // 🔥 Track completion
+      const timeSpent = Date.now() - viewStartTime.current;
+      firebase.trackWelcomeScreenComplete(timeSpent);
+      
+      // Stop performance trace
+      if (performanceTrace.current) {
+        performanceTrace.current.putMetric('time_to_complete', timeSpent);
+        performanceTrace.current.stop();
+      }
+      
       onComplete();
     }, 4000);
 
     return () => {
+      if (pulseAnimation) {
+        pulseAnimation.stop();
+      }
       clearTimeout(textTimer);
       clearTimeout(fadeTimer);
       clearTimeout(completeTimer);
     };
-  }, [fadeAnim, dashboardFadeAnim, textFadeAnim, onComplete]);
+  }, [fadeAnim, textFadeAnim, pulseAnim, onComplete, videoError, firebase, userName]);
+
+  const handleVideoError = (error: any) => {
+    console.error('🎬 Video playback error, falling back to animated welcome:', error);
+    setVideoError(true);
+    
+    // 🔥 Track video error
+    const loadTime = Date.now() - videoLoadStartTime.current;
+    firebase.trackVideoPlayback(false, loadTime, error?.message || 'Unknown error');
+    firebase.trackWelcomeScreenError('video_playback_failed', error?.message || 'Unknown error');
+  };
+
+  const handleVideoLoad = () => {
+    console.log('🎬 Video loaded successfully');
+    
+    // 🔥 Track successful video load
+    const loadTime = Date.now() - videoLoadStartTime.current;
+    firebase.trackVideoPlayback(true, loadTime);
+  };
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor="#000000" translucent={true} />
+    <Animated.View style={[styles.container, { opacity: fadeAnim }]}>
+      <StatusBar hidden />
       
-      {/* Full-screen video */}
-      <Animated.View style={[styles.videoContainer, { opacity: fadeAnim }]}>
-        <Video
-          source={require('../../assets/videos/welcome.mp4')}
-          style={styles.video}
-          resizeMode="cover"
-          repeat={false}
-          muted={true}
-          paused={false}
-          playInBackground={false}
-          playWhenInactive={false}
-          ignoreSilentSwitch="ignore"
-          onError={(error) => {
-            console.error('Video playback error:', error);
-            // Fallback: immediately show dashboard if video fails
-            onComplete();
-          }}
-        />
+      {/* Video or Fallback Background */}
+      <View style={styles.backgroundContainer}>
+        {!videoError ? (
+          <WelcomeVideo 
+            onError={handleVideoError}
+            onLoad={handleVideoLoad}
+          />
+        ) : (
+          <WelcomeFallback pulseAnim={pulseAnim} />
+        )}
         
-        {/* Welcome text overlay */}
-        <Animated.View style={[styles.textOverlay, { opacity: textFadeAnim }]}>
-          <Text style={styles.welcomeText}>Welcome, {userName}!</Text>
-        </Animated.View>
-      </Animated.View>
-
-      {/* Dashboard preview (fades in behind video) */}
-      {showDashboard && (
-        <Animated.View style={[styles.dashboardPreview, { opacity: dashboardFadeAnim }]}>
-          <View style={styles.dashboardPlaceholder}>
-            <View style={styles.logoContainer}>
-              <Text style={styles.logoText}>MaxPulse</Text>
-            </View>
-            <Text style={styles.dashboardText}>Your wellness journey continues...</Text>
-          </View>
-        </Animated.View>
-      )}
-    </View>
+        <WelcomeTextOverlay 
+          userName={userName}
+          textFadeAnim={textFadeAnim}
+          showTagline={videoError}
+        />
+      </View>
+    </Animated.View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#000000',
+    backgroundColor: 'transparent', // Transparent to allow crossfade
   },
-  videoContainer: {
+  backgroundContainer: {
     position: 'absolute',
     top: 0,
-    left: 0,
-    width: screenWidth,
-    height: screenHeight,
-    zIndex: 2,
-  },
-  video: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: screenWidth,
-    height: screenHeight,
-  },
-  textOverlay: {
-    position: 'absolute',
-    bottom: 120,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    zIndex: 3,
-  },
-  welcomeText: {
-    fontSize: 32,
-    fontWeight: '600',
-    color: '#FFFFFF',
-    textAlign: 'center',
-    textShadowColor: 'rgba(0, 0, 0, 0.5)',
-    textShadowOffset: { width: 0, height: 2 },
-    textShadowRadius: 4,
-    letterSpacing: 0.5,
-  },
-  dashboardPreview: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    width: screenWidth,
-    height: screenHeight,
-    backgroundColor: theme.colors.background,
-    zIndex: 1,
-  },
-  dashboardPlaceholder: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: theme.spacing.xl,
-  },
-  logoContainer: {
-    marginBottom: theme.spacing.xl,
-  },
-  logoText: {
-    fontSize: 36,
-    fontWeight: '500',
-    color: theme.colors.textPrimary,
-    letterSpacing: -0.5,
-  },
-  dashboardText: {
-    fontSize: theme.typography.medium,
-    color: theme.colors.textSecondary,
-    textAlign: 'center',
+    bottom: 0,
+    zIndex: 2,
+    backgroundColor: '#000000', // Black background for video/fallback
   },
 });

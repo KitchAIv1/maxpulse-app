@@ -1,6 +1,9 @@
 // TriHabit Utility Functions
 // Core algorithms and helpers from PRD
 
+// Re-export theme for convenience
+export { theme } from './theme';
+
 /**
  * Clamp a number between 0 and 1
  */

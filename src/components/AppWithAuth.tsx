@@ -1,287 +1,37 @@
 // App with Authentication Component
 // Manages authentication state and routes between auth and main app
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { AuthContainer } from '../screens/auth';
 import { WelcomeScreen } from '../screens/WelcomeScreen';
-import { authService, supabase } from '../services/supabase';
-import { useAppStore } from '../stores/appStore';
+import { useAuthManager } from '../hooks/useAuthManager';
 import { UserProfileFromActivation } from '../types';
-import SyncManager from '../services/SyncManager';
-import TargetManager from '../services/TargetManager';
-import DailyMetricsUpdater from '../services/DailyMetricsUpdater';
-import NetworkService from '../services/NetworkService';
-import HealthDataService from '../services/HealthDataService';
 
 interface AppWithAuthProps {
   children: React.ReactNode;
 }
 
 export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null); // null = loading
-  const [user, setUser] = useState<any>(null);
-  const [showWelcome, setShowWelcome] = useState(false);
-  const { setUser: setStoreUser, initializeTargets, loadTodayData } = useAppStore();
-
   // Development flag - set to true for testing, false for production
   const ALWAYS_SHOW_WELCOME = true;
 
-  // Check authentication status on app start and set up auth listener
-  useEffect(() => {
-    checkAuthStatus();
-    
-    // Listen for authentication state changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('🔐 Auth state changed:', event, session?.user?.id || 'no user');
-        
-        if (event === 'SIGNED_OUT' || !session?.user) {
-          // User signed out or session expired
-          setUser(null);
-          setStoreUser(null);
-          setIsAuthenticated(false);
-          console.log('👋 User signed out - redirecting to auth');
-        } else if (event === 'SIGNED_IN' && session?.user) {
-          // User signed in
-          console.log('👋 User signed in:', session.user.id);
-          setUser(session.user);
-          setStoreUser({
-            id: session.user.id,
-            created_at: session.user.created_at,
-            tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-            display_name: session.user.user_metadata?.name || session.user.email,
-          });
-          
-          // Load user data
-          await loadUserTargets(session.user.id);
-          await loadTodayData();
-          
-          // Show welcome screen if testing flag is enabled
-          if (ALWAYS_SHOW_WELCOME) {
-            setShowWelcome(true);
-          }
-          
-          setIsAuthenticated(true);
-        }
-      }
-    );
+  // Authentication management
+  const { isAuthenticated, user, showWelcome, handleAuthComplete, setShowWelcome } = useAuthManager(ALWAYS_SHOW_WELCOME);
 
-    // Cleanup subscription on unmount
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, []);
-
-  const checkAuthStatus = async () => {
-    try {
-      const { user: currentUser, error } = await authService.getCurrentUser();
-      
-      if (error || !currentUser) {
-        setIsAuthenticated(false);
-        return;
-      }
-
-      setUser(currentUser);
-      setStoreUser({
-        id: currentUser.id,
-        created_at: currentUser.created_at,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        display_name: currentUser.user_metadata?.name || currentUser.email,
-      });
-
-      // Load user's dynamic targets from their plan
-      await loadUserTargets(currentUser.id);
-      
-      // Fix any existing daily_metrics rows with wrong targets
-      setTimeout(async () => {
-        try {
-          console.log('🔧 Running daily_metrics audit and fix...');
-          const result = await DailyMetricsUpdater.auditAndFix(currentUser.id);
-          if (result.success) {
-            console.log(`✅ Daily metrics fixed: ${result.rowsUpdated} updated, ${result.rowsCreated} ensured`);
-          }
-        } catch (error) {
-          console.warn('⚠️ Daily metrics fix failed (non-critical):', error);
-        }
-      }, 2000); // Run after 2 seconds to not block startup
-      
-      // Load today's data (will restore from AsyncStorage if available)
-      await loadTodayData();
-      
-      // Show welcome screen if testing flag is enabled
-      if (ALWAYS_SHOW_WELCOME) {
-        setShowWelcome(true);
-      }
-      
-      setIsAuthenticated(true);
-      
-      // Initialize network service and process any queued operations
-      setTimeout(async () => {
-        try {
-          // Initialize network monitoring
-          const networkService = NetworkService.getInstance();
-          await networkService.initialize();
-          console.log('✅ Network service initialized');
-          
-          // Add listener for when network comes back online
-          const healthService = HealthDataService.getInstance();
-          networkService.addListener(async (isOnline) => {
-            if (isOnline) {
-              console.log('🌐 Network reconnected - processing queued operations...');
-              try {
-                await healthService.syncPendingData();
-                console.log('✅ Queued operations synced successfully');
-              } catch (error) {
-                console.warn('Failed to sync queued operations:', error);
-              }
-            }
-          });
-          
-          // Process any queued offline operations from previous sessions
-          await healthService.syncPendingData();
-          console.log('✅ Processed queued operations');
-        } catch (error) {
-          console.warn('Network initialization failed (non-critical):', error);
-        }
-      }, 500); // Small delay to let critical startup complete
-      
-      // Initialize sync manager in background (non-blocking)
-      setTimeout(async () => {
-        try {
-          const syncManager = SyncManager.getInstance();
-          await syncManager.initialize();
-          console.log('✅ Background sync initialized');
-        } catch (error) {
-          console.warn('Background initialization failed:', error);
-          // Don't break the app - it will work without background sync
-        }
-      }, 100); // Small delay to let UI render first
-    } catch (error) {
-      console.error('Error checking auth status:', error);
-      setIsAuthenticated(false);
-    }
+  // Handle authentication completion
+  const handleAuthCompleteWrapper = async (authenticatedUser: any, profile?: UserProfileFromActivation) => {
+    await handleAuthComplete(authenticatedUser, profile);
   };
 
-  const loadUserTargets = async (userId: string) => {
-    try {
-      console.log('🎯 V2 Engine: Loading current week targets for user:', userId);
-      
-      // Use V2 Engine to get current week's dynamic targets
-      const weeklyTargets = await TargetManager.getCurrentWeekTargets(userId);
-      
-      console.log('✅ V2 Engine loaded targets:', weeklyTargets);
-      
-      await initializeTargets({
-        steps: weeklyTargets.steps,
-        waterOz: weeklyTargets.waterOz,
-        sleepHr: weeklyTargets.sleepHr,
-      });
-      
-      console.log('🎯 Dashboard now shows V2 Engine targets:', {
-        steps: weeklyTargets.steps,
-        waterOz: weeklyTargets.waterOz,
-        sleepHr: weeklyTargets.sleepHr,
-        source: weeklyTargets.source,
-        week: weeklyTargets.week,
-        phase: weeklyTargets.phase,
-        focus: weeklyTargets.focus,
-      });
-    } catch (error) {
-      console.error('Error loading V2 Engine targets:', error);
-      // Don't fallback - let V2 Engine retry or user will see zeros indicating an issue
-      console.warn('⚠️ V2 Engine failed, targets remain at 0 to indicate issue');
-    }
-  };
-
-  const handleAuthComplete = async (authenticatedUser: any, profile?: UserProfileFromActivation) => {
-    try {
-      setUser(authenticatedUser);
-      setStoreUser({
-        id: authenticatedUser.id,
-        created_at: authenticatedUser.created_at,
-        tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        display_name: profile?.name || authenticatedUser.email,
-      });
-
-      // If this is a new user with profile data, set up their targets and save profile
-      if (profile) {
-        // Try to save the profile to the database now that user is authenticated
-        try {
-          const { error } = await supabase
-            .from('app_user_profiles')
-            .upsert({
-              user_id: authenticatedUser.id,
-              email: profile.email,
-              name: profile.name,
-              age: profile.age,
-              gender: profile.gender,
-              height_cm: profile.height_cm,
-              weight_kg: profile.weight_kg,
-              bmi: profile.bmi,
-              medical_conditions: profile.medical_conditions,
-              medical_allergies: profile.medical_allergies,
-              medical_medications: profile.medical_medications,
-              mental_health_data: profile.mental_health_data,
-              activation_code_id: profile.activation_code_id,
-              distributor_id: profile.distributor_id,
-              session_id: profile.session_id,
-              plan_type: profile.plan_type,
-            }, { onConflict: 'user_id' });
-
-          if (error) {
-            console.error('Error saving profile after auth:', error);
-          } else {
-            console.log('Profile saved successfully after authentication');
-          }
-        } catch (profileError) {
-          console.error('Failed to save profile after auth:', profileError);
-        }
-
-        // For new users, use V2 Engine for dynamic weekly targets
-        console.log('🎯 V2 Engine: Loading targets for new user:', authenticatedUser.id);
-        
-        const weeklyTargets = await TargetManager.getCurrentWeekTargets(authenticatedUser.id);
-        
-        console.log('✅ V2 Engine new user targets:', weeklyTargets);
-        
-        await initializeTargets({
-          steps: weeklyTargets.steps,
-          waterOz: weeklyTargets.waterOz,
-          sleepHr: weeklyTargets.sleepHr,
-        });
-        
-        console.log('🎯 Dashboard initialized with V2 Engine targets:', weeklyTargets);
-      } else {
-        // For existing users, load their current targets
-        await loadUserTargets(authenticatedUser.id);
-      }
-
-      // Show welcome screen for new users or if testing
-      if (ALWAYS_SHOW_WELCOME || profile) { // profile exists for new signups
-        setShowWelcome(true);
-      }
-      
-      setIsAuthenticated(true);
-    } catch (error) {
-      console.error('Error completing authentication:', error);
-      // Still proceed with authentication but don't override V2 Engine targets
-      setIsAuthenticated(true);
-      console.warn('⚠️ Authentication completed but V2 Engine targets may not be loaded');
-    }
-  };
-
-  const handleSignOut = async () => {
-    try {
-      await authService.signOut();
-      setUser(null);
-      setStoreUser(null);
-      setIsAuthenticated(false);
-    } catch (error) {
-      console.error('Error signing out:', error);
-    }
-  };
+  // Debug current state
+  console.log('🔍 AppWithAuth render state:', { 
+    isAuthenticated, 
+    showWelcome,
+    hasUser: !!user,
+    ALWAYS_SHOW_WELCOME 
+  });
 
   // Loading state
   if (isAuthenticated === null) {
@@ -298,6 +48,7 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
   // Handle welcome screen completion
   const handleWelcomeComplete = () => {
+    console.log('🎬 Welcome screen fade completed, showing dashboard');
     setShowWelcome(false);
   };
 
@@ -314,16 +65,27 @@ export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
 
   // Not authenticated - show auth screens
   if (!isAuthenticated) {
-    return <AuthContainer onAuthComplete={handleAuthComplete} />;
+    return <AuthContainer onAuthComplete={handleAuthCompleteWrapper} />;
   }
 
   // Authenticated but showing welcome screen
   if (showWelcome) {
+    console.log('🎬 Rendering WelcomeScreen with dashboard behind for user:', getUserDisplayName());
     return (
-      <WelcomeScreen 
-        userName={getUserDisplayName()}
-        onComplete={handleWelcomeComplete}
-      />
+      <View style={styles.layeredContainer}>
+        {/* Dashboard layer (behind welcome screen) */}
+        <View style={styles.dashboardLayer}>
+          {children}
+        </View>
+        
+        {/* Welcome screen layer (on top) */}
+        <View style={styles.welcomeLayer}>
+          <WelcomeScreen 
+            userName={getUserDisplayName()}
+            onComplete={handleWelcomeComplete}
+          />
+        </View>
+      </View>
     );
   }
 
@@ -348,5 +110,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: 'rgba(255,255,255,0.8)',
     textAlign: 'center',
+  },
+  layeredContainer: {
+    flex: 1,
+  },
+  dashboardLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1,
+  },
+  welcomeLayer: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 2,
   },
 });

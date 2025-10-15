@@ -149,7 +149,20 @@ class OfflineQueueService {
       .from('mood_checkins')
       .insert(operation.data);
     
-    return !error;
+    if (error) {
+      return false;
+    }
+
+    // Also update daily_metrics mood count after successful mood check-in insert
+    try {
+      const healthService = (await import('./HealthDataService')).default.getInstance();
+      await healthService.updateMoodCheckInCount(operation.userId);
+    } catch (updateError) {
+      console.warn('⚠️ Offline mood sync: Failed to update daily metrics count:', updateError);
+      // Don't fail the entire operation - mood check-in was still logged
+    }
+    
+    return true;
   }
 
   private async executeStepsOperation(operation: QueuedOperation): Promise<boolean> {

@@ -325,8 +325,10 @@ export const useStepTrackingStore = create<StepTrackingStore>()(
      * Update step target
      */
     updateTarget: (newTarget) => {
-      console.log('🎯 Updating step target from', get().todayTarget, 'to', newTarget);
-      set({ todayTarget: newTarget });
+      // Validate target to prevent undefined corruption
+      const validTarget = typeof newTarget === 'number' && !isNaN(newTarget) && newTarget > 0 ? newTarget : 10000;
+      console.log('🎯 Updating step target from', get().todayTarget, 'to', validTarget);
+      set({ todayTarget: validTarget });
     },
 
     /**

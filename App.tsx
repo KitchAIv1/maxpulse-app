@@ -23,11 +23,23 @@ import { calAiCard, calAiContainer, calAiText } from './src/utils/calAiStyles';
 import { RewardsScreen } from './src/screens/RewardsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
+import FirebaseService from './src/services/FirebaseService';
 
 function TriHabitApp() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'coach' | 'rewards' | 'settings'>('dashboard');
   const [wellbeingDashboardVisible, setWellbeingDashboardVisible] = useState(false);
   const [moodCheckInVisible, setMoodCheckInVisible] = useState(false);
+  
+  // Firebase initialization
+  const firebase = FirebaseService.getInstance();
+  
+  // Track screen changes
+  useEffect(() => {
+    const screenName = currentScreen === 'dashboard' ? 'Dashboard' : 
+                       currentScreen === 'coach' ? 'Coach' : 
+                       currentScreen === 'rewards' ? 'Rewards' : 'Settings';
+    firebase.logScreenView(screenName, screenName);
+  }, [currentScreen, firebase]);
   
   const {
     currentState,

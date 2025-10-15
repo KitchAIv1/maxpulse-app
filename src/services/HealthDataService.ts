@@ -336,7 +336,7 @@ class HealthDataService {
         return true; // Optimistic success
       }
 
-      // Online - try immediate database sync
+      // Online - try immediate database sync to mood_checkins table
       const { error } = await supabase
         .from('mood_checkins')
         .insert(moodCheckIn);
@@ -358,11 +358,126 @@ class HealthDataService {
         return false;
       }
 
+      // ✅ CRITICAL FIX: Also update daily_metrics.mood_checkins_actual
+      const updateSuccess = await this.updateMoodCheckInCount(userId);
+      if (!updateSuccess) {
+        console.warn('⚠️ Mood check-in logged but failed to update daily metrics count');
+        // Don't fail the entire operation - mood check-in was still logged
+      }
+
       if (__DEV__) console.log('✅ Mood check-in synced to database immediately');
       return true;
     } catch (error) {
       console.error('Failed to log mood check-in:', error);
       return false;
+    }
+  }
+
+  /**
+   * Update mood_checkins_actual count in daily_metrics based on actual mood_checkins for today
+   */
+  async updateMoodCheckInCount(userId: string): Promise<boolean> {
+    try {
+      const today = getTodayDate();
+      const startOfDay = `${today}T00:00:00.000Z`;
+      const endOfDay = `${today}T23:59:59.999Z`;
+
+      // Count actual mood check-ins for today
+      const { count, error: countError } = await supabase
+        .from('mood_checkins')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('timestamp', startOfDay)
+        .lte('timestamp', endOfDay);
+
+      if (countError) {
+        console.error('Error counting mood check-ins:', countError);
+        return false;
+      }
+
+      const actualCount = count || 0;
+
+      // Update daily_metrics with the actual count
+      return await this.updateDailyMetrics(userId, {
+        mood_checkins_actual: actualCount,
+      });
+    } catch (error) {
+      console.error('Failed to update mood check-in count:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Backfill mood_checkins_actual for past dates based on existing mood_checkins data
+   * This fixes historical data where mood check-ins exist but daily_metrics wasn't updated
+   */
+  async backfillMoodCheckInCounts(userId: string): Promise<number> {
+    try {
+      console.log('🔄 Backfilling mood check-in counts for user:', userId);
+      
+      // Get all dates with daily_metrics for this user
+      const { data: metricsData, error: metricsError } = await supabase
+        .from('daily_metrics')
+        .select('date')
+        .eq('user_id', userId)
+        .order('date', { ascending: false });
+
+      if (metricsError) {
+        console.error('Error fetching daily metrics dates:', metricsError);
+        return 0;
+      }
+
+      if (!metricsData || metricsData.length === 0) {
+        console.log('No daily metrics found for backfill');
+        return 0;
+      }
+
+      let updatedCount = 0;
+
+      // Process each date
+      for (const metric of metricsData) {
+        const date = metric.date;
+        const startOfDay = `${date}T00:00:00.000Z`;
+        const endOfDay = `${date}T23:59:59.999Z`;
+
+        // Count mood check-ins for this date
+        const { count, error: countError } = await supabase
+          .from('mood_checkins')
+          .select('*', { count: 'exact', head: true })
+          .eq('user_id', userId)
+          .gte('timestamp', startOfDay)
+          .lte('timestamp', endOfDay);
+
+        if (countError) {
+          console.error(`Error counting mood check-ins for ${date}:`, countError);
+          continue;
+        }
+
+        const actualCount = count || 0;
+
+        // Update daily_metrics for this specific date
+        const { error: updateError } = await supabase
+          .from('daily_metrics')
+          .update({ mood_checkins_actual: actualCount })
+          .eq('user_id', userId)
+          .eq('date', date);
+
+        if (updateError) {
+          console.error(`Error updating mood count for ${date}:`, updateError);
+          continue;
+        }
+
+        if (actualCount > 0) {
+          console.log(`✅ Updated ${date}: ${actualCount} mood check-ins`);
+          updatedCount++;
+        }
+      }
+
+      console.log(`🎉 Backfill complete: Updated ${updatedCount} dates with mood check-in counts`);
+      return updatedCount;
+    } catch (error) {
+      console.error('Failed to backfill mood check-in counts:', error);
+      return 0;
     }
   }
 

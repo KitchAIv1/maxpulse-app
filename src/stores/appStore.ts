@@ -303,9 +303,12 @@ export const useAppStore = create<AppStore>((set, get) => ({
   updateSleep: async (hours) => {
     const { user } = get();
     
+    // Validate sleep hours to prevent NaN corruption
+    const validHours = typeof hours === 'number' && !isNaN(hours) && hours >= 0 ? hours : 0;
+    
     // Always update UI immediately (optimistic update)
     set((state) => ({
-      currentState: { ...state.currentState, sleepHr: hours },
+      currentState: { ...state.currentState, sleepHr: validHours },
     }));
 
     // Persist today's state to AsyncStorage for reload persistence
@@ -314,7 +317,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       const stateToSave = {
         steps: get().currentState.steps,
         waterOz: get().currentState.waterOz,
-        sleepHr: hours,
+        sleepHr: validHours,
         moodCheckInFrequency: get().moodCheckInFrequency,
       };
       await AsyncStorage.setItem(`@todayState_${today}`, JSON.stringify(stateToSave));
@@ -332,7 +335,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
       try {
         await AppStoreActions.updateSleep(
           user.id,
-          hours,
+          validHours,
           () => {}, // Don't update UI again, already done optimistically
           (error) => console.warn('Database sync failed:', error) // Don't break UI on DB errors
         );
@@ -394,21 +397,29 @@ export const useAppStore = create<AppStore>((set, get) => ({
   initializeTargets: async (customTargets) => {
     // Always set targets immediately for UI (V2 Engine has priority)
     const targets = customTargets || generateTargets();
-    set({ targets });
+    
+    // Validate targets to prevent undefined/NaN corruption
+    const validTargets = {
+      steps: typeof targets.steps === 'number' && !isNaN(targets.steps) && targets.steps > 0 ? targets.steps : 10000,
+      waterOz: typeof targets.waterOz === 'number' && !isNaN(targets.waterOz) && targets.waterOz > 0 ? targets.waterOz : 95,
+      sleepHr: typeof targets.sleepHr === 'number' && !isNaN(targets.sleepHr) && targets.sleepHr > 0 ? targets.sleepHr : 8,
+    };
+    
+    set({ targets: validTargets });
 
     // Sync step target with step tracking store
     try {
       const { useStepTrackingStore } = await import('./stepTrackingStore');
       const stepStore = useStepTrackingStore.getState();
       if (stepStore.updateTarget) {
-        stepStore.updateTarget(targets.steps);
+        stepStore.updateTarget(validTargets.steps);
       }
     } catch (error) {
       console.warn('Failed to sync step target:', error);
     }
 
     // Skip database sync for now - V2 Engine is the source of truth
-    console.log('✅ Targets set to:', targets);
+    console.log('✅ Targets set to:', validTargets);
   },
 
   setSelectedDate: async (date: string) => {
