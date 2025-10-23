@@ -65,6 +65,11 @@ function TriHabitApp() {
 
   const { score: lifeScore, stepsPct: lifeScoreStepsPct, waterPct, sleepPct, moodCheckInPct } = useLifeScore();
 
+  // Log when steps change to track UI updates
+  useEffect(() => {
+    console.log(`🎨 App.tsx render - displaySteps: ${displaySteps}`);
+  }, [displaySteps]);
+
   // Handle wellbeing dashboard navigation
   const handleLifeScorePress = () => {
     setWellbeingDashboardVisible(true);

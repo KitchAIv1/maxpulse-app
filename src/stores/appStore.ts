@@ -290,6 +290,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   updateSteps: async (steps) => {
+    console.log(`📊 appStore.updateSteps called: ${steps} steps`);
+    
     set((state) => ({
       currentState: { ...state.currentState, steps },
     }));

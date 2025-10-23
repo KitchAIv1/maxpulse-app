@@ -596,31 +596,25 @@ class IOSPedometerService {
           const result = await Pedometer.getStepCountAsync(start, end);
           
           if (result && typeof result.steps === 'number') {
-            // Check if current activity is valid for step counting
-            const isValidActivity = this.motionActivityManager.isValidForStepCounting();
-            const currentActivity = this.motionActivityManager.getCurrentActivity();
-            
-            // Only update steps if activity is valid OR if steps haven't changed
-            // This prevents false increments from hand movements
+            // Check if steps have changed
             const stepsChanged = result.steps !== this.lastStepCount;
             
-            if (isValidActivity || !stepsChanged) {
+            // ALWAYS update if steps changed - CoreMotion's step detection is already accurate
+            // The motion activity filter was causing legitimate steps to be blocked
+            if (stepsChanged) {
+              const previousSteps = this.lastStepCount || 0;
               const stepData: StepData = {
                 steps: result.steps,
                 timestamp: new Date().toISOString(),
                 source: 'coremotion',
-                confidence: isValidActivity ? 'high' : 'medium',
+                confidence: 'high', // CoreMotion is accurate, trust it
               };
 
               this.lastStepCount = result.steps;
               this.lastStepData = stepData;
               this.notifyStepUpdate(stepData);
               
-              if (stepsChanged) {
-                console.log(`📊 Steps updated: ${result.steps} (activity: ${currentActivity?.type || 'unknown'})`);
-              }
-            } else {
-              console.log(`⚠️ Steps update blocked - invalid activity (${currentActivity?.type || 'unknown'})`);
+              console.log(`📊 Steps updated: ${result.steps} steps (+${result.steps - previousSteps})`);
             }
           }
         } catch (error) {

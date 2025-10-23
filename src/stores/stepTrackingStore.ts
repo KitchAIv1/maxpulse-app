@@ -232,6 +232,8 @@ export const useStepTrackingStore = create<StepTrackingStore>()(
     updateSteps: (stepData) => {
       const state = get();
       
+      console.log(`📊 stepTrackingStore.updateSteps called: ${stepData.steps} steps`);
+      
       set({
         todaySteps: stepData.steps,
         liveSteps: stepData.steps,
