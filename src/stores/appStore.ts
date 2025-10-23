@@ -177,7 +177,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           if (__DEV__) console.log('✅ Restored today\'s persisted state:', state);
           set({
             currentState: {
-              steps: state.steps || 0,
+              steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from AsyncStorage
               waterOz: state.waterOz || 0,
               sleepHr: state.sleepHr || 0,
             },
@@ -488,7 +488,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             if (__DEV__) console.log('✅ Restored from AsyncStorage:', state);
             set({
               currentState: {
-                steps: state.steps || 0,
+                steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from AsyncStorage
                 waterOz: state.waterOz || 0,
                 sleepHr: state.sleepHr || 0,
               },
