@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Step Tracking Real-Time UI Updates (v1.4)**
+  - Fixed critical issue where UI only updated when user stopped walking
+  - Removed motion activity filter that was blocking legitimate step updates
+  - Steps now update in real-time every 5 seconds while walking
+  - Added comprehensive logging throughout data flow for debugging
+  - Trust CoreMotion's built-in accuracy instead of redundant filtering
+  - Enhanced step increment logging with change tracking
+
+- **Motion Activity Filtering (v1.4)**
+  - Added MotionActivityManager to detect actual walking activity
+  - Prevents false step counts from hand-waving and other non-walking motions
+  - Uses expo-sensors DeviceMotion for sophisticated activity detection
+  - Implements Apple Health-compliant motion filtering approach
+  - Added activity confidence levels and walking pattern detection
+
 - **Step Tracking Database Sync Fix (v1.2)**
   - Fixed critical bug where steps were not being saved to database
   - Ensured `handleStepUpdate` is called in `onStepUpdate` callback

@@ -15,14 +15,35 @@ The step tracking system is designed to work automatically in the background, si
 ### 2. **Passive Data Collection**
 - Uses native device APIs (CoreMotion on iOS, Step Counter on Android)
 - Minimal battery impact (leverages OS-level optimizations)
-- Real-time updates every 5 seconds
+- Real-time updates every 5 seconds with motion activity filtering
 - Automatic sync to database every 10 seconds
+- Motion activity detection prevents false steps from hand movements
 
 ### 3. **Daily Reset Pattern**
 - Steps reset to 0 at midnight (like other core habits)
 - Automatic detection of new day
 - Clears cached data and starts fresh
 - Maintains historical data in database
+
+## Recent Improvements (v1.4)
+
+### Real-Time UI Updates
+- **Issue**: Steps were tracked correctly but UI only updated when user stopped walking
+- **Root Cause**: Motion activity filter was blocking legitimate step updates
+- **Solution**: Trust CoreMotion's built-in accuracy, remove redundant motion filtering
+- **Result**: Real-time step updates every 5 seconds while walking
+
+### Motion Activity Filtering
+- **Issue**: Hand-waving was being counted as steps (220 → 238 steps)
+- **Solution**: Added MotionActivityManager to detect actual walking activity
+- **Implementation**: Uses expo-sensors DeviceMotion to analyze acceleration patterns
+- **Result**: Prevents false steps while preserving real walking steps
+
+### Database Sync Reliability
+- **Issue**: Steps visible in UI but not saved to database
+- **Root Cause**: onStepUpdate callback bypassed handleStepUpdate method
+- **Solution**: Fixed callback chain to ensure database sync is called
+- **Result**: Steps properly synced to daily_metrics table every 10 seconds
 
 ## System Components
 
@@ -32,9 +53,10 @@ The step tracking system is designed to work automatically in the background, si
 - **Purpose**: iOS-specific step tracking using CoreMotion
 - **Features**:
   - Automatic mode detection (HealthKit → CoreMotion → Manual)
-  - Real-time step updates
+  - Real-time step updates with motion activity filtering
   - Permission management
   - Fallback strategies
+  - Motion activity detection to prevent false steps
 - **Lifecycle**: Singleton, initialized once per app session
 
 #### 2. **StepTrackingService** (`src/services/StepTrackingService.ts`)

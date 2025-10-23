@@ -55,6 +55,32 @@ console.log(`📊 Initial step count: ${result.steps} steps`);
 **File**: `src/services/StepTrackingService.ts` lines 129-131
 **Result**: Steps now properly sync to database every 10 seconds
 
+### 5. **CRITICAL: Real-Time UI Updates (v1.4)**
+**Problem**: Steps were tracked correctly but UI only updated when user stopped walking
+**Root Cause**: Motion activity filter logic was backwards - blocked legitimate steps
+**Solution**: Trust CoreMotion's built-in accuracy, remove redundant motion filtering
+**File**: `src/services/IOSPedometerService.ts` lines 596-618
+**Result**: Real-time step updates every 5 seconds while walking
+
+```typescript
+// Before (WRONG - blocked legitimate steps)
+if (isValidActivity || !stepsChanged) {
+  // Update steps
+}
+
+// After (CORRECT - always update when steps change)
+if (stepsChanged) {
+  // Update steps immediately
+  this.notifyStepUpdate(stepData);
+}
+```
+
+### 6. **Motion Activity Filtering (v1.4)**
+**Problem**: Hand-waving counted as steps (220 → 238 steps)
+**Solution**: Added MotionActivityManager for walking detection
+**File**: `src/services/MotionActivityManager.ts` (new file)
+**Result**: Prevents false steps while preserving real walking steps
+
 ```typescript
 // Before (BROKEN - bypassed database sync)
 this.iosPedometerService.setCallbacks({
