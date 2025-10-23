@@ -4,8 +4,10 @@
 export interface StepData {
   steps: number;
   timestamp: string; // ISO timestamp
-  source: 'pedometer' | 'healthkit' | 'googlefit' | 'sensor';
+  source: 'pedometer' | 'healthkit' | 'googlefit' | 'sensor' | 'coremotion' | 'cache';
   confidence?: 'low' | 'medium' | 'high';
+  distance?: number;
+  error?: string;
 }
 
 export interface DailyStepSummary {
@@ -74,6 +76,7 @@ export interface StepTrackingStatus {
   isAvailable: boolean;
   isAuthorized: boolean;
   isTracking: boolean;
+  lastUpdate?: string;
   lastError: string | null;
   supportedFeatures: StepTrackingFeature[];
 }

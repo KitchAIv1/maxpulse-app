@@ -5,6 +5,7 @@ Welcome to the MaxPulse app documentation. This directory contains comprehensive
 ## 📚 Documentation Structure
 
 ### 📋 **Core Documentation**
+- **[Documentation Index](DOCUMENTATION_INDEX.md)** - Complete overview of all documentation with current status
 - **[Product Requirements Document (PRD)](PRD.md)** - Complete product specification and requirements
 - **[Project README](../README.md)** - Main project overview and quick start guide
 

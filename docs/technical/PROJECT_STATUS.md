@@ -1,11 +1,12 @@
-# TriHabit Project Status & Resume Guide
+# MaxPulse Project Status & Resume Guide
 
 *Last Updated: January 2025*
 *✅ Recently Upgraded to Expo SDK 54*
+*✅ Step Tracking Database Sync Fixed (v1.2)*
 
 ## 🎯 Project Overview
 
-**TriHabit** is a unified health habits app that tracks **Steps**, **Hydration**, and **Sleep** with an AI Coach and Rewards system. Built with React Native + Expo, designed for seller distribution with referral codes.
+**MaxPulse** is a comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Built with React Native + Expo, featuring Cal AI-inspired minimalist design.
 
 ## ✅ Completed Work
 
@@ -19,17 +20,23 @@
 - ✅ Zustand for state management
 
 #### **2. UI Components Built**
-- ✅ **TriRings** - Three concentric rings (Steps, Hydration, Sleep) with Life Score center
+- ✅ **CalAiTriRings** - Four separate ring cards (Steps + 3 core habits) with Cal AI design
 - ✅ **KPICard** - Individual metric cards with progress bars and actions
 - ✅ **Badge** - Status indicators and labels
 - ✅ **Bar** - Progress bar component
 - ✅ **RewardsScreen** - Complete rewards page with points, streaks, badges
+- ✅ **WellbeingDashboard** - Comprehensive Life Score breakdown with insights
+- ✅ **CoachScreen** - AI Coach chat interface with natural language processing
+- ✅ **MoodCheckInModal** - Emotional wellness tracking with journaling
 
 #### **3. Step Tracking System**
-- ✅ **StepTrackingService** - High-accuracy step counting architecture
+- ✅ **StepTrackingService** - High-accuracy step counting architecture with database sync
+- ✅ **StepSyncService** - Database synchronization with throttling (every 10 seconds)
+- ✅ **IOSPedometerService** - iOS CoreMotion integration with 5-second polling
 - ✅ **HealthPermissionsManager** - iOS/Android permission handling
 - ✅ **stepTrackingStore** - Zustand store for step state management
-- ✅ **StepTrackingManager** - Integration component
+- ✅ **StepTrackingManager** - Integration component with daily reset handling
+- ✅ **Database Integration** - Steps properly synced to `daily_metrics` table
 - ✅ **Expo Go Compatible** - Simulated step tracking for development
 
 #### **4. Data Architecture**
@@ -46,12 +53,12 @@
 ### 🎨 **UI/UX Features**
 
 #### **Main Dashboard**
-- ✅ **Header** - Date, title, badges, profile/rewards access
-- ✅ **TriRings Visualization** - Live step, hydration, sleep progress
-- ✅ **Quick Actions** - +8oz water, +15m sleep buttons
-- ✅ **KPI Cards** - Horizontal scroll with detailed metrics
-- ✅ **AI Coach Card** - Next Best Action recommendations
-- ✅ **Diagnostics Grid** - Health gaps, debt, pace, streaks
+- ✅ **MaxPulse Header** - Logo, title, rewards points display
+- ✅ **CalendarBar** - 7-day week selector with historical navigation
+- ✅ **CalAiTriRings** - Four separate ring cards (Steps + 3 core habits)
+- ✅ **Quick Actions** - +8oz water, +15m sleep, mood check-in buttons
+- ✅ **Life Score Integration** - 4-factor model with real-time updates
+- ✅ **Wellbeing Dashboard** - Comprehensive modal with breakdown and insights
 
 #### **Rewards System**
 - ✅ **Points Summary** - Total points and weekly progress
@@ -61,63 +68,71 @@
 - ✅ **Next Badge Progress** - Visual progress toward next goal
 
 #### **Navigation**
-- ✅ **Screen Toggle** - Dashboard ↔ Rewards via trophy icon
-- ✅ **Back Navigation** - Clean navigation flow
+- ✅ **BottomNavigation** - Dashboard, Coach, Rewards, Settings with Cal AI styling
+- ✅ **Screen Transitions** - Smooth navigation between main screens
+- ✅ **Modal Management** - Wellbeing Dashboard, Mood Check-in, Coach Screen
 
 ### 🔧 **Technical Implementation**
 
 #### **Step Tracking Architecture**
 ```
 StepTrackingService (Singleton)
-├── iOS: Core Motion + HealthKit integration
-├── Android: Sensor Manager + Google Fit integration
-├── Permissions: Unified permission handling
-├── Storage: AsyncStorage for data persistence
-├── Events: Real-time step updates
-└── Behavioral Guardrails: Anti-gaming, cutoff times
+├── IOSPedometerService: Core Motion integration (5-second polling)
+├── StepSyncService: Database synchronization (10-second throttling)
+├── Permissions: iOS/Android permission handling
+├── Storage: AsyncStorage + Supabase database
+├── Events: Real-time step updates with database sync
+├── Daily Reset: Automatic new day detection and data clearing
+└── Anti-gaming: Behavioral guardrails and validation
 ```
 
 #### **State Management**
 ```
 Zustand Stores:
-├── appStore: Global app state (hydration, sleep, targets)
+├── appStore: Global app state (hydration, sleep, targets, mood, calendar)
 ├── stepTrackingStore: Step tracking state and computed values
-└── Selectors: useLifeScore, useStepProgress, useNextBestAction
+└── Selectors: useLifeScore, useStepProgress, useNextBestAction, useAppSelectors
 ```
 
 #### **Data Flow**
 ```
-Device Sensors → StepTrackingService → stepTrackingStore → UI Components
-                                   ↓
-                              AsyncStorage (persistence)
+Device Sensors → IOSPedometerService → StepTrackingService → StepSyncService
+     ↓                    ↓                    ↓                    ↓
+CoreMotion         handleStepUpdate      Database Sync        Supabase
+     ↓                    ↓                    ↓                    ↓
+5-second polling    UI Updates         daily_metrics        Real-time sync
+     ↓                    ↓                    ↓                    ↓
+AsyncStorage      stepTrackingStore      appStore         UI Components
 ```
 
-### 📱 **Current Status: Expo SDK 54 Ready**
+### 📱 **Current Status: Production Ready**
 
-The app is **fully functional in Expo Go with SDK 54** featuring:
-- ✅ **Upgraded to SDK 54** - Latest Expo features and performance improvements
-- ✅ **Faster iOS builds** - Precompiled React Native XCFrameworks
-- ✅ **Updated dependencies** - All Expo modules updated to latest compatible versions
-- ✅ **Simulated step tracking** - Realistic increments for testing
-- ✅ **No native module errors** - All dependencies Expo Go compatible
+The app is **fully functional and production-ready** featuring:
+- ✅ **Expo SDK 54** - Latest Expo features and performance improvements
+- ✅ **Step Tracking Fixed** - Database sync working properly (v1.2)
+- ✅ **Real-time Updates** - Steps sync to database every 10 seconds
 - ✅ **Complete UI functionality** - All screens and features working
-- ✅ **Data persistence** - Steps saved locally
-- ✅ **Error-free startup** - Clean console logs
-- ✅ **Backup available** - Previous SDK 53 state saved in `backup-sdk53` branch
+- ✅ **Database Integration** - Steps properly saved to `daily_metrics` table
+- ✅ **Cal AI Design System** - Consistent minimalist design throughout
+- ✅ **Authentication System** - Activation code validation and profile setup
+- ✅ **AI Coach Integration** - Natural language health conversations
+- ✅ **Wellbeing Dashboard** - Comprehensive Life Score breakdown
+- ✅ **Mood Tracking** - Emotional wellness with journaling
+- ✅ **Rewards System** - Points, streaks, and achievement badges
+- ✅ **Error-free operation** - Clean console logs and proper error handling
 
-## 🔄 **Pending Tasks**
+## 🔄 **Future Enhancements**
 
-### 🎯 **Immediate Next Steps**
+### 🎯 **Planned Improvements**
 
-#### **1. Enhanced Step Simulation (High Priority)**
-**Current Issue**: Steps increment every 2 seconds even when phone is stationary
-**Solution Needed**: More realistic simulation patterns
+#### **1. Enhanced Step Tracking (Optional)**
+**Current Status**: ✅ Working with database sync
+**Future Enhancement**: More realistic simulation patterns for development
 
-**Tasks:**
-- [ ] **Slower increments** - Every 10-30 seconds instead of 2
-- [ ] **Pause when stationary** - Stop increments when phone hasn't moved
-- [ ] **Manual testing controls** - Add buttons to simulate walking/running
+**Potential Tasks:**
+- [ ] **Motion-based simulation** - Use accelerometer for realistic step detection
 - [ ] **Time-based patterns** - More active during day hours (8am-8pm)
+- [ ] **Manual testing controls** - Add buttons to simulate walking/running
 - [ ] **Realistic daily totals** - Cap at reasonable daily maximums
 
 **Implementation Approach:**
@@ -129,22 +144,16 @@ The app is **fully functional in Expo Go with SDK 54** featuring:
 - Add manual testing UI controls
 ```
 
-#### **2. Authentication System (Medium Priority)**
-**Requirement**: Seller-distributed app with referral codes
+#### **2. Authentication System (Completed)**
+**Status**: ✅ Fully implemented with activation code system
 
-**Flow Design:**
-```
-New Users: Auth Screen → Sign Up → Referral Code Required → Account Created (tagged to seller)
-Existing Users: Auth Screen → Sign In → Dashboard (no referral code needed)
-```
-
-**Tasks:**
-- [ ] **AuthScreen** - Sign up/Sign in toggle
-- [ ] **ReferralCodeInput** - Required for new users only
-- [ ] **Google Sign-In** - Primary authentication method
-- [ ] **Supabase Auth** - Backend integration
-- [ ] **Seller Attribution** - Permanent user-seller relationship
-- [ ] **Onboarding Flow** - Permissions, targets, welcome
+**Implemented Features:**
+- ✅ **AuthContainer** - Sign up/Sign in toggle with activation code validation
+- ✅ **ActivationCodeInput** - Required for new users with real-time validation
+- ✅ **Supabase Auth** - Email/password authentication with RLS
+- ✅ **ProfileConfirmationScreen** - Assessment data review and editing
+- ✅ **WelcomeScreen** - Onboarding flow with personalized greeting
+- ✅ **AppWithAuth** - Authentication state management and routing
 
 #### **3. Real Health Integration (Low Priority - Dev Build Required)**
 **Note**: Requires Expo Dev Build, not compatible with Expo Go

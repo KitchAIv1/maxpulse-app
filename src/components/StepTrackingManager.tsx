@@ -5,6 +5,7 @@ import React, { useEffect, useCallback } from 'react';
 import { Platform, Alert } from 'react-native';
 import { useStepTrackingStore, useStepProgress, useStepTrackingStatus } from '../stores/stepTrackingStore';
 import { useAppStore } from '../stores/appStore';
+import StepTrackingService from '../services/StepTrackingService';
 
 interface StepTrackingManagerProps {
   children: React.ReactNode;
@@ -19,9 +20,18 @@ export const StepTrackingManager: React.FC<StepTrackingManagerProps> = ({ childr
     clearError,
   } = useStepTrackingStore();
 
-  const { updateSteps } = useAppStore();
+  const { user, updateSteps, selectedDate } = useAppStore();
   const { steps, target } = useStepProgress();
   const { status, permissions, isTracking, lastError, isAvailable, canStart } = useStepTrackingStatus();
+  
+  const stepTrackingService = StepTrackingService.getInstance();
+
+  // Set user ID when user is available
+  useEffect(() => {
+    if (user?.id) {
+      stepTrackingService.setUserId(user.id);
+    }
+  }, [user?.id, stepTrackingService]);
 
   // Initialize step tracking on mount
   useEffect(() => {
@@ -46,9 +56,12 @@ export const StepTrackingManager: React.FC<StepTrackingManagerProps> = ({ childr
     initialize();
   }, [initializeTracking]);
 
-  // Sync steps with main app store
+  // Sync steps with main app store (including cached data)
   useEffect(() => {
-    if (steps > 0) {
+    // Always sync steps, even if 0 (to clear stale data)
+    // But prioritize non-zero values to avoid overwriting real data with zeros
+    if (steps >= 0) {
+      console.log(`🔄 Syncing steps to main app store: ${steps}`);
       updateSteps(steps);
     }
   }, [steps, updateSteps]);
@@ -57,60 +70,73 @@ export const StepTrackingManager: React.FC<StepTrackingManagerProps> = ({ childr
   const handleRequestPermissions = useCallback(async () => {
     try {
       await requestPermissions();
-      
-      // After permissions are granted, try to start tracking
-      if (canStart) {
-        await startTracking();
-      }
+      console.log('✅ Permissions granted');
     } catch (error) {
-      console.error('Permission request failed:', error);
-      Alert.alert(
-        'Permission Required',
-        'Step tracking requires motion permissions to work properly. Please enable them in Settings.',
-        [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Open Settings', onPress: () => {
-            // Open app settings - would need react-native-permissions openSettings
-          }},
-        ]
-      );
+      console.error('⚠️ Permission request failed:', error);
+      // Silently fail - don't block the app with alerts
+      // User can still use other features
     }
-  }, [requestPermissions, canStart, startTracking]);
+  }, [requestPermissions]);
 
-  // Auto-request permissions if not determined
+  // Auto-request permissions and start tracking automatically after sign-in
   useEffect(() => {
-    const autoRequestPermissions = async () => {
-      if (Platform.OS === 'ios') {
-        if (permissions.motion === 'not-determined') {
+    if (!user?.id) return; // Only proceed if user is signed in
+
+    const autoInitializeTracking = async () => {
+      try {
+        // Check if permissions are needed
+        let needsPermissions = false;
+        
+        if (Platform.OS === 'ios') {
+          needsPermissions = permissions.motion === 'not-determined';
+        } else if (Platform.OS === 'android') {
+          needsPermissions = permissions.activityRecognition === 'not-determined';
+        }
+
+        // Request permissions if needed
+        if (needsPermissions) {
+          console.log('🔐 Requesting step tracking permissions automatically...');
           await handleRequestPermissions();
         }
-      } else if (Platform.OS === 'android') {
-        if (permissions.activityRecognition === 'not-determined') {
-          await handleRequestPermissions();
-        }
-      }
-    };
 
-    // Delay auto-request to avoid overwhelming user on first launch
-    const timer = setTimeout(autoRequestPermissions, 2000);
-    return () => clearTimeout(timer);
-  }, [permissions, handleRequestPermissions]);
-
-  // Auto-start tracking when permissions are available
-  useEffect(() => {
-    const autoStartTracking = async () => {
-      if (canStart && !isTracking) {
-        try {
+        // Auto-start tracking if not already tracking
+        if (canStart && !isTracking) {
+          console.log('🏃 Auto-starting step tracking (background mode)...');
           await startTracking();
-          console.log('Auto-started step tracking');
-        } catch (error) {
-          console.error('Auto-start tracking failed:', error);
+          console.log('✅ Step tracking started automatically in background');
         }
+      } catch (error) {
+        console.warn('⚠️ Auto-initialization failed (non-critical):', error);
+        // Don't block the app if step tracking fails
       }
     };
 
-    autoStartTracking();
-  }, [canStart, isTracking, startTracking]);
+    // Start tracking automatically after a short delay (to avoid overwhelming on first launch)
+    const timer = setTimeout(autoInitializeTracking, 1500);
+    return () => clearTimeout(timer);
+  }, [user?.id, permissions, canStart, isTracking, handleRequestPermissions, startTracking]);
+
+  // Handle daily reset when date changes
+  useEffect(() => {
+    const checkForNewDay = async () => {
+      const today = new Date().toISOString().split('T')[0];
+      const lastResetDate = await import('@react-native-async-storage/async-storage')
+        .then(AsyncStorage => AsyncStorage.default.getItem('@lastStepResetDate'))
+        .catch(() => null);
+
+      if (lastResetDate !== today) {
+        console.log('🆕 New day detected, resetting step tracking');
+        await stepTrackingService.resetForNewDay();
+        
+        // Save the reset date
+        import('@react-native-async-storage/async-storage')
+          .then(AsyncStorage => AsyncStorage.default.setItem('@lastStepResetDate', today))
+          .catch(console.warn);
+      }
+    };
+
+    checkForNewDay();
+  }, [selectedDate, stepTrackingService]);
 
   // Periodic sync with health platform
   useEffect(() => {

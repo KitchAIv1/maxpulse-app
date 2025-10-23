@@ -15,11 +15,14 @@ import {
   AndroidStepSensorData,
 } from '../types/health';
 import HealthPermissionsManager from './HealthPermissionsManager';
+import IOSPedometerService from './IOSPedometerService';
+import StepSyncService from './StepSyncService';
 
 class StepTrackingService implements IStepTrackingService {
   private static instance: StepTrackingService;
   private config: StepTrackingConfig;
   private permissionsManager: HealthPermissionsManager;
+  private stepSyncService: StepSyncService;
   private events: Partial<StepTrackingEvents> = {};
   
   // Tracking state
@@ -29,12 +32,16 @@ class StepTrackingService implements IStepTrackingService {
   private appStateSubscription: any = null;
   
   // Platform-specific instances
-  private pedometerSubscription: any = null; // iOS CMPedometer
+  private iosPedometerService: IOSPedometerService | null = null;
+  private pedometerSubscription: any = null; // iOS CMPedometer (legacy)
   private sensorSubscription: any = null; // Android sensor
   
   // Data caching
   private todayStepsCache: StepData | null = null;
   private lastUpdateTime = 0;
+  
+  // User context for database sync
+  private currentUserId: string | null = null;
 
   public static getInstance(): StepTrackingService {
     if (!StepTrackingService.instance) {
@@ -45,6 +52,7 @@ class StepTrackingService implements IStepTrackingService {
 
   constructor() {
     this.permissionsManager = HealthPermissionsManager.getInstance();
+    this.stepSyncService = StepSyncService.getInstance();
     
     // Default configuration
     this.config = {
@@ -58,6 +66,14 @@ class StepTrackingService implements IStepTrackingService {
       enableLiveUpdates: true,
       historicalDataDays: 30,
     };
+  }
+
+  /**
+   * Set the current user ID for database sync
+   */
+  setUserId(userId: string): void {
+    this.currentUserId = userId;
+    console.log('🔑 Step tracking service user ID set:', userId);
   }
 
   /**
@@ -97,24 +113,64 @@ class StepTrackingService implements IStepTrackingService {
   }
 
   /**
-   * Initialize iOS-specific step tracking
+   * Initialize iOS-specific step tracking with enterprise-ready service
    */
   private async initializeIOS(): Promise<void> {
     if (Platform.OS !== 'ios') return;
 
     try {
-      // For Expo Go, skip native module checks
-      console.log('Initializing iOS step tracking for Expo Go (simulated)');
+      console.log('🚀 Initializing enterprise iOS step tracking...');
       
-      // In a real dev build, we would:
-      // 1. Check Core Motion availability
-      // 2. Initialize HealthKit
-      // 3. Set up native pedometer subscriptions
+      // Initialize the new enterprise iOS pedometer service
+      this.iosPedometerService = IOSPedometerService.getInstance();
       
-      // For now, just mark as available
-      console.log('iOS step tracking initialized (simulated)');
+      // Set up callbacks
+      this.iosPedometerService.setCallbacks({
+        onStepUpdate: (stepData) => {
+          // Call the proper handler which includes database sync
+          this.handleStepUpdate(stepData);
+        },
+        onStatusChange: (status) => {
+          console.log(`📱 Pedometer status: ${status.mode}, tracking: ${status.isTracking}`);
+          
+          if (this.events.onTrackingStatusChanged) {
+            this.events.onTrackingStatusChanged({
+              isAvailable: status.mode !== 'disabled',
+              isAuthorized: status.permissions.motion === 'authorized' || status.permissions.healthKit === 'authorized',
+              isTracking: status.isTracking,
+              lastUpdate: status.lastUpdate || undefined,
+              lastError: status.error || null,
+              supportedFeatures: ['live-counting', 'background-sync'],
+            });
+          }
+        },
+        onError: (error) => {
+          console.error('🚨 iOS Pedometer Error:', error.message);
+          
+          if (this.events.onError) {
+            this.events.onError({
+              code: 'IOS_PEDOMETER_ERROR',
+              message: error.message,
+              platform: 'ios',
+              recoverable: true,
+              timestamp: new Date().toISOString(),
+            });
+          }
+        },
+      });
+      
+      // Initialize the service
+      await this.iosPedometerService.initialize({
+        enableHealthKit: true,
+        enableCoreMotion: true,
+        updateInterval: this.config.liveUpdateInterval,
+        maxRetries: 3,
+        fallbackTimeout: 10000,
+      });
+      
+      console.log('✅ Enterprise iOS step tracking initialized successfully');
     } catch (error) {
-      console.error('iOS initialization failed:', error);
+      console.error('❌ iOS initialization failed:', error);
       throw error;
     }
   }
@@ -193,21 +249,25 @@ class StepTrackingService implements IStepTrackingService {
   }
 
   /**
-   * Start iOS live tracking using Core Motion
-   * NOTE: This requires a development/production build - will not work in Expo Go
+   * Start iOS live tracking using enterprise pedometer service
    */
   private async startIOSLiveTracking(): Promise<void> {
     if (Platform.OS !== 'ios') return;
 
     try {
-      // In Expo Go, this will do nothing - steps will remain at database value (0)
-      // In a real dev/prod build, this would use actual Core Motion pedometer
-      console.log('iOS step tracking requires dev/prod build - not available in Expo Go');
-      console.log('Steps will display database value only (0 until pedometer is enabled)');
+      if (!this.iosPedometerService) {
+        throw new Error('iOS Pedometer Service not initialized');
+      }
+
+      // Request permissions if needed
+      await this.iosPedometerService.requestPermissions();
       
-      // No mock data - let it show actual database value
+      // Start tracking
+      await this.iosPedometerService.startTracking();
+      
+      console.log('✅ iOS live step tracking started with enterprise service');
     } catch (error) {
-      console.error('iOS live tracking failed:', error);
+      console.error('❌ iOS live tracking failed:', error);
       throw error;
     }
   }
@@ -274,19 +334,17 @@ class StepTrackingService implements IStepTrackingService {
       return;
     }
 
-    // Initialize cache if needed
-    if (!this.todayStepsCache) {
-      this.todayStepsCache = {
-        steps: 0,
-        timestamp: new Date().toISOString(),
-        source: stepData.source,
-        confidence: stepData.confidence,
-      };
-    }
+    // For iOS pedometer, stepData.steps is the total for today, not incremental
+    // So we use it directly instead of accumulating
+    const totalStepsForToday = stepData.steps;
 
-    // Update cache (accumulate steps)
-    this.todayStepsCache.steps += stepData.steps;
-    this.todayStepsCache.timestamp = stepData.timestamp;
+    // Update cache with total steps
+    this.todayStepsCache = {
+      steps: totalStepsForToday,
+      timestamp: stepData.timestamp,
+      source: stepData.source,
+      confidence: stepData.confidence,
+    };
 
     // Apply reasonable daily maximum (anti-gaming)
     if (this.todayStepsCache.steps > this.config.maxStepsPerDay) {
@@ -296,38 +354,63 @@ class StepTrackingService implements IStepTrackingService {
     // Persist to storage (async, but don't wait)
     this.saveTodaySteps(this.todayStepsCache).catch(console.error);
 
+    // Sync to database if user is authenticated
+    if (this.currentUserId) {
+      this.stepSyncService.syncStepsToDatabase(this.currentUserId, this.todayStepsCache)
+        .catch(error => console.warn('Database sync failed:', error));
+    }
+
     // Notify listeners
     this.events.onStepsUpdated?.(this.todayStepsCache);
   }
 
   /**
-   * Get today's step count
+   * Get today's step count using enterprise services
    */
   async getTodaySteps(): Promise<StepData> {
     if (this.todayStepsCache) {
       return this.todayStepsCache;
     }
 
-    // Try to load from cache
-    const cached = await this.loadTodaySteps();
-    if (cached) {
-      this.todayStepsCache = cached;
-      return cached;
-    }
+    try {
+      // Use platform-specific enterprise services
+      if (Platform.OS === 'ios' && this.iosPedometerService) {
+        const stepData = await this.iosPedometerService.getCurrentSteps();
+        this.todayStepsCache = stepData;
+        return stepData;
+      } else if (Platform.OS === 'android') {
+        return await this.getAndroidTodaySteps();
+      }
 
-    // Fallback to platform-specific retrieval
-    if (Platform.OS === 'ios') {
-      return await this.getIOSTodaySteps();
-    } else if (Platform.OS === 'android') {
-      return await this.getAndroidTodaySteps();
-    }
+      // Try to load from cache as fallback
+      const cached = await this.loadTodaySteps();
+      if (cached) {
+        this.todayStepsCache = cached;
+        return cached;
+      }
 
-    // Default fallback
-    return {
-      steps: 0,
-      timestamp: new Date().toISOString(),
-      source: 'pedometer',
-    };
+      // Default fallback
+      return {
+        steps: 0,
+        timestamp: new Date().toISOString(),
+        source: 'pedometer',
+      };
+    } catch (error) {
+      console.error('Error getting today steps:', error);
+      
+      // Return cached data or zero as fallback
+      const cached = await this.loadTodaySteps();
+      if (cached) {
+        return cached;
+      }
+      
+      return {
+        steps: 0,
+        timestamp: new Date().toISOString(),
+        source: 'pedometer',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
   }
 
   /**
@@ -444,10 +527,48 @@ class StepTrackingService implements IStepTrackingService {
   }
 
   /**
+   * Reset step data for new day
+   */
+  async resetForNewDay(): Promise<void> {
+    console.log('🆕 Resetting step tracking for new day');
+    
+    // Clear cached data
+    this.todayStepsCache = null;
+    this.lastUpdateTime = 0;
+    
+    // Reset database sync if user is authenticated
+    if (this.currentUserId) {
+      await this.stepSyncService.resetStepsForNewDay(this.currentUserId);
+    }
+    
+    // Clear AsyncStorage cache for steps
+    try {
+      const today = new Date().toISOString().split('T')[0];
+      const yesterday = new Date();
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayStr = yesterday.toISOString().split('T')[0];
+      
+      // Clear yesterday's step cache
+      const AsyncStorage = await import('@react-native-async-storage/async-storage');
+      await AsyncStorage.default.removeItem(`steps_${yesterdayStr}`);
+      
+      console.log('✅ Step data reset for new day');
+    } catch (error) {
+      console.warn('Failed to clear step cache:', error);
+    }
+  }
+
+  /**
    * Cleanup resources
    */
   async cleanup(): Promise<void> {
     await this.stopLiveTracking();
+    
+    // Cleanup iOS pedometer service
+    if (this.iosPedometerService) {
+      await this.iosPedometerService.cleanup();
+      this.iosPedometerService = null;
+    }
     
     if (this.appStateSubscription) {
       this.appStateSubscription.remove();

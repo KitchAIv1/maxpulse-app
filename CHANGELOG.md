@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Step Tracking Database Sync Fix (v1.2)**
+  - Fixed critical bug where steps were not being saved to database
+  - Ensured `handleStepUpdate` is called in `onStepUpdate` callback
+  - Steps now properly sync to `daily_metrics` table every 10 seconds
+  - Added comprehensive logging for database sync operations
+  - Updated documentation with troubleshooting guides
+
+- **Step Tracking Performance Improvements (v1.1)**
+  - Reduced polling interval from 30 seconds to 5 seconds for smoother UI updates
+  - Improved initial step detection with better logging
+  - Enhanced CoreMotion integration for more responsive step tracking
+  - Added initial step count logging for better debugging
+
 - **Rewards UI Redesign**
   - Starbucks partnership reward card with optimized image (14KB)
   - Today's earnings grid with mini ring visualizations
