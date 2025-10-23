@@ -322,8 +322,8 @@ class StepTrackingService implements IStepTrackingService {
   private handleStepUpdate(stepData: StepData): void {
     const now = Date.now();
     
-    // Throttle updates to prevent excessive UI updates
-    if (now - this.lastUpdateTime < 1000) return; // Max 1 update per second
+    // Throttle UI updates to prevent excessive re-renders (500ms for smooth real-time feel)
+    if (now - this.lastUpdateTime < 500) return; // Max 2 updates per second
     this.lastUpdateTime = now;
 
     // Apply behavioral guardrails
@@ -335,6 +335,23 @@ class StepTrackingService implements IStepTrackingService {
     // For iOS pedometer, stepData.steps is the total for today, not incremental
     // So we use it directly instead of accumulating
     const totalStepsForToday = stepData.steps;
+
+    // Step smoothing: Prevent large jumps from delayed CoreMotion processing
+    if (this.todayStepsCache) {
+      const increment = totalStepsForToday - this.todayStepsCache.steps;
+      const timeSinceLastUpdate = now - this.lastUpdateTime;
+      
+      // If increment is suspiciously large and time is short, it's likely delayed processing
+      // Maximum reasonable: 20 steps per second (very fast running)
+      const maxReasonableRate = 20; // steps per second
+      const expectedMaxIncrement = Math.ceil((timeSinceLastUpdate / 1000) * maxReasonableRate);
+      
+      if (increment > expectedMaxIncrement && timeSinceLastUpdate < 2000) {
+        console.log(`📊 Step smoothing applied: increment ${increment} over ${timeSinceLastUpdate}ms`);
+        // Don't reject, but mark with lower confidence for monitoring
+        stepData.confidence = 'medium';
+      }
+    }
 
     // Update cache with total steps
     this.todayStepsCache = {
@@ -352,13 +369,13 @@ class StepTrackingService implements IStepTrackingService {
     // Persist to storage (async, but don't wait)
     this.saveTodaySteps(this.todayStepsCache).catch(console.error);
 
-    // Sync to database if user is authenticated
+    // Sync to database if user is authenticated (throttled separately in StepSyncService)
     if (this.currentUserId) {
       this.stepSyncService.syncStepsToDatabase(this.currentUserId, this.todayStepsCache)
         .catch(error => console.warn('Database sync failed:', error));
     }
 
-    // Notify listeners
+    // Notify listeners for UI updates
     this.events.onStepsUpdated?.(this.todayStepsCache);
   }
 

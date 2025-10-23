@@ -95,7 +95,7 @@ class IOSPedometerService {
     this.config = {
       enableHealthKit: true,
       enableCoreMotion: true,
-      updateInterval: 5000, // 5 seconds
+      updateInterval: 1000, // 1 second for near real-time updates
       maxRetries: 3,
       fallbackTimeout: 10000, // 10 seconds
     };
@@ -586,7 +586,7 @@ class IOSPedometerService {
         console.log(`📊 Initial step count: ${result.steps} steps (activity valid: ${isValidActivity})`);
       }
 
-      // Set up periodic updates (every 5 seconds for smooth ring progression)
+      // Set up periodic updates (every 1 second for near real-time updates)
       this.coreMotionInterval = setInterval(async () => {
         try {
           const end = new Date();
@@ -599,28 +599,38 @@ class IOSPedometerService {
             // Check if steps have changed
             const stepsChanged = result.steps !== this.lastStepCount;
             
-            // ALWAYS update if steps changed - CoreMotion's step detection is already accurate
-            // The motion activity filter was causing legitimate steps to be blocked
             if (stepsChanged) {
               const previousSteps = this.lastStepCount || 0;
+              const increment = result.steps - previousSteps;
+              
+              // Step validation: Prevent unrealistic increments
+              // Maximum reasonable: 15 steps per second (very fast running)
+              const maxIncrementPerSecond = 15;
+              const isReasonableIncrement = increment <= maxIncrementPerSecond;
+              
+              if (!isReasonableIncrement) {
+                console.warn(`⚠️ Unrealistic step increment detected: +${increment} steps. Possible false detection.`);
+                // Still update but log the anomaly for monitoring
+              }
+              
               const stepData: StepData = {
                 steps: result.steps,
                 timestamp: new Date().toISOString(),
                 source: 'coremotion',
-                confidence: 'high', // CoreMotion is accurate, trust it
+                confidence: isReasonableIncrement ? 'high' : 'medium',
               };
 
               this.lastStepCount = result.steps;
               this.lastStepData = stepData;
               this.notifyStepUpdate(stepData);
               
-              console.log(`📊 Steps updated: ${result.steps} steps (+${result.steps - previousSteps})`);
+              console.log(`📊 Steps updated: ${result.steps} steps (+${increment})`);
             }
           }
         } catch (error) {
           console.warn('CoreMotion update failed:', error);
         }
-      }, 5000); // Update every 5 seconds for smooth UI progression
+      }, 1000); // Update every 1 second for near real-time progression
 
       console.log('✅ CoreMotion step tracking started with activity filtering');
     } catch (error) {
