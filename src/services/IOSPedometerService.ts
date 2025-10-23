@@ -10,9 +10,10 @@
  * - Last Resort: Manual entry mode
  */
 
-import { Platform, NativeEventEmitter, NativeModules } from 'react-native';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { StepData, CMPedometerData, HealthPermissions, PermissionStatus } from '../types/health';
+import { StepData, HealthPermissions, PermissionStatus } from '../types/health';
+import MotionActivityManager from './MotionActivityManager';
 
 // Import react-native-health for HealthKit integration
 let AppleHealthKit: any = null;
@@ -70,6 +71,9 @@ class IOSPedometerService {
   private coreMotionInterval: NodeJS.Timeout | null = null;
   private retryCount = 0;
   
+  // Motion activity detection
+  private motionActivityManager: MotionActivityManager;
+  
   // Event callbacks
   private onStepUpdate: ((stepData: StepData) => void) | null = null;
   private onStatusChange: ((status: PedometerStatus) => void) | null = null;
@@ -106,6 +110,9 @@ class IOSPedometerService {
         motion: 'not-determined',
       },
     };
+
+    // Initialize motion activity manager
+    this.motionActivityManager = MotionActivityManager.getInstance();
   }
 
   /**
@@ -543,7 +550,10 @@ class IOSPedometerService {
     }
 
     try {
-      console.log('🏃‍♂️ Starting CoreMotion step tracking...');
+      console.log('🏃‍♂️ Starting CoreMotion step tracking with motion activity detection...');
+      
+      // Start motion activity monitoring
+      await this.motionActivityManager.startMonitoring();
       
       // Check if Pedometer is available
       const isAvailable = await Pedometer.isAvailableAsync();
@@ -559,18 +569,21 @@ class IOSPedometerService {
       const result = await Pedometer.getStepCountAsync(start, end);
       
       if (result && typeof result.steps === 'number') {
+        // Check if current activity is valid for step counting
+        const isValidActivity = this.motionActivityManager.isValidForStepCounting();
+        
         const stepData: StepData = {
           steps: result.steps,
           timestamp: new Date().toISOString(),
           source: 'coremotion',
-          confidence: 'medium',
+          confidence: isValidActivity ? 'high' : 'low',
         };
 
         this.lastStepCount = result.steps;
         this.lastStepData = stepData;
         this.notifyStepUpdate(stepData);
         
-        console.log(`📊 Initial step count: ${result.steps} steps`);
+        console.log(`📊 Initial step count: ${result.steps} steps (activity valid: ${isValidActivity})`);
       }
 
       // Set up periodic updates (every 5 seconds for smooth ring progression)
@@ -583,23 +596,39 @@ class IOSPedometerService {
           const result = await Pedometer.getStepCountAsync(start, end);
           
           if (result && typeof result.steps === 'number') {
-            const stepData: StepData = {
-              steps: result.steps,
-              timestamp: new Date().toISOString(),
-              source: 'coremotion',
-              confidence: 'medium',
-            };
+            // Check if current activity is valid for step counting
+            const isValidActivity = this.motionActivityManager.isValidForStepCounting();
+            const currentActivity = this.motionActivityManager.getCurrentActivity();
+            
+            // Only update steps if activity is valid OR if steps haven't changed
+            // This prevents false increments from hand movements
+            const stepsChanged = result.steps !== this.lastStepCount;
+            
+            if (isValidActivity || !stepsChanged) {
+              const stepData: StepData = {
+                steps: result.steps,
+                timestamp: new Date().toISOString(),
+                source: 'coremotion',
+                confidence: isValidActivity ? 'high' : 'medium',
+              };
 
-            this.lastStepCount = result.steps;
-            this.lastStepData = stepData;
-            this.notifyStepUpdate(stepData);
+              this.lastStepCount = result.steps;
+              this.lastStepData = stepData;
+              this.notifyStepUpdate(stepData);
+              
+              if (stepsChanged) {
+                console.log(`📊 Steps updated: ${result.steps} (activity: ${currentActivity?.type || 'unknown'})`);
+              }
+            } else {
+              console.log(`⚠️ Steps update blocked - invalid activity (${currentActivity?.type || 'unknown'})`);
+            }
           }
         } catch (error) {
           console.warn('CoreMotion update failed:', error);
         }
       }, 5000); // Update every 5 seconds for smooth UI progression
 
-      console.log('✅ CoreMotion step tracking started');
+      console.log('✅ CoreMotion step tracking started with activity filtering');
     } catch (error) {
       console.error('❌ CoreMotion tracking failed:', error);
       throw error;

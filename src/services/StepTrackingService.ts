@@ -11,8 +11,6 @@ import {
   StepTrackingEvents,
   IStepTrackingService,
   HealthPermissions,
-  CMPedometerData,
-  AndroidStepSensorData,
 } from '../types/health';
 import HealthPermissionsManager from './HealthPermissionsManager';
 import IOSPedometerService from './IOSPedometerService';
