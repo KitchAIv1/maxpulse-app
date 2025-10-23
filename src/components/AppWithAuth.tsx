@@ -14,8 +14,8 @@ interface AppWithAuthProps {
 }
 
 export const AppWithAuth: React.FC<AppWithAuthProps> = ({ children }) => {
-  // Development flag - set to true for testing, false for production
-  const ALWAYS_SHOW_WELCOME = true;
+  // Development flag - set to false for production (only show welcome once after auth)
+  const ALWAYS_SHOW_WELCOME = false;
 
   // Authentication management
   const { isAuthenticated, user, showWelcome, handleAuthComplete, setShowWelcome } = useAuthManager(ALWAYS_SHOW_WELCOME);

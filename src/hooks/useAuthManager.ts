@@ -35,8 +35,12 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
       const targets = await TargetManager.getCurrentWeekTargets(userId);
       console.log('✅ V2 Engine loaded targets:', targets);
       
-      // Set targets in store
-      await initializeTargets(targets.steps, targets.waterOz, targets.sleepHr);
+      // Set targets in store (pass as object, not individual parameters)
+      await initializeTargets({
+        steps: targets.steps,
+        waterOz: targets.waterOz,
+        sleepHr: targets.sleepHr
+      });
       console.log('🎯 Dashboard now shows V2 Engine targets:', targets);
 
       // ✅ CRITICAL FIX: Backfill mood check-in counts for historical data
@@ -131,7 +135,11 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
       });
 
       if (profile) {
-        await initializeTargets(profile.steps_target, profile.water_target, profile.sleep_target);
+        await initializeTargets({
+          steps: profile.steps_target,
+          waterOz: profile.water_target,
+          sleepHr: profile.sleep_target
+        });
       } else {
         await loadUserTargets(authenticatedUser.id);
       }
@@ -172,7 +180,8 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
           await loadUserTargets(session.user.id);
           await loadTodayData();
           
-          if (alwaysShowWelcome) {
+          // Only show welcome if not already authenticated (prevents multiple triggers)
+          if (alwaysShowWelcome && !isAuthenticated) {
             console.log('🎬 Setting showWelcome to true (auth state change)');
             setShowWelcome(true);
           }
