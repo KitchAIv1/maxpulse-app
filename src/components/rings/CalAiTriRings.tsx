@@ -123,13 +123,20 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     );
   }, []);
   
-  // Animated styles for icon
+  // Animated styles for icon with bounce
   const animatedIconStyle = useAnimatedStyle(() => ({
     transform: [{ scale: iconScale.value }],
-    shadowColor: theme.colors.ringSteps,
-    shadowOffset: { width: 0, height: 0 },
-    shadowOpacity: glowOpacity.value,
-    shadowRadius: 12,
+  }));
+  
+  // Animated styles for glowing background circle
+  const animatedGlowStyle = useAnimatedStyle(() => ({
+    opacity: glowOpacity.value,
+    backgroundColor: '#007AFF', // iOS blue
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    position: 'absolute',
+    zIndex: -1,
   }));
 
   // Landscape Steps Card (label left, ring right, percentage below label)
@@ -163,9 +170,12 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
             accentColor={accentColor}
             centerContent={
               <View style={styles.ringCenter}>
-                <Reanimated.View style={animatedIconStyle}>
-                  <Text style={styles.largeRingIcon}>{icon}</Text>
-                </Reanimated.View>
+                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
+                  <Reanimated.View style={animatedGlowStyle} />
+                  <Reanimated.View style={animatedIconStyle}>
+                    <Text style={styles.largeRingIcon}>{icon}</Text>
+                  </Reanimated.View>
+                </View>
                 <Text style={styles.largeRingValue}>
                   {current}
                 </Text>
