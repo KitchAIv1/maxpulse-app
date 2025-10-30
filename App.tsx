@@ -154,6 +154,61 @@ function TriHabitApp() {
     await setSelectedDate(date);
   };
 
+  // Mock assessment data for testing
+  const mockAssessmentData = {
+    performance: {
+      week: 1,
+      phase: 1,
+      startDate: '2025-01-20',
+      endDate: '2025-01-26',
+      averageAchievement: 75,
+      consistencyDays: 5,
+      totalTrackingDays: 7,
+      strongestPillar: 'water' as const,
+      weakestPillar: 'steps' as const,
+      overallGrade: 'progress' as const,
+      pillarBreakdown: [
+        { pillar: 'steps' as const, averageAchievement: 65, consistentDays: 4, trend: 'improving' as const, dailyValues: [60, 65, 70, 75, 80, 50, 60] },
+        { pillar: 'water' as const, averageAchievement: 85, consistentDays: 6, trend: 'stable' as const, dailyValues: [80, 85, 90, 85, 80, 85, 90] },
+        { pillar: 'sleep' as const, averageAchievement: 70, consistentDays: 5, trend: 'improving' as const, dailyValues: [65, 70, 75, 70, 65, 75, 80] },
+        { pillar: 'mood' as const, averageAchievement: 80, consistentDays: 6, trend: 'stable' as const, dailyValues: [75, 80, 85, 80, 75, 85, 80] },
+      ],
+    },
+    consistency: {
+      totalDays: 7,
+      consistentDays: 5,
+      consistencyRate: 71,
+      longestStreak: 4,
+      currentStreak: 3,
+      weekendConsistency: 75,
+      timeOfDayPatterns: [],
+    },
+    assessment: {
+      recommendation: 'extend' as const,
+      confidence: 75,
+      reasoning: [
+        'You achieved 75% average performance this week',
+        'Consistency was good with 5 out of 7 days meeting targets',
+        'Steps need more attention to reach the 80% mastery threshold',
+        'Water intake is excellent - keep it up!',
+      ],
+      modifications: {
+        focusArea: 'steps' as const,
+        adjustmentReason: 'Focus on increasing daily steps to reach mastery level',
+        steps: 8000,
+      },
+      riskFactors: ['Steps below 80% threshold'],
+      opportunities: ['Strong hydration habits', 'Improving sleep patterns'],
+    },
+    currentTargets: {
+      steps: 10000,
+      waterOz: 95,
+      sleepHr: 7,
+      week: 1,
+      phase: 1,
+    },
+  };
+
   // Weekly Assessment Handlers
   const handleWeeklyAssessmentClose = () => {
     setWeeklyAssessmentVisible(false);
@@ -294,6 +349,15 @@ function TriHabitApp() {
           </View>
 
 
+          {/* Test Button for Weekly Assessment */}
+          <TouchableOpacity
+            style={styles.testAssessmentButton}
+            onPress={() => setWeeklyAssessmentVisible(true)}
+          >
+            <Icon name="analytics" size={20} color="white" />
+            <Text style={styles.testAssessmentText}>Test Weekly Assessment</Text>
+          </TouchableOpacity>
+
           {/* Quick Actions - Only show when viewing today */}
           {!isViewingPastDate && (
             <View style={styles.quickActions}>
@@ -354,15 +418,13 @@ function TriHabitApp() {
       />
 
       {/* Weekly Assessment Modal */}
-      {assessmentData && (
-        <WeeklyAssessmentModal
-          visible={weeklyAssessmentVisible}
-          onClose={handleWeeklyAssessmentClose}
-          assessmentData={assessmentData}
-          onDecision={handleProgressionDecision}
-          isExecuting={isExecuting}
-        />
-      )}
+      <WeeklyAssessmentModal
+        visible={weeklyAssessmentVisible}
+        onClose={handleWeeklyAssessmentClose}
+        assessmentData={assessmentData || mockAssessmentData}
+        onDecision={handleProgressionDecision}
+        isExecuting={isExecuting}
+      />
     </View>
   );
 }
@@ -453,6 +515,24 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.small,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.warning,
+  },
+  testAssessmentButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: theme.colors.primary,
+    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.lg,
+    borderRadius: theme.borderRadius.lg,
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.base,
+    gap: theme.spacing.sm,
+    ...theme.shadows.medium,
+  },
+  testAssessmentText: {
+    fontSize: theme.typography.medium,
+    fontWeight: theme.typography.weights.semibold,
+    color: 'white',
   },
   quickActions: {
     flexDirection: 'row',
