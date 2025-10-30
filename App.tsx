@@ -14,9 +14,12 @@ import {
 } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, KPICard, CalAiTriRings, CalendarBar, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
+import { WeeklyAssessmentModal } from './src/components/assessment/WeeklyAssessmentModal';
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
+import { useWeeklyAssessment } from './src/hooks/assessment/useWeeklyAssessment';
+import { useProgressionDecision } from './src/hooks/assessment/useProgressionDecision';
 import { formatSleepDuration } from './src/utils';
 import { theme } from './src/utils/theme';
 import { calAiCard, calAiContainer, calAiText } from './src/utils/calAiStyles';
@@ -24,6 +27,7 @@ import { RewardsScreen } from './src/screens/RewardsScreen';
 import ProfileScreen from './src/screens/ProfileScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
 import FirebaseService from './src/services/FirebaseService';
+import { AssessmentTrigger } from './src/services/scheduling/AssessmentTrigger';
 
 function TriHabitApp() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'coach' | 'rewards' | 'settings'>('dashboard');
@@ -33,6 +37,29 @@ function TriHabitApp() {
   // Firebase initialization
   const firebase = FirebaseService.getInstance();
   
+  // Weekly Assessment Integration
+  const { user } = useAppStore();
+  const userId = user?.id;
+  
+  // Weekly assessment hooks
+  const {
+    assessmentData,
+    isAssessmentReady,
+    isLoading: assessmentLoading,
+    error: assessmentError,
+    triggerAssessment,
+    dismissAssessment,
+  } = useWeeklyAssessment(userId);
+
+  const {
+    executeDecision,
+    isExecuting,
+    error: decisionError,
+  } = useProgressionDecision(userId, assessmentData?.assessment);
+
+  // Weekly assessment modal state
+  const [weeklyAssessmentVisible, setWeeklyAssessmentVisible] = useState(false);
+  
   // Track screen changes
   useEffect(() => {
     const screenName = currentScreen === 'dashboard' ? 'Dashboard' : 
@@ -40,6 +67,33 @@ function TriHabitApp() {
                        currentScreen === 'rewards' ? 'Rewards' : 'Settings';
     firebase.logScreenView(screenName, screenName);
   }, [currentScreen, firebase]);
+
+  // Check for weekly assessment trigger on app launch and screen changes
+  useEffect(() => {
+    const checkAssessmentTrigger = async () => {
+      if (!userId) return;
+      
+      try {
+        console.log('🔍 Checking for weekly assessment trigger...');
+        await AssessmentTrigger.triggerAssessmentFlow(userId);
+      } catch (error) {
+        console.warn('⚠️ Error checking assessment trigger:', error);
+      }
+    };
+
+    // Check on app launch and when returning to dashboard
+    if (currentScreen === 'dashboard') {
+      checkAssessmentTrigger();
+    }
+  }, [currentScreen, userId]);
+
+  // Show assessment modal when assessment is ready
+  useEffect(() => {
+    if (isAssessmentReady && assessmentData && !weeklyAssessmentVisible) {
+      console.log('📊 Weekly assessment ready, showing modal');
+      setWeeklyAssessmentVisible(true);
+    }
+  }, [isAssessmentReady, assessmentData, weeklyAssessmentVisible]);
   
   const {
     currentState,
@@ -98,6 +152,34 @@ function TriHabitApp() {
   // Handle date selection from calendar
   const handleDateSelect = async (date: string) => {
     await setSelectedDate(date);
+  };
+
+  // Weekly Assessment Handlers
+  const handleWeeklyAssessmentClose = () => {
+    setWeeklyAssessmentVisible(false);
+    if (assessmentData) {
+      dismissAssessment();
+    }
+  };
+
+  const handleProgressionDecision = async (decision: 'accepted' | 'override_advance' | 'coach_consultation') => {
+    if (!userId || !assessmentData) return;
+
+    try {
+      console.log('🎯 User made progression decision:', decision);
+      
+      await executeDecision(decision);
+      
+      // Close modal after successful execution
+      setWeeklyAssessmentVisible(false);
+      
+      // Show success feedback
+      console.log('✅ Progression decision executed successfully');
+      
+    } catch (error) {
+      console.error('❌ Error executing progression decision:', error);
+      // Keep modal open on error so user can try again
+    }
   };
 
   // V2 Engine will initialize targets automatically via AppWithAuth
@@ -270,6 +352,17 @@ function TriHabitApp() {
           stepsCount: displaySteps,
         }}
       />
+
+      {/* Weekly Assessment Modal */}
+      {assessmentData && (
+        <WeeklyAssessmentModal
+          visible={weeklyAssessmentVisible}
+          onClose={handleWeeklyAssessmentClose}
+          assessmentData={assessmentData}
+          onDecision={handleProgressionDecision}
+          isExecuting={isExecuting}
+        />
+      )}
     </View>
   );
 }

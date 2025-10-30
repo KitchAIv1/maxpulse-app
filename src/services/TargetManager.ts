@@ -183,6 +183,258 @@ export class TargetManager {
       source: 'default',
     };
   }
+
+  /**
+   * Refresh targets after progression decision
+   * This method ensures the app store gets updated with new weekly targets
+   */
+  static async refreshTargetsAfterProgression(userId: string): Promise<{
+    success: boolean;
+    targets?: {
+      steps: number;
+      waterOz: number;
+      sleepHr: number;
+      source: string;
+      week?: number;
+      phase?: number;
+      focus?: string;
+    };
+    error?: string;
+  }> {
+    try {
+      console.log('🔄 Refreshing targets after progression for user:', userId);
+
+      // Get fresh targets from V2 Engine
+      const newTargets = await this.getCurrentWeekTargets(userId);
+      
+      // Update app store with new targets
+      const { useAppStore } = await import('../stores/appStore');
+      const store = useAppStore.getState();
+      
+      await store.initializeTargets({
+        steps: newTargets.steps,
+        waterOz: newTargets.waterOz,
+        sleepHr: newTargets.sleepHr,
+      });
+
+      console.log('✅ Targets refreshed successfully:', newTargets);
+
+      return {
+        success: true,
+        targets: newTargets,
+      };
+
+    } catch (error) {
+      console.error('❌ Error refreshing targets after progression:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Get targets for specific week (used for progression planning)
+   */
+  static async getTargetsForWeek(userId: string, weekNumber: number, phaseNumber: number): Promise<{
+    steps: number;
+    waterOz: number;
+    sleepHr: number;
+    week: number;
+    phase: number;
+    focus?: string;
+  } | null> {
+    try {
+      console.log(`🎯 Getting targets for week ${weekNumber}, phase ${phaseNumber}`);
+
+      // Use V2 Engine to get targets for specific week
+      const targets = await V2EngineConnector.getTargetsForWeek(userId, weekNumber, phaseNumber);
+      
+      if (targets) {
+        return {
+          steps: targets.steps,
+          waterOz: targets.waterOz,
+          sleepHr: targets.sleepHr,
+          week: weekNumber,
+          phase: phaseNumber,
+          focus: targets.focus,
+        };
+      }
+
+      return null;
+
+    } catch (error) {
+      console.error('Error getting targets for specific week:', error);
+      return null;
+    }
+  }
+
+  /**
+   * Validate targets are within reasonable bounds
+   */
+  static validateTargets(targets: {
+    steps: number;
+    waterOz: number;
+    sleepHr: number;
+  }): {
+    isValid: boolean;
+    errors: string[];
+    adjustedTargets?: {
+      steps: number;
+      waterOz: number;
+      sleepHr: number;
+    };
+  } {
+    const errors: string[] = [];
+    const adjustedTargets = { ...targets };
+
+    // Steps validation (2,000 - 25,000)
+    if (targets.steps < 2000) {
+      errors.push('Steps target too low (minimum 2,000)');
+      adjustedTargets.steps = 2000;
+    } else if (targets.steps > 25000) {
+      errors.push('Steps target too high (maximum 25,000)');
+      adjustedTargets.steps = 25000;
+    }
+
+    // Water validation (32oz - 150oz)
+    if (targets.waterOz < 32) {
+      errors.push('Water target too low (minimum 32oz)');
+      adjustedTargets.waterOz = 32;
+    } else if (targets.waterOz > 150) {
+      errors.push('Water target too high (maximum 150oz)');
+      adjustedTargets.waterOz = 150;
+    }
+
+    // Sleep validation (5 - 12 hours)
+    if (targets.sleepHr < 5) {
+      errors.push('Sleep target too low (minimum 5 hours)');
+      adjustedTargets.sleepHr = 5;
+    } else if (targets.sleepHr > 12) {
+      errors.push('Sleep target too high (maximum 12 hours)');
+      adjustedTargets.sleepHr = 12;
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      adjustedTargets: errors.length > 0 ? adjustedTargets : undefined,
+    };
+  }
+
+  /**
+   * Apply target modifications (used during week extensions)
+   */
+  static async applyTargetModifications(
+    userId: string,
+    modifications: {
+      steps?: number;
+      waterOz?: number;
+      sleepHr?: number;
+      focusArea?: 'steps' | 'water' | 'sleep' | 'mood';
+      adjustmentReason: string;
+    }
+  ): Promise<{
+    success: boolean;
+    appliedTargets?: {
+      steps: number;
+      waterOz: number;
+      sleepHr: number;
+    };
+    error?: string;
+  }> {
+    try {
+      console.log('🔧 Applying target modifications for user:', userId, modifications);
+
+      // Get current targets
+      const currentTargets = await this.getCurrentWeekTargets(userId);
+      
+      // Apply modifications
+      const modifiedTargets = {
+        steps: modifications.steps || currentTargets.steps,
+        waterOz: modifications.waterOz || currentTargets.waterOz,
+        sleepHr: modifications.sleepHr || currentTargets.sleepHr,
+      };
+
+      // Validate modified targets
+      const validation = this.validateTargets(modifiedTargets);
+      const finalTargets = validation.adjustedTargets || modifiedTargets;
+
+      // Update app store
+      const { useAppStore } = await import('../stores/appStore');
+      const store = useAppStore.getState();
+      
+      await store.initializeTargets(finalTargets);
+
+      console.log('✅ Target modifications applied successfully:', finalTargets);
+
+      return {
+        success: true,
+        appliedTargets: finalTargets,
+      };
+
+    } catch (error) {
+      console.error('❌ Error applying target modifications:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
+
+  /**
+   * Reset targets to V2 Engine defaults (used after progression reset)
+   */
+  static async resetToV2EngineTargets(userId: string): Promise<{
+    success: boolean;
+    targets?: {
+      steps: number;
+      waterOz: number;
+      sleepHr: number;
+      source: string;
+    };
+    error?: string;
+  }> {
+    try {
+      console.log('🔄 Resetting to V2 Engine targets for user:', userId);
+
+      // Force refresh from V2 Engine
+      const engineTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      
+      if (!engineTargets) {
+        throw new Error('V2 Engine returned no targets');
+      }
+
+      const targets = {
+        steps: engineTargets.steps,
+        waterOz: engineTargets.waterOz,
+        sleepHr: engineTargets.sleepHr,
+      };
+
+      // Update app store
+      const { useAppStore } = await import('../stores/appStore');
+      const store = useAppStore.getState();
+      
+      await store.initializeTargets(targets);
+
+      console.log('✅ Reset to V2 Engine targets successfully:', targets);
+
+      return {
+        success: true,
+        targets: {
+          ...targets,
+          source: 'v2_engine',
+        },
+      };
+
+    } catch (error) {
+      console.error('❌ Error resetting to V2 Engine targets:', error);
+      return {
+        success: false,
+        error: error instanceof Error ? error.message : 'Unknown error',
+      };
+    }
+  }
 }
 
 export default TargetManager;

@@ -162,6 +162,80 @@ export class V2EngineConnector {
   }
 
   /**
+   * Get targets for a specific week (used for progression planning)
+   */
+  static async getTargetsForWeek(userId: string, weekNumber: number, phaseNumber: number): Promise<WeeklyTargets | null> {
+    try {
+      console.log(`🔧 V2 Engine: Getting targets for week ${weekNumber}, phase ${phaseNumber}`);
+
+      // Get user's activation code and V2 analysis
+      const { data: profile } = await supabase
+        .from('app_user_profiles')
+        .select('activation_code_id')
+        .eq('user_id', userId)
+        .single();
+
+      if (!profile?.activation_code_id) {
+        console.error('❌ No activation code found for user');
+        return null;
+      }
+
+      const { data: activationCode } = await supabase
+        .from('activation_codes')
+        .select('onboarding_data')
+        .eq('id', profile.activation_code_id)
+        .single();
+
+      if (!activationCode?.onboarding_data?.v2Analysis) {
+        console.error('❌ No V2 analysis found in activation code');
+        return null;
+      }
+
+      // Extract transformation roadmap
+      const { transformationRoadmap } = activationCode.onboarding_data.v2Analysis;
+      
+      if (!transformationRoadmap?.phases) {
+        console.error('❌ No transformation phases found');
+        return null;
+      }
+
+      // Find the specified phase
+      const phase = transformationRoadmap.phases.find((p: any) => p.phase === phaseNumber);
+      
+      if (!phase) {
+        console.error('❌ Specified phase not found:', phaseNumber);
+        return null;
+      }
+
+      // Calculate week within phase (1-4 for each phase)
+      const weekInPhase = ((weekNumber - 1) % 4) + 1;
+      const milestone = phase.weeklyMilestones?.[weekInPhase - 1];
+
+      if (!milestone) {
+        console.error('❌ No milestone found for week', weekInPhase, 'in phase', phaseNumber);
+        return null;
+      }
+
+      // Parse targets from milestone focus string
+      const weeklyTargets = this.parseWeeklyTargets(milestone.focus, weekNumber, phaseNumber);
+      
+      console.log('✅ V2 Engine extracted targets for specific week:', weeklyTargets);
+
+      return {
+        ...weeklyTargets,
+        week: weekNumber,
+        phase: phaseNumber,
+        focus: milestone.focus,
+        expectedChanges: milestone.expectedChanges || [],
+      };
+
+    } catch (error) {
+      console.error('❌ V2 Engine getTargetsForWeek failed:', error);
+      return null;
+    }
+  }
+
+  /**
    * Get final targets (end of 90-day plan)
    */
   static async getFinalTargets(activationCodeId: string): Promise<{ steps: number; waterOz: number; sleepHr: number } | null> {

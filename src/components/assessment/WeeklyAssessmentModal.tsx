@@ -1,0 +1,160 @@
+// Weekly Assessment Modal Component
+// Single responsibility: Modal container for weekly assessment display
+
+import React from 'react';
+import {
+  View,
+  Text,
+  Modal,
+  TouchableOpacity,
+  ScrollView,
+  StyleSheet,
+  StatusBar,
+} from 'react-native';
+import Icon from 'react-native-vector-icons/Ionicons';
+import { WeeklyAssessmentData } from '../../types/assessment';
+import { ProgressionDecision } from '../../types/progression';
+import { PerformanceBreakdown } from './PerformanceBreakdown';
+import { ProgressionRecommendation } from './ProgressionRecommendation';
+import { ProgressionChoices } from './ProgressionChoices';
+import { theme } from '../../utils/theme';
+
+interface WeeklyAssessmentModalProps {
+  visible: boolean;
+  onClose: () => void;
+  assessmentData: WeeklyAssessmentData;
+  onDecision: (decision: ProgressionDecision) => void;
+  isExecuting?: boolean;
+}
+
+export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
+  visible,
+  onClose,
+  assessmentData,
+  onDecision,
+  isExecuting = false,
+}) => {
+  const { performance, assessment } = assessmentData;
+
+  const handleDecision = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation') => {
+    const decision: ProgressionDecision = {
+      type: decisionType === 'override_advance' ? 'advance' : assessment.recommendation,
+      weekNumber: performance.week,
+      phaseNumber: performance.phase,
+      userId: '', // Will be set by parent component
+      reasoning: decisionType === 'accepted' 
+        ? assessment.reasoning 
+        : ['User chose to override recommendation'],
+      confidence: assessment.confidence,
+      modifications: assessment.modifications,
+      executedBy: 'user',
+    };
+
+    onDecision(decision);
+  };
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={false} />
+        
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.headerTitle}>Week {performance.week} Assessment</Text>
+            <Text style={styles.headerSubtitle}>
+              Phase {performance.phase} • {performance.startDate} to {performance.endDate}
+            </Text>
+          </View>
+          <TouchableOpacity 
+            style={styles.closeButton} 
+            onPress={onClose}
+            disabled={isExecuting}
+          >
+            <Icon name="close" size={24} color={theme.colors.textPrimary} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView 
+          style={styles.scrollView}
+          contentContainerStyle={styles.scrollContent}
+          showsVerticalScrollIndicator={false}
+        >
+          {/* Performance Breakdown */}
+          <PerformanceBreakdown 
+            performance={performance}
+            consistency={assessmentData.consistency}
+          />
+
+          {/* Progression Recommendation */}
+          <ProgressionRecommendation 
+            assessment={assessment}
+            currentWeek={performance.week}
+            currentPhase={performance.phase}
+          />
+
+          {/* Progression Choices */}
+          <ProgressionChoices
+            recommendation={assessment.recommendation}
+            onChoice={handleDecision}
+            isExecuting={isExecuting}
+            weekNumber={performance.week}
+          />
+
+          <View style={styles.bottomSpacer} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+};
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    paddingHorizontal: theme.spacing.lg,
+    paddingVertical: theme.spacing.base,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+    backgroundColor: theme.colors.cardBackground,
+  },
+  headerTitle: {
+    fontSize: theme.typography.large,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+  },
+  headerSubtitle: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textSecondary,
+    marginTop: theme.spacing.xs,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: theme.borderRadius.full,
+    backgroundColor: theme.colors.background,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...theme.shadows.subtle,
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    paddingHorizontal: theme.spacing.lg,
+    paddingTop: theme.spacing.lg,
+  },
+  bottomSpacer: {
+    height: theme.spacing.xl,
+  },
+});
