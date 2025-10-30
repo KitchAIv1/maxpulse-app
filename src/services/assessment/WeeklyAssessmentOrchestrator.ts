@@ -176,10 +176,13 @@ export class WeeklyAssessmentOrchestrator {
     const consistency = {
       consistentDays: history.consistency_days,
       totalDays: history.total_tracking_days,
-      consistencyRate: (history.consistency_days / history.total_tracking_days) * 100,
+      consistencyRate: history.total_tracking_days > 0 
+        ? (history.consistency_days / history.total_tracking_days) * 100 
+        : 0,
+      currentStreak: history.consistency_days, // Use consistency_days as approximation
+      longestStreak: history.consistency_days, // Simplified - assume current is longest
       weekdayConsistency: 100, // Simplified - not stored separately
       weekendConsistency: 100, // Simplified - not stored separately
-      longestStreak: history.consistency_days, // Simplified
     };
 
     // Reconstruct assessment recommendation
@@ -189,7 +192,12 @@ export class WeeklyAssessmentOrchestrator {
       reasoning: history.decision_reasoning || [],
       riskFactors: [],
       opportunities: [],
-      modifications: undefined,
+      modifications: history.progression_recommendation === 'extend' && history.weakest_pillar
+        ? {
+            focusArea: history.weakest_pillar,
+            adjustmentReason: `Reducing ${this.getPillarDisplayName(history.weakest_pillar)} target to build consistency`,
+          }
+        : undefined,
     };
 
     // Get targets from stored data
@@ -230,6 +238,19 @@ export class WeeklyAssessmentOrchestrator {
     const achievementScore = (averageAchievement / 100) * 50;
     const consistencyScore = (consistencyDays / 7) * 50;
     return Math.round(achievementScore + consistencyScore);
+  }
+
+  /**
+   * Get display-friendly pillar names
+   */
+  private static getPillarDisplayName(pillar: string): string {
+    switch (pillar) {
+      case 'steps': return 'Steps';
+      case 'water': return 'Hydration';
+      case 'sleep': return 'Sleep';
+      case 'mood': return 'Mood Check-ins';
+      default: return pillar;
+    }
   }
 
   /**
