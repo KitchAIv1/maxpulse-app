@@ -2,11 +2,37 @@
 
 ## 🎯 **Overview**
 
-The MaxPulse step tracking system has undergone **major improvements** with the implementation of near real-time accuracy, comprehensive validation, rate limiting, and enhanced user experience. The system now achieves **deterministic accuracy** with proper rate limiting to prevent overcounting from batched CoreMotion updates.
+The MaxPulse step tracking system has undergone **major improvements** with the implementation of near real-time accuracy, comprehensive validation, rate limiting, enhanced user experience, and critical bug fixes. The system now achieves **deterministic accuracy** with proper rate limiting to prevent overcounting from batched CoreMotion updates, plus robust date navigation and calendar UX enhancements.
 
 ## ✅ **Major Improvements Implemented**
 
-### 1. **Rate Limiting & Overcounting Fix (v1.6 - October 30, 2025)**
+### 1. **Calendar Dual Highlighting System (v1.7 - October 30, 2025)**
+**Problem**: Today's date was invisible when viewing other dates (gray styling too subtle)
+**Solution**: Implemented bright blue highlighting for today's date in all scenarios
+**Result**:
+- ✅ **Today always visible** with bright blue border, text, and light blue background
+- ✅ **Selected date clearly distinguished** with black styling
+- ✅ **Special "today + selected" state** with blue highlighting
+- ✅ **Enhanced UX** - no confusion between current vs selected dates
+
+### 2. **Critical Date Navigation Bug Fix (v1.7)**
+**Problem**: Steps showing 0 after date navigation (DB: 504, UI: 0, need reload)
+**Solution**: Applied "don't overwrite steps" fix to all cache restoration paths
+**Result**:
+- ✅ **Steps persist correctly** when switching between dates
+- ✅ **No app reload required** to see correct step counts
+- ✅ **StepTrackingService remains source of truth** in all scenarios
+- ✅ **Fixed all cache fallback paths** (AsyncStorage, error handling)
+
+### 3. **Step Tracking UI Enhancements (v1.7)**
+**Problem**: Step percentage showing 0% instead of actual progress
+**Solution**: Reused existing percentage logic from rewards section
+**Result**:
+- ✅ **Percentage display working** - shows correct progress
+- ✅ **Real-time updates** - percentage updates with step changes
+- ✅ **Clean codebase** - removed non-working animation code
+
+### 4. **Rate Limiting & Overcounting Fix (v1.6 - October 30, 2025)**
 **Problem**: Overcounting due to batched CoreMotion updates (70 actual steps → 160 counted)
 **Solution**: Implemented time-based rate limiting with 3 steps/second maximum
 **Result**: 
@@ -15,7 +41,7 @@ The MaxPulse step tracking system has undergone **major improvements** with the 
 - ✅ **Session baseline tracking** prevents initial jump on app launch
 - ✅ **Deterministic accuracy** with proper validation at source
 
-### 2. **Session Baseline Tracking (v1.6)**
+### 5. **Session Baseline Tracking (v1.6)**
 **Problem**: Initial jump to 100+ steps when launching app (shows cumulative daily steps)
 **Solution**: Track session start baseline and only emit updates for new movement
 **Result**:
@@ -23,7 +49,7 @@ The MaxPulse step tracking system has undergone **major improvements** with the 
 - ✅ **Session-relative progress** - shows steps taken during current session
 - ✅ **Cleaner UX** - user sees 0 steps initially, then gradual increase
 
-### 3. **Near Real-Time Accuracy (v1.5)**
+### 6. **Near Real-Time Accuracy (v1.5)**
 **Problem**: Step tracking needed refinement for accuracy and real-time UX
 **Solution**: Reduced polling interval from 5s to 1s, added step validation
 **Result**: 
@@ -31,7 +57,7 @@ The MaxPulse step tracking system has undergone **major improvements** with the 
 - ✅ **1-second polling** for responsive tracking
 - ✅ **Smooth progression** with immediate visual feedback
 
-### 4. **UI Responsiveness Optimization (v1.5)**
+### 7. **UI Responsiveness Optimization (v1.5)**
 **Problem**: UI updates needed to be more responsive for real-time feel
 **Solution**: Optimized throttling and update frequency
 **Result**:
@@ -40,7 +66,7 @@ The MaxPulse step tracking system has undergone **major improvements** with the 
 - ✅ **3-second database sync** for optimal performance
 - ✅ **Smooth progression** with responsive updates
 
-### 5. **Performance Optimizations (v1.1)**
+### 8. **Performance Optimizations (v1.1)**
 **Problem**: Chunky step updates (44 → 68 → 90) instead of smooth progression
 **Solution**: Reduced polling interval from 30 seconds to 5 seconds
 **Result**:

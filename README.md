@@ -2,7 +2,7 @@
 
 A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations.
 
-![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green)
+![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-1.7.0-green)
 
 ## 🚀 Features
 

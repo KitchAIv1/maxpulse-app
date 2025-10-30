@@ -5,10 +5,39 @@ All notable changes to the MaxPulse app will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.7.0] - 2025-10-30
 
 ### Added
-- **Step Tracking Rate Limiting & Accuracy Fix (v1.6 - October 30, 2025)**
+- **Calendar Dual Highlighting System (v1.7)**
+  - Today's date always clearly visible with bright blue styling
+  - Selected date clearly distinguished with black styling
+  - Special "today + selected" state with blue highlighting
+  - Fixed calendar UX where today was invisible when viewing other dates
+  - Enhanced visual states: today (blue), selected (black), past (dark), future (disabled)
+
+- **Critical Date Navigation Bug Fix (v1.7)**
+  - Fixed steps showing 0 after date navigation (DB: 504, UI: 0)
+  - Prevented cache from overwriting live step data on date switching
+  - Applied "don't overwrite steps" fix to all cache restoration paths
+  - StepTrackingService now remains single source of truth in all scenarios
+  - No more app reload required to see correct step counts
+
+- **Step Tracking UI Enhancements (v1.7)**
+  - Fixed percentage display showing 0% instead of actual progress
+  - Reused existing percentage logic from rewards section
+  - Removed non-working animation code for cleaner codebase
+  - Ensured step ring percentage updates correctly in real-time
+
+### Fixed
+- Calendar today date visibility when not selected
+- Date navigation cache overwriting live step data
+- Step percentage calculation in main dashboard
+- AsyncStorage fallback paths preserving step data integrity
+
+## [1.6.0] - 2025-10-30
+
+### Added
+- **Step Tracking Rate Limiting & Accuracy Fix (v1.6)**
   - Fixed critical overcounting issue (70 actual steps → 160 counted)
   - Implemented time-based rate limiting with 3 steps/second maximum
   - Added session baseline tracking to prevent initial jump on app launch
