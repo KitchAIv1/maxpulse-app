@@ -11,6 +11,8 @@ import {
   StyleSheet,
   StatusBar,
   Dimensions,
+  KeyboardAvoidingView,
+  Platform,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -80,7 +82,11 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
         />
         
         {/* Bottom Sheet */}
-        <View style={styles.bottomSheet}>
+        <KeyboardAvoidingView 
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.bottomSheet}
+          keyboardVerticalOffset={0}
+        >
           {/* Handle */}
           <View style={styles.handle} />
           
@@ -96,6 +102,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
+            keyboardShouldPersistTaps="handled"
           >
             {/* Health Context Cards */}
             <HealthContextCards healthContext={healthContext} />
@@ -135,7 +142,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
 
             <View style={styles.bottomSpacer} />
           </ScrollView>
-        </View>
+        </KeyboardAvoidingView>
       </View>
     </Modal>
   );
