@@ -500,7 +500,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
             // No AsyncStorage data, use cache as fallback
             if (__DEV__) console.log('⚠️ No AsyncStorage data, using cached state');
             set({
-              currentState: cache.currentState,
+              currentState: {
+                steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from cache
+                waterOz: cache.currentState.waterOz,
+                sleepHr: cache.currentState.sleepHr,
+              },
               targets: cache.targets,
               moodCheckInFrequency: cache.moodCheckInFrequency,
               todayStateCache: null,
@@ -510,7 +514,11 @@ export const useAppStore = create<AppStore>((set, get) => ({
           console.warn('Failed to restore from AsyncStorage:', error);
           // Fallback to cache
           set({
-            currentState: cache.currentState,
+            currentState: {
+              steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from cache
+              waterOz: cache.currentState.waterOz,
+              sleepHr: cache.currentState.sleepHr,
+            },
             targets: cache.targets,
             moodCheckInFrequency: cache.moodCheckInFrequency,
             todayStateCache: null,
