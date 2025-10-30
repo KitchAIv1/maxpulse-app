@@ -2,16 +2,17 @@
 
 A comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys.
 
-*Last updated: October 30, 2025 - Version 1.7.0*
+*Last updated: October 30, 2025 - Version 1.7.1*
 
 ---
 
-## Version 1.7.0 - Current MVP Status
+## Version 1.7.1 - Current MVP Status
 
 **Release Date:** October 30, 2025  
 **Status:** Production Ready ✅
 
 ### Key Features Implemented:
+- ✅ **Mood Check-In Keyboard Handling** - Input field stays above keyboard when typing
 - ✅ **Real-time Step Tracking** with iOS CoreMotion integration
 - ✅ **Calendar Dual Highlighting System** - Today always clearly visible
 - ✅ **Date Navigation** - Steps persist correctly without app reload
@@ -20,6 +21,7 @@ A comprehensive health transformation platform that combines **Steps**, **Hydrat
 - ✅ **Enhanced UX** - Seamless date switching and visual feedback
 
 ### Technical Improvements:
+- **KeyboardAvoidingView**: Platform-specific behavior for mood check-in (iOS: padding, Android: height)
 - **Rate Limiting**: 3 steps/second maximum to prevent overcounting
 - **Session Baseline Tracking**: No initial jump on app launch
 - **Cache Restoration Fixes**: All paths preserve live step data
@@ -27,6 +29,7 @@ A comprehensive health transformation platform that combines **Steps**, **Hydrat
 - **Percentage Calculation**: Reused proven logic from rewards section
 
 ### Critical Bugs Fixed:
+- Keyboard covering input field in mood check-in (user couldn't see what they were typing)
 - Steps showing 0 after date navigation (DB: 504, UI: 0)
 - Today's date invisible when viewing other dates
 - Step percentage showing 0% instead of actual progress

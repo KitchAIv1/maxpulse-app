@@ -34,6 +34,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Step percentage calculation in main dashboard
 - AsyncStorage fallback paths preserving step data integrity
 
+## [1.7.1] - 2025-10-30
+
+### Fixed
+- **Mood Check-In Keyboard Covering Input Field**
+  - Keyboard was covering the quick notes input field when typing
+  - User couldn't see what they were typing during mood check-in
+  - Poor UX for mood check-in flow
+
+### Improved
+- **Enhanced Keyboard Handling for Mood Check-In**
+  - Wrapped bottom sheet with KeyboardAvoidingView for smooth behavior
+  - Added platform-specific keyboard handling (iOS: padding, Android: height)
+  - Input field now automatically stays above keyboard when typing
+  - Added keyboardShouldPersistTaps for better scroll handling
+  - Smooth animations on keyboard show/hide for professional feel
+
 ## [1.6.0] - 2025-10-30
 
 ### Added
