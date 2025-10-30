@@ -5,6 +5,15 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Dimensions, Animated } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
+import Reanimated, { 
+  useSharedValue, 
+  useAnimatedStyle, 
+  withSpring, 
+  withRepeat, 
+  withSequence,
+  withTiming,
+  Easing
+} from 'react-native-reanimated';
 import { CalAiRing } from './CalAiRing';
 import { theme } from '../../utils/theme';
 import { calAiCard } from '../../utils/calAiStyles';
@@ -57,6 +66,10 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   const [animatedSleepPct] = useState(new Animated.Value(sleepPct));
   const [animatedMoodPct] = useState(new Animated.Value(moodPct));
   
+  // Reanimated values for walking icon animations
+  const iconScale = useSharedValue(1);
+  const glowOpacity = useSharedValue(0.3);
+  
   // Animate percentages when they change
   useEffect(() => {
     Animated.parallel([
@@ -82,6 +95,37 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
       }),
     ]).start();
   }, [stepsPct, waterPct, sleepPct, moodPct]);
+  
+  // Bounce animation when steps change
+  useEffect(() => {
+    if (stepsData.current > 0) {
+      iconScale.value = withSequence(
+        withSpring(1.15, { damping: 8, stiffness: 200 }),
+        withSpring(1.0, { damping: 8, stiffness: 200 })
+      );
+    }
+  }, [stepsData.current]);
+  
+  // Continuous glow pulse animation
+  useEffect(() => {
+    glowOpacity.value = withRepeat(
+      withSequence(
+        withTiming(0.7, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
+        withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+      ),
+      -1, // Infinite repeat
+      false
+    );
+  }, []);
+  
+  // Animated styles for icon
+  const animatedIconStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: iconScale.value }],
+    shadowColor: theme.colors.ringSteps,
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: glowOpacity.value,
+    shadowRadius: 12,
+  }));
 
   // Landscape Steps Card (label left, ring right, percentage below label)
   const LandscapeStepsCard: React.FC<{
@@ -114,7 +158,9 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
             accentColor={accentColor}
             centerContent={
               <View style={styles.ringCenter}>
-                <Text style={styles.largeRingIcon}>{icon}</Text>
+                <Reanimated.View style={animatedIconStyle}>
+                  <Text style={styles.largeRingIcon}>{icon}</Text>
+                </Reanimated.View>
                 <Text style={styles.largeRingValue}>
                   {current}
                 </Text>
