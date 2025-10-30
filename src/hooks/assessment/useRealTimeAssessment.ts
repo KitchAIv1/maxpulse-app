@@ -39,7 +39,7 @@ export const useRealTimeAssessment = (
       const data = await WeeklyAssessmentOrchestrator.conductWeeklyAssessment(
         userId,
         targetWeek,
-        true // Force reassessment to get fresh data
+        false // Use cached assessment if available (changed from true)
       );
 
       if (data) {

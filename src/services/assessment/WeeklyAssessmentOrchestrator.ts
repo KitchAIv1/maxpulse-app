@@ -111,14 +111,125 @@ export class WeeklyAssessmentOrchestrator {
         return null;
       }
 
-      // Convert stored data back to WeeklyAssessmentData format
-      // This is a simplified version - in production, you'd want full reconstruction
-      return null; // For MVP, always recalculate
+      console.log(`✅ Found cached assessment for week ${weekNumber}`);
+
+      // Reconstruct WeeklyAssessmentData from stored history
+      return this.reconstructAssessmentFromHistory(data);
     } catch (error) {
       // Table might not exist yet - that's okay
       console.warn('⚠️ Could not check existing assessment (table may not exist yet)');
       return null;
     }
+  }
+
+  /**
+   * Reconstruct full assessment data from stored history record
+   */
+  private static reconstructAssessmentFromHistory(
+    history: any
+  ): WeeklyAssessmentData {
+    // Reconstruct performance data
+    const performance = {
+      week: history.week_number,
+      phase: history.phase_number,
+      startDate: history.start_date,
+      endDate: history.end_date,
+      averageAchievement: history.overall_achievement_avg,
+      consistencyDays: history.consistency_days,
+      totalTrackingDays: history.total_tracking_days,
+      strongestPillar: history.strongest_pillar,
+      weakestPillar: history.weakest_pillar,
+      overallGrade: this.determineGrade(history.overall_achievement_avg, history.consistency_days),
+      pillarBreakdown: [
+        {
+          pillar: 'steps' as const,
+          averageAchievement: history.steps_achievement_avg,
+          consistentDays: Math.round((history.steps_achievement_avg / 100) * history.total_tracking_days),
+          trend: 'stable' as const,
+          dailyValues: [],
+        },
+        {
+          pillar: 'water' as const,
+          averageAchievement: history.water_achievement_avg,
+          consistentDays: Math.round((history.water_achievement_avg / 100) * history.total_tracking_days),
+          trend: 'stable' as const,
+          dailyValues: [],
+        },
+        {
+          pillar: 'sleep' as const,
+          averageAchievement: history.sleep_achievement_avg,
+          consistentDays: Math.round((history.sleep_achievement_avg / 100) * history.total_tracking_days),
+          trend: 'stable' as const,
+          dailyValues: [],
+        },
+        {
+          pillar: 'mood' as const,
+          averageAchievement: history.mood_achievement_avg,
+          consistentDays: Math.round((history.mood_achievement_avg / 100) * history.total_tracking_days),
+          trend: 'stable' as const,
+          dailyValues: [],
+        },
+      ],
+    };
+
+    // Reconstruct consistency data
+    const consistency = {
+      consistentDays: history.consistency_days,
+      totalDays: history.total_tracking_days,
+      consistencyRate: (history.consistency_days / history.total_tracking_days) * 100,
+      weekdayConsistency: 100, // Simplified - not stored separately
+      weekendConsistency: 100, // Simplified - not stored separately
+      longestStreak: history.consistency_days, // Simplified
+    };
+
+    // Reconstruct assessment recommendation
+    const assessment = {
+      recommendation: history.progression_recommendation,
+      confidence: this.calculateConfidence(history.overall_achievement_avg, history.consistency_days),
+      reasoning: history.decision_reasoning || [],
+      riskFactors: [],
+      opportunities: [],
+      modifications: undefined,
+    };
+
+    // Get targets from stored data
+    const currentTargets = history.targets_at_assessment || this.getDefaultTargets();
+
+    return {
+      performance,
+      consistency,
+      assessment,
+      currentTargets,
+      nextWeekTargets: undefined,
+    };
+  }
+
+  /**
+   * Determine performance grade from stored metrics
+   */
+  private static determineGrade(
+    averageAchievement: number,
+    consistencyDays: number
+  ): 'mastery' | 'progress' | 'struggle' {
+    if (averageAchievement >= 80 && consistencyDays >= 5) {
+      return 'mastery';
+    } else if (averageAchievement >= 60 && consistencyDays >= 3) {
+      return 'progress';
+    } else {
+      return 'struggle';
+    }
+  }
+
+  /**
+   * Calculate confidence score from metrics
+   */
+  private static calculateConfidence(
+    averageAchievement: number,
+    consistencyDays: number
+  ): number {
+    const achievementScore = (averageAchievement / 100) * 50;
+    const consistencyScore = (consistencyDays / 7) * 50;
+    return Math.round(achievementScore + consistencyScore);
   }
 
   /**
