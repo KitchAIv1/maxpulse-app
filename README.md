@@ -4,6 +4,24 @@ A comprehensive React Native health transformation platform that combines **Step
 
 ![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-1.7.0-green)
 
+## 🎯 Version 1.7.0 - Production Ready MVP
+
+**Latest Release:** October 30, 2025  
+**Status:** Production Ready ✅
+
+### Key Improvements in v1.7.0:
+- ✅ **Calendar Dual Highlighting** - Today's date always clearly visible
+- ✅ **Date Navigation Fix** - Steps persist correctly without app reload  
+- ✅ **Step Percentage Display** - Shows actual progress (not 0%)
+- ✅ **Data Integrity** - No cache overwriting live step data
+- ✅ **Enhanced UX** - Seamless date switching and visual feedback
+
+### Critical Bugs Fixed:
+- Steps showing 0 after date navigation (DB: 504, UI: 0)
+- Today's date invisible when viewing other dates
+- Step percentage showing 0% instead of actual progress
+- AsyncStorage overwriting live step data
+
 ## 🚀 Features
 
 ### 🔐 **Authentication & Onboarding**
