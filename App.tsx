@@ -16,6 +16,7 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, KPICard, CalAiTriRings, CalendarBar, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { WeeklyAssessmentModal } from './src/components/assessment/WeeklyAssessmentModal';
+import { AssessmentTestButton } from './src/components/testing/AssessmentTestButton';
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
@@ -478,6 +479,11 @@ function TriHabitApp() {
                 </Text>
               )}
             </>
+          )}
+
+          {/* Assessment Caching Test Button (DEV ONLY) */}
+          {__DEV__ && userId && (
+            <AssessmentTestButton userId={userId} />
           )}
 
           <View style={styles.bottomSpacer} />
