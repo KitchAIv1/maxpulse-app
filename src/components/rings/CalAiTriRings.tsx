@@ -103,6 +103,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   useEffect(() => {
     if (stepsData.current > prevSteps && prevSteps > 0) {
       // Only animate if steps increased and we're not on initial load
+      console.log(`🎯 BOUNCE TRIGGERED: ${prevSteps} → ${stepsData.current} (+${stepsData.current - prevSteps})`);
       iconScale.value = withSequence(
         withSpring(1.15, { damping: 8, stiffness: 200 }),
         withSpring(1.0, { damping: 8, stiffness: 200 })
@@ -111,12 +112,12 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     setPrevSteps(stepsData.current);
   }, [stepsData.current]);
   
-  // Continuous glow pulse animation
+  // Continuous glow pulse animation (more visible)
   useEffect(() => {
     glowOpacity.value = withRepeat(
       withSequence(
-        withTiming(0.7, { duration: 1500, easing: Easing.inOut(Easing.ease) }),
-        withTiming(0.3, { duration: 1500, easing: Easing.inOut(Easing.ease) })
+        withTiming(0.9, { duration: 1500, easing: Easing.inOut(Easing.ease) }), // Increased from 0.7 to 0.9
+        withTiming(0.4, { duration: 1500, easing: Easing.inOut(Easing.ease) })  // Increased from 0.3 to 0.4
       ),
       -1, // Infinite repeat
       false
@@ -128,13 +129,13 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     transform: [{ scale: iconScale.value }],
   }));
   
-  // Animated styles for glowing background circle
+  // Animated styles for glowing background circle (larger and more visible)
   const animatedGlowStyle = useAnimatedStyle(() => ({
     opacity: glowOpacity.value,
     backgroundColor: '#007AFF', // iOS blue
-    width: 50,
-    height: 50,
-    borderRadius: 25,
+    width: 60,  // Increased from 50
+    height: 60, // Increased from 50
+    borderRadius: 30, // Increased from 25
     position: 'absolute',
     zIndex: -1,
   }));
