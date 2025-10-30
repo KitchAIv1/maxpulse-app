@@ -287,8 +287,8 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.regular,
   },
   todayDayLabel: {
-    color: '#6B7280',
-    fontWeight: theme.typography.weights.medium,
+    color: '#007AFF', // Bright blue - clearly visible
+    fontWeight: theme.typography.weights.semibold,
   },
   todaySelectedDayLabel: {
     color: '#007AFF', // Blue text to indicate "today"
@@ -317,9 +317,10 @@ const styles = StyleSheet.create({
     backgroundColor: 'transparent',
   },
   todayDateCircle: {
-    borderColor: '#6B7280',
+    borderColor: '#007AFF', // Bright blue border - clearly visible
     borderStyle: 'solid',
-    backgroundColor: 'transparent',
+    backgroundColor: '#F0F8FF', // Light blue background - stands out
+    borderWidth: 2,
   },
   todaySelectedDateCircle: {
     borderColor: '#007AFF', // Blue border to indicate "today"
@@ -344,8 +345,8 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.regular,
   },
   todayDateText: {
-    color: '#6B7280',
-    fontWeight: theme.typography.weights.medium,
+    color: '#007AFF', // Bright blue text - clearly visible
+    fontWeight: theme.typography.weights.semibold,
   },
   todaySelectedDateText: {
     color: '#007AFF', // Blue text to indicate "today"
