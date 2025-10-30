@@ -466,15 +466,18 @@ function TriHabitApp() {
           </View>
           
           {/* Status indicator */}
-          {hasRealData && !isViewingPastDate && (
-            <Text style={styles.realDataIndicator}>
-              ✅ Week {realAssessmentData?.performance.week} data available
-            </Text>
-          )}
-          {realDataError && !isViewingPastDate && (
-            <Text style={styles.errorIndicator}>
-              ⚠️ {realDataError}
-            </Text>
+          {!isViewingPastDate && (
+            <>
+              {hasRealData ? (
+                <Text style={styles.assessmentStatusText}>
+                  Week {realAssessmentData?.performance.week} Assessment Available
+                </Text>
+              ) : (
+                <Text style={styles.assessmentStatusText}>
+                  Next Assessment: Sunday
+                </Text>
+              )}
+            </>
           )}
 
           <View style={styles.bottomSpacer} />
@@ -610,21 +613,15 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.warning,
   },
-  realDataIndicator: {
-    fontSize: theme.typography.small,
-    color: theme.colors.success,
+  assessmentStatusText: {
+    fontSize: 9, // Same as calendar day labels
+    fontWeight: theme.typography.weights.light, // Same as calendar day labels
+    color: '#9E9E9E', // Same as calendar day labels
     textAlign: 'center',
     marginHorizontal: theme.spacing.lg,
+    marginTop: theme.spacing.xs,
     marginBottom: theme.spacing.sm,
-    fontWeight: theme.typography.weights.medium,
-  },
-  errorIndicator: {
-    fontSize: theme.typography.small,
-    color: theme.colors.warning,
-    textAlign: 'center',
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.sm,
-    fontWeight: theme.typography.weights.medium,
+    textTransform: 'uppercase',
   },
   quickActions: {
     flexDirection: 'row',
