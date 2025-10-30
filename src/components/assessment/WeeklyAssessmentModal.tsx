@@ -1,7 +1,7 @@
 // Weekly Assessment Modal Component
 // Single responsibility: Modal container for weekly assessment display
 
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   ScrollView,
   StyleSheet,
   StatusBar,
+  Alert,
 } from 'react-native';
 import Icon from 'react-native-vector-icons/Ionicons';
 import { WeeklyAssessmentData } from '../../types/assessment';
@@ -36,21 +37,78 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
 }) => {
   const { performance, assessment } = assessmentData;
 
-  const handleDecision = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation') => {
-    const decision: ProgressionDecision = {
-      type: decisionType === 'override_advance' ? 'advance' : assessment.recommendation,
-      weekNumber: performance.week,
-      phaseNumber: performance.phase,
-      userId: '', // Will be set by parent component
-      reasoning: decisionType === 'accepted' 
-        ? assessment.reasoning 
-        : ['User chose to override recommendation'],
-      confidence: assessment.confidence,
-      modifications: assessment.modifications,
-      executedBy: 'user',
-    };
+  const getDecisionActionText = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation'): string => {
+    if (decisionType === 'coach_consultation') {
+      return 'Request AI Coach Consultation';
+    }
+    
+    const actualType = decisionType === 'override_advance' ? 'advance' : assessment.recommendation;
+    
+    switch (actualType) {
+      case 'advance':
+        return `Advance to Week ${performance.week + 1}`;
+      case 'extend':
+        return `Continue Week ${performance.week} with adjusted targets`;
+      case 'reset':
+        return `Reset to Week ${performance.week - 1}`;
+      default:
+        return 'Proceed';
+    }
+  };
 
-    onDecision(decision);
+  const getDecisionMessage = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation'): string => {
+    if (decisionType === 'coach_consultation') {
+      return 'Your request will be logged and an AI coach will review your progress. You\'ll stay on your current week until you receive guidance.';
+    }
+    
+    const actualType = decisionType === 'override_advance' ? 'advance' : assessment.recommendation;
+    
+    switch (actualType) {
+      case 'advance':
+        return 'Your targets will be updated to the next week\'s goals. Your progress will reset and you\'ll start tracking toward new targets.';
+      case 'extend':
+        return 'You\'ll stay on the current week with modified targets based on your performance. This gives you more time to build consistency.';
+      case 'reset':
+        return 'You\'ll go back to the previous week\'s targets. This helps rebuild your foundation before moving forward.';
+      default:
+        return 'Your targets and progress will be updated accordingly.';
+    }
+  };
+
+  const handleDecision = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation') => {
+    const actionText = getDecisionActionText(decisionType);
+    const message = getDecisionMessage(decisionType);
+
+    Alert.alert(
+      'Confirm Your Decision',
+      `${actionText}\n\n${message}\n\nAre you sure you want to proceed?`,
+      [
+        {
+          text: 'Cancel',
+          style: 'cancel',
+        },
+        {
+          text: 'Confirm',
+          style: 'default',
+          onPress: () => {
+            const decision: ProgressionDecision = {
+              type: decisionType === 'override_advance' ? 'advance' : assessment.recommendation,
+              weekNumber: performance.week,
+              phaseNumber: performance.phase,
+              userId: '', // Will be set by parent component
+              reasoning: decisionType === 'accepted' 
+                ? assessment.reasoning 
+                : ['User chose to override recommendation'],
+              confidence: assessment.confidence,
+              modifications: assessment.modifications,
+              executedBy: 'user',
+            };
+
+            onDecision(decision);
+          },
+        },
+      ]
+    );
   };
 
   return (
