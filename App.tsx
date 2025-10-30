@@ -136,11 +136,6 @@ function TriHabitApp() {
     console.log(`🎨 App.tsx render - displaySteps: ${displaySteps}`);
   }, [displaySteps]);
 
-  // Handle wellbeing dashboard navigation
-  const handleLifeScorePress = () => {
-    setWellbeingDashboardVisible(true);
-  };
-
   const handleWellbeingDashboardClose = () => {
     setWellbeingDashboardVisible(false);
   };
@@ -409,67 +404,77 @@ function TriHabitApp() {
                 current: moodCheckInFrequency.total_checkins,
                 target: moodCheckInFrequency.target_checkins,
               }}
-              onLifeScorePress={handleLifeScorePress}
             />
           </View>
 
+          {/* Quick Actions - Always visible, disabled when viewing past dates */}
+          <View style={[styles.quickActions, isViewingPastDate && styles.quickActionsDisabled]}>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.hydrationButton]}
+              onPress={() => addHydration(8)}
+              disabled={isViewingPastDate}
+            >
+              <Text style={styles.actionButtonText}>+8oz Water</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.sleepButton]}
+              onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
+              disabled={isViewingPastDate}
+            >
+              <Text style={styles.actionButtonText}>+15m Sleep</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.actionButton, styles.stepsButton]}
+              onPress={handleMoodCheckIn}
+              disabled={isViewingPastDate}
+            >
+              <Text style={styles.actionButtonText}>Mood</Text>
+              <Text style={styles.actionButtonSubtext}>Check-in</Text>
+            </TouchableOpacity>
+          </View>
 
-          {/* Weekly Assessment Button - Shows Real Data */}
-          <TouchableOpacity
-            style={styles.testAssessmentButton}
-            onPress={() => {
-              if (!hasRealData && !realDataLoading) {
-                refreshAssessment();
-              }
-              setWeeklyAssessmentVisible(true);
-            }}
-            disabled={realDataLoading}
-          >
-            <Icon 
-              name={realDataLoading ? "hourglass" : hasRealData ? "analytics" : "refresh"} 
-              size={20} 
-              color="white" 
-            />
-            <Text style={styles.testAssessmentText}>
-              {realDataLoading ? 'Loading...' : hasRealData ? 'View Weekly Assessment' : 'Load Assessment'}
-            </Text>
-          </TouchableOpacity>
+          {/* Assessment Buttons Container - Side by side, always visible, disabled when viewing past dates */}
+          <View style={[styles.assessmentButtonsContainer, isViewingPastDate && styles.assessmentButtonsDisabled]}>
+            <TouchableOpacity
+              style={[styles.assessmentButton, styles.lifeScoreButton]}
+              onPress={() => setWellbeingDashboardVisible(true)}
+              disabled={isViewingPastDate}
+            >
+              <Icon name="analytics-outline" size={20} color="white" />
+              <Text style={styles.assessmentButtonText}>View Life Score</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[styles.assessmentButton, styles.weeklyAssessmentButton]}
+              onPress={() => {
+                if (!hasRealData && !realDataLoading) {
+                  refreshAssessment();
+                }
+                setWeeklyAssessmentVisible(true);
+              }}
+              disabled={realDataLoading || isViewingPastDate}
+            >
+              <Icon 
+                name={realDataLoading ? "hourglass" : hasRealData ? "calendar" : "refresh"} 
+                size={20} 
+                color="white" 
+              />
+              <Text style={styles.assessmentButtonText}>
+                {realDataLoading ? 'Loading...' : 'Assessment'}
+              </Text>
+            </TouchableOpacity>
+          </View>
           
           {/* Status indicator */}
-          {hasRealData && (
+          {hasRealData && !isViewingPastDate && (
             <Text style={styles.realDataIndicator}>
-              ✅ Using real data from Week {realAssessmentData?.performance.week}
+              ✅ Week {realAssessmentData?.performance.week} data available
             </Text>
           )}
-          {realDataError && (
+          {realDataError && !isViewingPastDate && (
             <Text style={styles.errorIndicator}>
-              ⚠️ {realDataError} (showing mock data)
+              ⚠️ {realDataError}
             </Text>
-          )}
-
-          {/* Quick Actions - Only show when viewing today */}
-          {!isViewingPastDate && (
-            <View style={styles.quickActions}>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.hydrationButton]}
-                onPress={() => addHydration(8)}
-              >
-                <Text style={styles.actionButtonText}>+8oz Water</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.sleepButton]}
-                onPress={() => updateSleep(Math.min(currentState.sleepHr + 0.25, targets.sleepHr))}
-              >
-                <Text style={styles.actionButtonText}>+15m Sleep</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.actionButton, styles.stepsButton]}
-                onPress={handleMoodCheckIn}
-              >
-                <Text style={styles.actionButtonText}>Mood</Text>
-                <Text style={styles.actionButtonSubtext}>Check-in</Text>
-              </TouchableOpacity>
-            </View>
           )}
 
           <View style={styles.bottomSpacer} />
@@ -605,24 +610,6 @@ const styles = StyleSheet.create({
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.warning,
   },
-  testAssessmentButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: theme.colors.primary,
-    paddingVertical: theme.spacing.base,
-    paddingHorizontal: theme.spacing.lg,
-    borderRadius: theme.borderRadius.lg,
-    marginHorizontal: theme.spacing.lg,
-    marginBottom: theme.spacing.base,
-    gap: theme.spacing.sm,
-    ...theme.shadows.medium,
-  },
-  testAssessmentText: {
-    fontSize: theme.typography.medium,
-    fontWeight: theme.typography.weights.semibold,
-    color: 'white',
-  },
   realDataIndicator: {
     fontSize: theme.typography.small,
     color: theme.colors.success,
@@ -645,6 +632,9 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
     marginTop: 0,
     paddingHorizontal: theme.spacing.base,
+  },
+  quickActionsDisabled: {
+    opacity: 0.5,
   },
   actionButton: {
     flex: 1,
@@ -683,6 +673,38 @@ const styles = StyleSheet.create({
     marginHorizontal: theme.spacing.base,
     marginBottom: theme.spacing.lg,
     marginTop: theme.spacing.sm,
+  },
+  assessmentButtonsContainer: {
+    flexDirection: 'row',
+    gap: theme.spacing.md,
+    marginHorizontal: theme.spacing.base,
+    marginBottom: theme.spacing.base,
+  },
+  assessmentButtonsDisabled: {
+    opacity: 0.5,
+  },
+  assessmentButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.md,
+    borderRadius: theme.borderRadius.lg,
+    gap: theme.spacing.sm,
+    minHeight: 48,
+    ...theme.shadows.medium,
+  },
+  lifeScoreButton: {
+    backgroundColor: '#43A047', // Green for Life Score
+  },
+  weeklyAssessmentButton: {
+    backgroundColor: theme.colors.primary, // Red for Assessment
+  },
+  assessmentButtonText: {
+    fontSize: theme.typography.regular,
+    fontWeight: theme.typography.weights.semibold,
+    color: 'white',
   },
   bottomSpacer: {
     height: 24,

@@ -488,7 +488,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             if (__DEV__) console.log('✅ Restored from AsyncStorage:', state);
             set({
               currentState: {
-                steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from AsyncStorage
+                steps: state.steps || 0, // FIXED: Restore steps from AsyncStorage
                 waterOz: state.waterOz || 0,
                 sleepHr: state.sleepHr || 0,
               },
@@ -501,7 +501,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
             if (__DEV__) console.log('⚠️ No AsyncStorage data, using cached state');
             set({
               currentState: {
-                steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from cache
+                steps: cache.currentState.steps, // FIXED: Restore steps from cache
                 waterOz: cache.currentState.waterOz,
                 sleepHr: cache.currentState.sleepHr,
               },
@@ -515,7 +515,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
           // Fallback to cache
           set({
             currentState: {
-              steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from cache
+              steps: cache.currentState.steps, // FIXED: Restore steps from cache
               waterOz: cache.currentState.waterOz,
               sleepHr: cache.currentState.sleepHr,
             },
