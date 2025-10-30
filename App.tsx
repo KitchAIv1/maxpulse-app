@@ -66,7 +66,7 @@ function TriHabitApp() {
     executeDecision,
     isExecuting,
     error: decisionError,
-  } = useProgressionDecision(userId, assessmentData?.assessment);
+  } = useProgressionDecision();
 
   // Weekly assessment modal state
   const [weeklyAssessmentVisible, setWeeklyAssessmentVisible] = useState(false);
@@ -228,19 +228,35 @@ function TriHabitApp() {
     }
   };
 
-  const handleProgressionDecision = async (decision: 'accepted' | 'override_advance' | 'coach_consultation') => {
-    if (!userId || !assessmentData) return;
+  const handleProgressionDecision = async (decisionObj: any) => {
+    if (!userId) return;
+
+    // Get the actual assessment data (prioritize real data)
+    const currentAssessmentData = realAssessmentData || assessmentData || mockAssessmentData;
+    
+    if (!currentAssessmentData) {
+      console.error('❌ No assessment data available');
+      return;
+    }
 
     try {
-      console.log('🎯 User made progression decision:', decision);
+      console.log('🎯 User made progression decision:', decisionObj);
       
-      await executeDecision(decision);
+      // Set the userId on the decision object
+      decisionObj.userId = userId;
+      
+      await executeDecision(decisionObj, currentAssessmentData);
       
       // Close modal after successful execution
       setWeeklyAssessmentVisible(false);
       
       // Show success feedback
       console.log('✅ Progression decision executed successfully');
+      
+      // Refresh the assessment data to show updated week/targets
+      if (hasRealData) {
+        await refreshAssessment();
+      }
       
     } catch (error) {
       console.error('❌ Error executing progression decision:', error);
