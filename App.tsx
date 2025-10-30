@@ -482,13 +482,13 @@ function TriHabitApp() {
             </>
           )}
 
-          {/* Assessment Testing Buttons (DEV ONLY) */}
-          {__DEV__ && userId && (
+          {/* Assessment Testing Buttons (DEV ONLY) - Uncomment to enable */}
+          {/* {__DEV__ && userId && (
             <>
               <AssessmentTestButton userId={userId} />
               <AssessmentValidationButton userId={userId} />
             </>
-          )}
+          )} */}
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
