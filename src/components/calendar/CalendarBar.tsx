@@ -143,6 +143,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
             styles.dayButton,
             dayItem.isSelected && styles.activeDayButton,
             dayItem.isFuture && styles.disabledDayButton,
+            dayItem.isToday && dayItem.isSelected && styles.todaySelectedDayButton,
           ]}
           onPress={() => handleDayPress(dayItem)}
           disabled={dayItem.isFuture || disabled}
@@ -154,6 +155,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
               dayItem.isSelected && styles.activeDayLabel,
               dayItem.isFuture && styles.disabledDayLabel,
               dayItem.isToday && !dayItem.isSelected && styles.todayDayLabel,
+              dayItem.isToday && dayItem.isSelected && styles.todaySelectedDayLabel,
               !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDayLabel,
             ]}
           >
@@ -166,6 +168,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
               dayItem.isSelected && styles.activeDateCircle,
               dayItem.isFuture && styles.disabledDateCircle,
               dayItem.isToday && !dayItem.isSelected && styles.todayDateCircle,
+              dayItem.isToday && dayItem.isSelected && styles.todaySelectedDateCircle,
               !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDateCircle,
             ]}
           >
@@ -175,6 +178,7 @@ const CalendarBarComponent: React.FC<CalendarBarProps> = ({
                 dayItem.isSelected && styles.activeDateText,
                 dayItem.isFuture && styles.disabledDateText,
                 dayItem.isToday && !dayItem.isSelected && styles.todayDateText,
+                dayItem.isToday && dayItem.isSelected && styles.todaySelectedDateText,
                 !dayItem.isFuture && !dayItem.isToday && !dayItem.isSelected && styles.pastDateText,
               ]}
             >
@@ -262,6 +266,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     ...theme.shadows.subtle,
   },
+  todaySelectedDayButton: {
+    backgroundColor: '#FFFFFF',
+    ...theme.shadows.subtle,
+    borderWidth: 2,
+    borderColor: '#007AFF', // Blue border to indicate "today"
+  },
   disabledDayButton: {
     opacity: 0.4,
   },
@@ -278,6 +288,10 @@ const styles = StyleSheet.create({
   },
   todayDayLabel: {
     color: '#6B7280',
+    fontWeight: theme.typography.weights.medium,
+  },
+  todaySelectedDayLabel: {
+    color: '#007AFF', // Blue text to indicate "today"
     fontWeight: theme.typography.weights.medium,
   },
   disabledDayLabel: {
@@ -307,6 +321,12 @@ const styles = StyleSheet.create({
     borderStyle: 'solid',
     backgroundColor: 'transparent',
   },
+  todaySelectedDateCircle: {
+    borderColor: '#007AFF', // Blue border to indicate "today"
+    borderStyle: 'solid',
+    backgroundColor: '#F0F8FF', // Light blue background to indicate "today + selected"
+    borderWidth: 2,
+  },
   disabledDateCircle: {
     borderColor: '#CFCFCF',
   },
@@ -326,6 +346,10 @@ const styles = StyleSheet.create({
   todayDateText: {
     color: '#6B7280',
     fontWeight: theme.typography.weights.medium,
+  },
+  todaySelectedDateText: {
+    color: '#007AFF', // Blue text to indicate "today"
+    fontWeight: theme.typography.weights.semibold,
   },
   disabledDateText: {
     color: '#CFCFCF',
