@@ -17,6 +17,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Badge, KPICard, CalAiTriRings, CalendarBar, BottomNavigation, WellbeingDashboard, CoachScreen, MoodCheckInModal, AppWithAuth } from './src/components';
 import { WeeklyAssessmentModal } from './src/components/assessment/WeeklyAssessmentModal';
 import { AssessmentTestButton } from './src/components/testing/AssessmentTestButton';
+import { AssessmentValidationButton } from './src/components/testing/AssessmentValidationButton';
 import { useAppStore } from './src/stores/appStore';
 import { useLifeScore } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
@@ -481,9 +482,12 @@ function TriHabitApp() {
             </>
           )}
 
-          {/* Assessment Caching Test Button (DEV ONLY) */}
+          {/* Assessment Testing Buttons (DEV ONLY) */}
           {__DEV__ && userId && (
-            <AssessmentTestButton userId={userId} />
+            <>
+              <AssessmentTestButton userId={userId} />
+              <AssessmentValidationButton userId={userId} />
+            </>
           )}
 
           <View style={styles.bottomSpacer} />
