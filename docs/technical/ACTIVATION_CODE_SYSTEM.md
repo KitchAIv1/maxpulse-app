@@ -142,42 +142,167 @@ The `onboarding_data` JSONB field contains comprehensive health assessment resul
 ```
 
 ### 90-Day Transformation Roadmap
+
+**Location**: The transformation roadmap is stored in `onboarding_data.v2Analysis.transformationRoadmap` (not directly in `onboarding_data.transformationRoadmap`).
+
+**Source**: This data is created by the MaxPulse Dashboard assessment flow (separate repository) and stored in the `activation_codes` table during user onboarding.
+
 ```json
 {
-  "transformationRoadmap": {
-    "phases": [
-      {
-        "name": "Foundation Building",
-        "phase": 1,
-        "weeks": "Weeks 1-4",
-        "focus": ["sleep_optimization", "hydration_habits"],
-        "actions": [
-          {
-            "action": "Establish consistent bedtime routine",
-            "how": "Set fixed bedtime and wake time",
-            "why": "Improve sleep quality and duration",
-            "tracking": "Sleep hours in app"
-          }
-        ],
-        "expectedResults": ["Better sleep quality", "Increased energy"],
-        "weeklyMilestones": [
-          {
-            "week": 1,
-            "focus": "Sleep routine establishment",
-            "expectedChanges": ["Earlier bedtime", "Consistent wake time"]
-          }
-        ]
-      }
-    ],
-    "successFactors": [
-      "Consistency over perfection",
-      "Gradual habit formation",
-      "Regular progress tracking"
-    ],
-    "overallTimeline": "90 days to sustainable health transformation"
+  "v2Analysis": {
+    "transformationRoadmap": {
+      "phases": [
+        {
+          "name": "Foundation",
+          "phase": 1,
+          "weeks": "Weeks 1-4",
+          "focus": ["Sleep", "Hydration", "Steps", "Mood Tracking"],
+          "actions": [
+            {
+              "action": "Sleep Protocol",
+              "how": "Set bedtime: 23:00 PM (to achieve 7-hour minimum)",
+              "why": "Sleep affects everything else",
+              "tracking": "Did you sleep 7+ hours? Y/N"
+            }
+          ],
+          "expectedResults": [
+            "Better morning alertness",
+            "Reduced headaches and fatigue",
+            "Clearer thinking and focus"
+          ],
+          "weeklyMilestones": [
+            {
+              "week": 1,
+              "focus": "Sleep 6.6hrs + Drink 1.5L water daily",
+              "expectedChanges": [
+                "Better morning alertness",
+                "Reduced brain fog"
+              ]
+            },
+            {
+              "week": 2,
+              "focus": "Sleep 6.8hrs + Drink 2L water daily",
+              "expectedChanges": [
+                "Reduced headaches",
+                "Less afternoon fatigue"
+              ]
+            },
+            {
+              "week": 3,
+              "focus": "Sleep 6.9hrs + Drink 2.5L water daily",
+              "expectedChanges": [
+                "Better sleep quality",
+                "Consistent steps"
+              ]
+            },
+            {
+              "week": 4,
+              "focus": "Sleep 7hrs + Drink 2.8L water daily",
+              "expectedChanges": [
+                "Mood improving",
+                "Sustained energy"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Movement",
+          "phase": 2,
+          "weeks": "Weeks 5-8",
+          "focus": ["Exercise Intensity", "Journaling"],
+          "weeklyMilestones": [
+            {
+              "week": 1,
+              "focus": "30-minute moderate to brisk walk + 6300 steps daily",
+              "expectedChanges": [
+                "Journaling started",
+                "Easier breathing"
+              ]
+            },
+            {
+              "week": 2,
+              "focus": "35-minute moderate to brisk walk + 7500 steps daily",
+              "expectedChanges": [
+                "Reflection habit forming",
+                "Better stamina"
+              ]
+            },
+            {
+              "week": 3,
+              "focus": "40-minute moderate to brisk walk + 8800 steps daily",
+              "expectedChanges": [
+                "Consistent journaling",
+                "Clothes fitting looser"
+              ]
+            },
+            {
+              "week": 4,
+              "focus": "45-minute moderate to brisk walk + 10000 steps daily",
+              "expectedChanges": [
+                "Daily reflection natural",
+                "Visible muscle tone"
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Nutrition",
+          "phase": 3,
+          "weeks": "Weeks 9-12",
+          "focus": ["Food quality", "Meal timing"],
+          "weeklyMilestones": [
+            {
+              "week": 9,
+              "focus": "Fast food 1x/week + daily breakfast",
+              "expectedChanges": [
+                "Reduced cravings",
+                "More stable energy"
+              ]
+            },
+            {
+              "week": 10,
+              "focus": "Maintain changes + no late snacking",
+              "expectedChanges": [
+                "Better digestion",
+                "Less bloating"
+              ]
+            },
+            {
+              "week": 11,
+              "focus": "Consistent meal timing",
+              "expectedChanges": [
+                "Natural hunger cues return",
+                "Better sleep"
+              ]
+            },
+            {
+              "week": 12,
+              "focus": "All habits integrated",
+              "expectedChanges": [
+                "2-3kg fat loss",
+                "Sustained energy",
+                "Clear mind"
+              ]
+            }
+          ]
+        }
+      ],
+      "successFactors": [
+        "Start with easiest changes first (sleep + water)",
+        "Build one habit at a time",
+        "Track daily - what gets measured gets managed",
+        "Expect setbacks - they're part of the process"
+      ],
+      "overallTimeline": "84 days (12 weeks)"
+    }
   }
 }
 ```
+
+**Important Notes**:
+- **Progression Pattern**: The roadmap uses an intentional "up and down" progression (e.g., Week 5 starts at 6300 steps after Week 4's 9061). This is **by design** - Phase 2 focuses on quality over quantity (brisk walks vs. casual steps).
+- **Target Extraction**: The V2 Engine Connector parses the `focus` string from `weeklyMilestones` to extract numeric targets (steps, water, sleep hours).
+- **Data Accuracy**: All weekly targets displayed in the app exactly match the stored roadmap data.
 
 ## Authentication Flow
 
@@ -399,9 +524,12 @@ const ERROR_MESSAGES = {
 - **Distributor Tracking**: Maintain distributor relationships
 
 ### With 90-Day Plans
-- **Plan Assignment**: Automatic plan assignment based on assessment
-- **Target Progression**: Dynamic target adjustment over time
+- **Plan Assignment**: Automatic plan assignment based on assessment from MaxPulse Dashboard
+- **Data Storage**: Transformation roadmap stored in `activation_codes.onboarding_data.v2Analysis.transformationRoadmap`
+- **Target Progression**: Dynamic target adjustment over time via V2 Engine Connector
 - **Milestone Tracking**: Progress tracking against plan milestones
+- **Intentional Progression**: Phase transitions may show target decreases (e.g., Week 5 drops steps) - this is intentional to focus on quality over quantity
+- **Data Verification**: All targets are verified against the stored roadmap to ensure accuracy
 
 ### With AI Coach
 - **Context Awareness**: AI Coach has access to assessment data

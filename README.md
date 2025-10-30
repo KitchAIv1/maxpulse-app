@@ -440,21 +440,32 @@ calAiText = {
 - **`offline_queue`**: Offline-first operation queue for background sync
 
 ### V2 Engine Integration
-The app uses the **V2 Engine Connector** to extract dynamic weekly targets from activation codes:
+The app uses the **V2 Engine Connector** to extract dynamic weekly targets from the 90-day transformation roadmap:
 
-```typescript
-// V2EngineConnector extracts current week's targets
-const weeklyTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
-// Returns: { steps: 6250, water: 51, sleep: 6.6 } based on plan_progress
-
-// TargetManager provides the single source of truth
-const targets = await TargetManager.getCurrentWeekTargets(userId);
-// UI displays these dynamic targets, not hardcoded values
+**Data Source**: The transformation roadmap is created by the MaxPulse Dashboard assessment flow and stored in:
 ```
+activation_codes.onboarding_data.v2Analysis.transformationRoadmap
+```
+
+**Target Extraction**:
+```typescript
+// V2EngineConnector extracts current week's targets from user's roadmap
+const weeklyTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+// Returns: { steps: 6250, waterOz: 51, sleepHr: 6.6, week: 1, phase: 1 }
+// Based on plan_progress.current_week and stored transformation roadmap
+
+// Targets are parsed from weeklyMilestones[].focus strings
+// Example: "Sleep 6.6hrs + Drink 1.5L water daily" → { steps: 6250, waterOz: 51, sleepHr: 6.6 }
+```
+
+**Progression Notes**:
+- Targets follow the **exact roadmap** from the user's personalized 90-day plan
+- Phase transitions (e.g., Week 5) may show **intentional target adjustments** (quality over quantity)
+- All targets are **verified** to match the stored roadmap data
 
 **Key Services:**
 - **`TargetManager`**: Single source of truth for user targets (V2 Engine → UI)
-- **`V2EngineConnector`**: Extracts weekly progression from transformation roadmap
+- **`V2EngineConnector`**: Extracts weekly progression from `v2Analysis.transformationRoadmap`
 - **`HealthDataService`**: CRUD operations for daily metrics with RLS
 - **`SyncManager`**: Background synchronization with offline queue support
 - **`OfflineQueueService`**: Offline-first data persistence with AsyncStorage
