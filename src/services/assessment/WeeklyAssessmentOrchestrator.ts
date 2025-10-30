@@ -77,7 +77,13 @@ export class WeeklyAssessmentOrchestrator {
       };
 
       // Store assessment results
-      await this.storeAssessmentResults(userId, assessmentData);
+      // Store results for future reference (optional - fails gracefully if table doesn't exist)
+      try {
+        await this.storeAssessmentResults(userId, assessmentData);
+      } catch (storageError) {
+        console.warn('⚠️ Could not store assessment history (table may not exist yet):', storageError);
+        // Continue anyway - assessment data is still valid
+      }
 
       return assessmentData;
     } catch (error) {
@@ -93,20 +99,26 @@ export class WeeklyAssessmentOrchestrator {
     userId: string,
     weekNumber: number
   ): Promise<WeeklyAssessmentData | null> {
-    const { data, error } = await supabase
-      .from('weekly_performance_history')
-      .select('*')
-      .eq('user_id', userId)
-      .eq('week_number', weekNumber)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('weekly_performance_history')
+        .select('*')
+        .eq('user_id', userId)
+        .eq('week_number', weekNumber)
+        .single();
 
-    if (error || !data) {
+      if (error || !data) {
+        return null;
+      }
+
+      // Convert stored data back to WeeklyAssessmentData format
+      // This is a simplified version - in production, you'd want full reconstruction
+      return null; // For MVP, always recalculate
+    } catch (error) {
+      // Table might not exist yet - that's okay
+      console.warn('⚠️ Could not check existing assessment (table may not exist yet)');
       return null;
     }
-
-    // Convert stored data back to WeeklyAssessmentData format
-    // This is a simplified version - in production, you'd want full reconstruction
-    return null; // For MVP, always recalculate
   }
 
   /**
