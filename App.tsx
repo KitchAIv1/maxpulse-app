@@ -21,6 +21,7 @@ import { useLifeScore } from './src/hooks/useAppSelectors';
 import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackingStore';
 import { useWeeklyAssessment } from './src/hooks/assessment/useWeeklyAssessment';
 import { useProgressionDecision } from './src/hooks/assessment/useProgressionDecision';
+import { useRealTimeAssessment } from './src/hooks/assessment/useRealTimeAssessment';
 import { formatSleepDuration } from './src/utils';
 import { theme } from './src/utils/theme';
 import { calAiCard, calAiContainer, calAiText } from './src/utils/calAiStyles';
@@ -51,6 +52,15 @@ function TriHabitApp() {
     triggerAssessment,
     dismissAssessment,
   } = useWeeklyAssessment(userId);
+
+  // Real-time assessment hook (fetches actual data)
+  const {
+    assessmentData: realAssessmentData,
+    isLoading: realDataLoading,
+    error: realDataError,
+    refreshAssessment,
+    hasData: hasRealData,
+  } = useRealTimeAssessment(userId);
 
   const {
     executeDecision,
@@ -350,14 +360,38 @@ function TriHabitApp() {
           </View>
 
 
-          {/* Test Button for Weekly Assessment */}
+          {/* Weekly Assessment Button - Shows Real Data */}
           <TouchableOpacity
             style={styles.testAssessmentButton}
-            onPress={() => setWeeklyAssessmentVisible(true)}
+            onPress={() => {
+              if (!hasRealData && !realDataLoading) {
+                refreshAssessment();
+              }
+              setWeeklyAssessmentVisible(true);
+            }}
+            disabled={realDataLoading}
           >
-            <Icon name="analytics" size={20} color="white" />
-            <Text style={styles.testAssessmentText}>Test Weekly Assessment</Text>
+            <Icon 
+              name={realDataLoading ? "hourglass" : hasRealData ? "analytics" : "refresh"} 
+              size={20} 
+              color="white" 
+            />
+            <Text style={styles.testAssessmentText}>
+              {realDataLoading ? 'Loading...' : hasRealData ? 'View Weekly Assessment' : 'Load Assessment'}
+            </Text>
           </TouchableOpacity>
+          
+          {/* Status indicator */}
+          {hasRealData && (
+            <Text style={styles.realDataIndicator}>
+              ✅ Using real data from Week {realAssessmentData?.performance.week}
+            </Text>
+          )}
+          {realDataError && (
+            <Text style={styles.errorIndicator}>
+              ⚠️ {realDataError} (showing mock data)
+            </Text>
+          )}
 
           {/* Quick Actions - Only show when viewing today */}
           {!isViewingPastDate && (
@@ -422,7 +456,7 @@ function TriHabitApp() {
       <WeeklyAssessmentModal
         visible={weeklyAssessmentVisible}
         onClose={handleWeeklyAssessmentClose}
-        assessmentData={assessmentData || mockAssessmentData}
+        assessmentData={realAssessmentData || assessmentData || mockAssessmentData}
         onDecision={handleProgressionDecision}
         isExecuting={isExecuting}
       />
@@ -534,6 +568,22 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.semibold,
     color: 'white',
+  },
+  realDataIndicator: {
+    fontSize: theme.typography.small,
+    color: theme.colors.success,
+    textAlign: 'center',
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    fontWeight: theme.typography.weights.medium,
+  },
+  errorIndicator: {
+    fontSize: theme.typography.small,
+    color: theme.colors.warning,
+    textAlign: 'center',
+    marginHorizontal: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
+    fontWeight: theme.typography.weights.medium,
   },
   quickActions: {
     flexDirection: 'row',
