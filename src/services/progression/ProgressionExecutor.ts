@@ -23,9 +23,17 @@ export class ProgressionExecutor {
     assessmentData: WeeklyAssessmentData
   ): Promise<ProgressionExecutionResult> {
     try {
+      console.log('🚀 ProgressionExecutor.executeProgression called');
+      console.log('   userId:', userId);
+      console.log('   decision:', decision);
+      console.log('   current week:', assessmentData.performance.week);
+      
       // Validate the decision
       const validation = await this.validateProgressionDecision(userId, decision);
+      console.log('   validation result:', validation);
+      
       if (!validation.isValid) {
+        console.error('❌ Validation failed:', validation.reason);
         return {
           success: false,
           type: decision.type,
@@ -37,9 +45,12 @@ export class ProgressionExecutor {
         };
       }
 
+      console.log('✅ Validation passed, executing decision type:', decision.type);
+      
       // Execute based on decision type
       switch (decision.type) {
         case 'advance':
+          console.log('📈 Executing advancement...');
           return await this.executeAdvancement(userId, decision, assessmentData);
         
         case 'extend':

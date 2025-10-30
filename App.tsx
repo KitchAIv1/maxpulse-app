@@ -229,7 +229,13 @@ function TriHabitApp() {
   };
 
   const handleProgressionDecision = async (decisionObj: any) => {
-    if (!userId) return;
+    console.log('🔍 handleProgressionDecision called with:', decisionObj);
+    console.log('🔍 Current userId:', userId);
+    
+    if (!userId) {
+      console.error('❌ No userId available');
+      return;
+    }
 
     // Get the actual assessment data (prioritize real data)
     const currentAssessmentData = realAssessmentData || assessmentData || mockAssessmentData;
@@ -240,23 +246,31 @@ function TriHabitApp() {
     }
 
     try {
-      console.log('🎯 User made progression decision:', decisionObj);
-      
       // Set the userId on the decision object
       decisionObj.userId = userId;
       
+      console.log('🎯 User made progression decision:', decisionObj);
+      console.log('📊 Assessment data:', {
+        week: currentAssessmentData.performance.week,
+        phase: currentAssessmentData.performance.phase,
+        recommendation: currentAssessmentData.assessment.recommendation
+      });
+      
       await executeDecision(decisionObj, currentAssessmentData);
+      
+      console.log('✅ Progression decision executed successfully');
       
       // Close modal after successful execution
       setWeeklyAssessmentVisible(false);
       
-      // Show success feedback
-      console.log('✅ Progression decision executed successfully');
-      
       // Refresh the assessment data to show updated week/targets
+      console.log('🔄 Refreshing assessment to show new week...');
       if (hasRealData) {
         await refreshAssessment();
       }
+      
+      // Force reload targets from V2 Engine
+      console.log('🔄 Reloading targets from V2 Engine...');
       
     } catch (error) {
       console.error('❌ Error executing progression decision:', error);
