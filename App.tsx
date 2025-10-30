@@ -269,8 +269,11 @@ function TriHabitApp() {
         await refreshAssessment();
       }
       
-      // Force reload targets from V2 Engine
+      // Force reload targets from V2 Engine and reset to TODAY
       console.log('🔄 Reloading targets from V2 Engine...');
+      const today = new Date().toISOString().split('T')[0];
+      await useAppStore.getState().loadCurrentWeekTargets(userId);
+      await useAppStore.getState().setSelectedDate(today); // Reset to today!
       
     } catch (error) {
       console.error('❌ Error executing progression decision:', error);
