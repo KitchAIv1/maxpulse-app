@@ -336,20 +336,16 @@ class StepTrackingService implements IStepTrackingService {
     // So we use it directly instead of accumulating
     const totalStepsForToday = stepData.steps;
 
-    // Step smoothing: Prevent large jumps from delayed CoreMotion processing
+    // Step validation is now handled at IOSPedometerService level
+    // This ensures rate limiting happens before data reaches the store
     if (this.todayStepsCache) {
       const increment = totalStepsForToday - this.todayStepsCache.steps;
       const timeSinceLastUpdate = now - this.lastUpdateTime;
       
-      // If increment is suspiciously large and time is short, it's likely delayed processing
-      // Maximum reasonable: 20 steps per second (very fast running)
-      const maxReasonableRate = 20; // steps per second
-      const expectedMaxIncrement = Math.ceil((timeSinceLastUpdate / 1000) * maxReasonableRate);
-      
-      if (increment > expectedMaxIncrement && timeSinceLastUpdate < 2000) {
-        console.log(`📊 Step smoothing applied: increment ${increment} over ${timeSinceLastUpdate}ms`);
-        // Don't reject, but mark with lower confidence for monitoring
-        stepData.confidence = 'medium';
+      // Log increment for monitoring (validation already done upstream)
+      if (increment > 0 && timeSinceLastUpdate > 0) {
+        const rate = (increment / (timeSinceLastUpdate / 1000)).toFixed(2);
+        console.log(`📊 Step increment: +${increment} over ${timeSinceLastUpdate}ms (${rate} steps/sec)`);
       }
     }
 

@@ -83,6 +83,8 @@ class IOSPedometerService {
   private lastStepCount = 0;
   private lastStepData: StepData | null = null;
   private sessionStartTime: Date | null = null;
+  private sessionStartSteps: number | null = null; // Track session baseline for relative progress
+  private lastValidUpdateTime: number = 0; // Track time of last valid update for rate limiting
 
   public static getInstance(): IOSPedometerService {
     if (!IOSPedometerService.instance) {
@@ -596,35 +598,55 @@ class IOSPedometerService {
           const result = await Pedometer.getStepCountAsync(start, end);
           
           if (result && typeof result.steps === 'number') {
+            // Initialize session baseline on first update
+            if (this.sessionStartSteps === null) {
+              this.sessionStartSteps = result.steps;
+              this.lastStepCount = result.steps;
+              this.lastValidUpdateTime = Date.now();
+              console.log(`🎯 Session started at ${result.steps} steps`);
+              return; // Don't emit initial value, wait for actual movement
+            }
+            
             // Check if steps have changed
             const stepsChanged = result.steps !== this.lastStepCount;
             
             if (stepsChanged) {
               const previousSteps = this.lastStepCount || 0;
               const increment = result.steps - previousSteps;
+              const now = Date.now();
+              const timeSinceLastUpdate = now - this.lastValidUpdateTime;
               
-              // Step validation: Prevent unrealistic increments
-              // Maximum reasonable: 15 steps per second (very fast running)
-              const maxIncrementPerSecond = 15;
-              const isReasonableIncrement = increment <= maxIncrementPerSecond;
+              // Step validation: Rate limiting based on time window
+              // Maximum reasonable: 3 steps per second (fast walking/jogging)
+              // This prevents batched CoreMotion updates from causing jumps
+              const maxStepsPerSecond = 3;
+              const timeWindowSeconds = Math.max(timeSinceLastUpdate / 1000, 1); // At least 1 second
+              const maxAllowedIncrement = Math.ceil(maxStepsPerSecond * timeWindowSeconds);
               
-              if (!isReasonableIncrement) {
-                console.warn(`⚠️ Unrealistic step increment detected: +${increment} steps. Possible false detection.`);
-                // Still update but log the anomaly for monitoring
+              let validatedSteps = result.steps;
+              let confidence: 'high' | 'medium' | 'low' = 'high';
+              
+              // If increment exceeds reasonable rate, cap it
+              if (increment > maxAllowedIncrement) {
+                console.warn(`⚠️ Rate limit applied: +${increment} steps in ${timeSinceLastUpdate}ms (max: ${maxAllowedIncrement})`);
+                validatedSteps = previousSteps + maxAllowedIncrement;
+                confidence = 'medium';
               }
               
               const stepData: StepData = {
-                steps: result.steps,
+                steps: validatedSteps,
                 timestamp: new Date().toISOString(),
                 source: 'coremotion',
-                confidence: isReasonableIncrement ? 'high' : 'medium',
+                confidence,
               };
 
-              this.lastStepCount = result.steps;
+              this.lastStepCount = validatedSteps;
               this.lastStepData = stepData;
+              this.lastValidUpdateTime = now;
               this.notifyStepUpdate(stepData);
               
-              console.log(`📊 Steps updated: ${result.steps} steps (+${increment})`);
+              const actualIncrement = validatedSteps - previousSteps;
+              console.log(`📊 Steps updated: ${validatedSteps} steps (+${actualIncrement}) [${confidence} confidence]`);
             }
           }
         } catch (error) {

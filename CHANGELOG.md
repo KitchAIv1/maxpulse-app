@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Step Tracking Rate Limiting & Accuracy Fix (v1.6 - October 30, 2025)**
+  - Fixed critical overcounting issue (70 actual steps → 160 counted)
+  - Implemented time-based rate limiting with 3 steps/second maximum
+  - Added session baseline tracking to prevent initial jump on app launch
+  - Removed redundant smoothing logic (validation now at source)
+  - Enhanced logging with step rate monitoring (steps/sec)
+  - Achieved deterministic accuracy with proper CoreMotion batch handling
+  - Fixed AsyncStorage overwriting live step data bug
+
 - **Step Tracking Near Real-Time Accuracy (v1.5)**
   - Reduced polling interval from 5s to 1s for near real-time updates
   - Added step validation with 15 steps/second threshold
