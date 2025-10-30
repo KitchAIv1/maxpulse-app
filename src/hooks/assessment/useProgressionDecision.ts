@@ -33,26 +33,36 @@ export const useProgressionDecision = (): UseProgressionDecisionReturn => {
     decision: ProgressionDecision,
     assessmentData: WeeklyAssessmentData
   ) => {
+    console.log('🎯 useProgressionDecision.executeDecision called');
+    console.log('📋 Decision:', JSON.stringify(decision, null, 2));
+    console.log('📊 Assessment data week:', assessmentData.performance.week);
+    
     setIsExecuting(true);
     setError(null);
     setExecutionResult(null);
 
     try {
+      console.log('🚀 Calling ProgressionExecutor.executeProgression...');
       const result = await ProgressionExecutor.executeProgression(
         decision.userId,
         decision,
         assessmentData
       );
 
+      console.log('✅ ProgressionExecutor returned:', JSON.stringify(result, null, 2));
       setExecutionResult(result);
 
       if (!result.success) {
+        console.error('❌ Progression failed:', result.error);
         setError(result.error || 'Failed to execute progression decision');
+      } else {
+        console.log('🎉 Progression succeeded! New week:', result.newWeek);
       }
     } catch (err) {
-      console.error('Error executing progression decision:', err);
+      console.error('💥 Error executing progression decision:', err);
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
     } finally {
+      console.log('🏁 executeDecision finished, isExecuting = false');
       setIsExecuting(false);
     }
   }, []);
