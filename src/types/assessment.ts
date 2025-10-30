@@ -66,27 +66,27 @@ export interface WeeklyAssessmentData {
 
 export interface WeeklyPerformanceHistory {
   id: string;
-  userId: string;
-  weekNumber: number;
-  phaseNumber: number;
-  startDate: string;
-  endDate: string;
-  stepsAchievementAvg: number;
-  waterAchievementAvg: number;
-  sleepAchievementAvg: number;
-  moodAchievementAvg: number;
-  overallAchievementAvg: number;
-  consistencyDays: number;
-  totalTrackingDays: number;
-  progressionRecommendation: ProgressionRecommendation;
-  userDecision?: UserDecision;
-  decisionReasoning: string[];
-  targetsAtAssessment: any;
-  strongestPillar: HealthPillar;
-  weakestPillar: HealthPillar;
-  assessedAt: string;
-  createdAt: string;
-  updatedAt: string;
+  user_id: string;
+  week_number: number;
+  phase_number: number;
+  start_date: string;
+  end_date: string;
+  steps_achievement_avg: number;
+  water_achievement_avg: number;
+  sleep_achievement_avg: number;
+  mood_achievement_avg: number;
+  overall_achievement_avg: number;
+  consistency_days: number;
+  total_tracking_days: number;
+  progression_recommendation: ProgressionRecommendation;
+  user_decision?: UserDecision;
+  decision_reasoning: string[];
+  targets_at_assessment: any;
+  strongest_pillar: HealthPillar;
+  weakest_pillar: HealthPillar;
+  assessed_at: string;
+  created_at: string;
+  updated_at: string;
 }
 
 // Enums and Union Types
