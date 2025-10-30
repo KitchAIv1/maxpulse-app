@@ -70,6 +70,9 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   const iconScale = useSharedValue(1);
   const glowOpacity = useSharedValue(0.3);
   
+  // Track previous step count to detect changes
+  const [prevSteps, setPrevSteps] = useState(stepsData.current);
+  
   // Animate percentages when they change
   useEffect(() => {
     Animated.parallel([
@@ -96,14 +99,16 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     ]).start();
   }, [stepsPct, waterPct, sleepPct, moodPct]);
   
-  // Bounce animation when steps change
+  // Bounce animation when steps change (only on increment, not initial load)
   useEffect(() => {
-    if (stepsData.current > 0) {
+    if (stepsData.current > prevSteps && prevSteps > 0) {
+      // Only animate if steps increased and we're not on initial load
       iconScale.value = withSequence(
         withSpring(1.15, { damping: 8, stiffness: 200 }),
         withSpring(1.0, { damping: 8, stiffness: 200 })
       );
     }
+    setPrevSteps(stepsData.current);
   }, [stepsData.current]);
   
   // Continuous glow pulse animation
