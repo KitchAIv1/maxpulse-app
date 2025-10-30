@@ -66,13 +66,6 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
   const [animatedSleepPct] = useState(new Animated.Value(sleepPct));
   const [animatedMoodPct] = useState(new Animated.Value(moodPct));
   
-  // Reanimated values for walking icon animations
-  const iconScale = useSharedValue(1);
-  const glowOpacity = useSharedValue(0); // Start hidden, only show when walking
-  
-  // Track previous step count to detect changes
-  const [prevSteps, setPrevSteps] = useState(stepsData.current);
-  
   // Animate percentages when they change
   useEffect(() => {
     Animated.parallel([
@@ -98,44 +91,6 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
       }),
     ]).start();
   }, [stepsPct, waterPct, sleepPct, moodPct]);
-  
-  // Bounce + Glow animation when steps change (only on increment, not initial load)
-  useEffect(() => {
-    if (stepsData.current > prevSteps && prevSteps > 0) {
-      // Only animate if steps increased and we're not on initial load
-      console.log(`🎯 BOUNCE TRIGGERED: ${prevSteps} → ${stepsData.current} (+${stepsData.current - prevSteps})`);
-      
-      // BIG bounce - much more visible (1.0 → 1.3)
-      iconScale.value = withSequence(
-        withSpring(1.3, { damping: 10, stiffness: 300 }), // Increased from 1.15 to 1.3
-        withSpring(1.0, { damping: 10, stiffness: 300 })
-      );
-      
-      // Glow appears when walking, fades out after 3 seconds
-      glowOpacity.value = withSequence(
-        withTiming(0.9, { duration: 200 }), // Quick fade in
-        withTiming(0.9, { duration: 2800 }), // Hold for 2.8s
-        withTiming(0, { duration: 500 })     // Fade out
-      );
-    }
-    setPrevSteps(stepsData.current);
-  }, [stepsData.current]);
-  
-  // Animated styles for icon with bounce
-  const animatedIconStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: iconScale.value }],
-  }));
-  
-  // Animated styles for glowing background circle (RED for visibility)
-  const animatedGlowStyle = useAnimatedStyle(() => ({
-    opacity: glowOpacity.value,
-    backgroundColor: '#FF3B30', // Bright RED (iOS red) - much more visible!
-    width: 65,  // Even larger
-    height: 65,
-    borderRadius: 32.5,
-    position: 'absolute',
-    zIndex: -1,
-  }));
 
   // Landscape Steps Card (label left, ring right, percentage below label)
   const LandscapeStepsCard: React.FC<{
@@ -147,10 +102,9 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
     size: number;
     accentColor?: string;
   }> = ({ title, icon, percentage, current, target, size, accentColor }) => {
-    // Create animated percentage text
-    const displayPercentage = typeof percentage === 'number' 
-      ? Math.round(percentage * 100)
-      : 0; // For animated values, we'll just show static percentage
+    // Calculate percentage display (reuse rewards card logic)
+    const percentageValue = typeof percentage === 'number' ? percentage : stepsPct;
+    const displayPercentage = percentageValue > 0 ? Math.max(Math.round(percentageValue * 100), 1) : 0;
     
     return (
       <View style={[styles.landscapeStepsCard, calAiCard.base]}>
@@ -168,12 +122,7 @@ export const CalAiTriRings: React.FC<CalAiTriRingsProps> = ({
             accentColor={accentColor}
             centerContent={
               <View style={styles.ringCenter}>
-                <View style={{ position: 'relative', alignItems: 'center', justifyContent: 'center' }}>
-                  <Reanimated.View style={animatedGlowStyle} />
-                  <Reanimated.View style={animatedIconStyle}>
-                    <Text style={styles.largeRingIcon}>{icon}</Text>
-                  </Reanimated.View>
-                </View>
+                <Text style={styles.largeRingIcon}>{icon}</Text>
                 <Text style={styles.largeRingValue}>
                   {current}
                 </Text>
