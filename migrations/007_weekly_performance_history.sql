@@ -71,4 +71,4 @@ CREATE POLICY "Users can manage their own weekly performance history"
 
 -- Grant permissions
 GRANT ALL ON weekly_performance_history TO authenticated;
-GRANT USAGE ON SEQUENCE weekly_performance_history_id_seq TO authenticated;
+-- Note: No sequence grant needed - UUID columns don't use sequences
