@@ -276,15 +276,24 @@ function TriHabitApp() {
       
       // Reload targets from V2 Engine
       const newTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      console.log('🔍 V2 Engine returned:', newTargets);
+      
       if (newTargets) {
+        // V2EngineConnector returns { steps, waterOz, sleepHr, ... } directly
         await useAppStore.getState().initializeTargets({
-          steps: newTargets.targets.steps,
-          waterOz: newTargets.targets.waterOz,
-          sleepHr: newTargets.targets.sleepHr,
+          steps: newTargets.steps,
+          waterOz: newTargets.waterOz,
+          sleepHr: newTargets.sleepHr,
+        });
+        console.log('✅ Targets updated in store:', {
+          steps: newTargets.steps,
+          waterOz: newTargets.waterOz,
+          sleepHr: newTargets.sleepHr,
         });
       }
       
-      // Reset to today's date
+      // Reset to today's date to show current data
+      console.log('📅 Resetting to today:', today);
       await useAppStore.getState().setSelectedDate(today);
       
     } catch (error) {
