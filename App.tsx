@@ -30,6 +30,7 @@ import ProfileScreen from './src/screens/ProfileScreen';
 import StepTrackingManager from './src/components/StepTrackingManager';
 import FirebaseService from './src/services/FirebaseService';
 import { AssessmentTrigger } from './src/services/scheduling/AssessmentTrigger';
+import V2EngineConnector from './src/services/V2EngineConnector';
 
 function TriHabitApp() {
   const [currentScreen, setCurrentScreen] = useState<'dashboard' | 'coach' | 'rewards' | 'settings'>('dashboard');
@@ -272,8 +273,19 @@ function TriHabitApp() {
       // Force reload targets from V2 Engine and reset to TODAY
       console.log('🔄 Reloading targets from V2 Engine...');
       const today = new Date().toISOString().split('T')[0];
-      await useAppStore.getState().loadCurrentWeekTargets(userId);
-      await useAppStore.getState().setSelectedDate(today); // Reset to today!
+      
+      // Reload targets from V2 Engine
+      const newTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      if (newTargets) {
+        await useAppStore.getState().initializeTargets({
+          steps: newTargets.targets.steps,
+          waterOz: newTargets.targets.waterOz,
+          sleepHr: newTargets.targets.sleepHr,
+        });
+      }
+      
+      // Reset to today's date
+      await useAppStore.getState().setSelectedDate(today);
       
     } catch (error) {
       console.error('❌ Error executing progression decision:', error);
