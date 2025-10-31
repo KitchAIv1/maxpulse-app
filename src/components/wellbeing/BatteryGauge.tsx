@@ -161,6 +161,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
     position: 'absolute',
+    top: '55%', // Push down from center
+    transform: [{ translateY: -30 }], // Adjust vertical alignment
   },
   scoreText: {
     fontSize: 56,
