@@ -1,8 +1,20 @@
-# MaxPulse Activation Code Authentication System
+# ⚠️ DEPRECATED - MaxPulse Activation Code Authentication System
 
-## Overview
+> **STATUS:** This authentication system has been deprecated as of v2.0.0 (November 2025)
+> 
+> **Replacement:** MaxPulse now uses direct email/password sign-in for verified Maximum 88 members. This document is retained for historical reference and data migration purposes only.
+>
+> **For current authentication:** See [AUTH_UI_OVERHAUL.md](ui/AUTH_UI_OVERHAUL.md)
 
-The MaxPulse app uses a unique activation code system that seamlessly integrates with pre-existing health assessment data. Users receive activation codes from distributors/coaches after completing health assessments, providing instant access to personalized health transformation programs.
+---
+
+## Overview (DEPRECATED)
+
+**⚠️ This system is no longer in use.**
+
+The MaxPulse app previously used a unique activation code system that integrated with pre-existing health assessment data. Users received activation codes from distributors/coaches after completing health assessments, providing instant access to personalized health transformation programs.
+
+**Current System:** Users now sign in directly with email/password (Maximum 88 verified members only).
 
 ## Architecture
 

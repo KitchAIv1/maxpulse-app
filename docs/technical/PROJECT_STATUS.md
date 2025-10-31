@@ -6,7 +6,7 @@
 
 ## 🎯 Project Overview
 
-**MaxPulse** is a comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Built with React Native + Expo, featuring Cal AI-inspired minimalist design.
+**MaxPulse** is a comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach** and **Wellbeing Dashboard** for personalized 90-day health journeys. Exclusive to Maximum 88 verified customers and distributors. Built with React Native + Expo, featuring Cal AI-inspired minimalist design.
 
 ## ✅ Completed Work
 
@@ -123,7 +123,7 @@ The app is **fully functional and production-ready** featuring:
 - ✅ **Complete UI functionality** - All screens and features working
 - ✅ **Database Integration** - Steps properly saved to `daily_metrics` table
 - ✅ **Cal AI Design System** - Consistent minimalist design throughout
-- ✅ **Authentication System** - Activation code validation and profile setup
+- ✅ **Authentication System** - Email/password sign-in for verified Maximum 88 members (Activation code system deprecated in v2.0.0)
 - ✅ **AI Coach Integration** - Natural language health conversations
 - ✅ **Wellbeing Dashboard** - Comprehensive Life Score breakdown
 - ✅ **Mood Tracking** - Emotional wellness with journaling
@@ -181,11 +181,11 @@ The app is **fully functional and production-ready** featuring:
 - [ ] **Progress Feedback** - Real-time step increment visualization
 
 #### **2. Authentication System (Completed)**
-**Status**: ✅ Fully implemented with activation code system
+**Status**: ✅ MVP1 - Email/password sign-in for Maximum 88 verified members
 
 **Implemented Features:**
-- ✅ **AuthContainer** - Sign up/Sign in toggle with activation code validation
-- ✅ **ActivationCodeInput** - Required for new users with real-time validation
+- ✅ **AuthContainer** - Sign-in flow for verified users (Activation code system deprecated in v2.0.0)
+- ✅ **LoginScreen** - Exclusive sign-in with elegant branding
 - ✅ **Supabase Auth** - Email/password authentication with RLS
 - ✅ **ProfileConfirmationScreen** - Assessment data review and editing
 - ✅ **WelcomeScreen** - Onboarding flow with personalized greeting

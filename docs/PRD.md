@@ -1,6 +1,6 @@
 # MaxPulse – Personalized Health Transformation App (PRD)
 
-A comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys.
+A comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach** and **Wellbeing Dashboard** for personalized 90-day health journeys. Exclusive to Maximum 88 verified customers and distributors.
 
 *Last updated: November 22, 2025 - Version 2.0.0 (MVP1 Release)*
 
@@ -73,16 +73,16 @@ A comprehensive health transformation platform that combines **Steps**, **Hydrat
 
 ## 1) Executive Summary
 
-MaxPulse transforms health habits through personalized, data-driven 90-day transformation programs. Users access the app via unique activation codes that contain their personalized health assessment data, dynamic targets, and transformation roadmap. The app features real-time step tracking, hydration logging, sleep monitoring, and mood check-ins, all unified through a Life Score visualization and AI Coach guidance.
+MaxPulse transforms health habits through personalized, data-driven 90-day transformation programs. Users access the app via secure email authentication (Maximum 88 verified members only). The app features real-time step tracking, hydration logging, sleep monitoring, and mood check-ins, all unified through a Life Score visualization and AI Coach guidance.
 
 **Key Differentiators:**
-- **Activation Code System**: Seamless onboarding with pre-configured personalized targets
+- **Exclusive Access**: Secure sign-in for verified Maximum 88 customers and distributors
 - **AI Coach Chat Interface**: Natural language health conversations with contextual insights
 - **Wellbeing Dashboard**: Comprehensive Life Score breakdown with trends and insights
 - **Mood Check-In System**: Emotional wellness tracking with journaling capabilities
 - **90-Day Transformation Plans**: Progressive targets based on individual health assessments
 
-**Primary KPIs:** Day-7 retention; Life Score improvement over 90 days; Activation code conversion rate; AI Coach engagement.
+**Primary KPIs:** Day-7 retention; Life Score improvement over 90 days; Sign-in success rate; AI Coach engagement.
 
 ---
 
@@ -90,12 +90,12 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 
 **Goals**
 
-* **Personalized Health Transformation**: Activation code system with individualized targets and 90-day plans
+* **Personalized Health Transformation**: Individualized targets and 90-day plans based on user profile data
 * **Comprehensive Tracking**: Steps (auto), hydration, sleep, and mood check-ins with Life Score visualization
 * **AI-Powered Guidance**: Natural language coach interface with contextual health insights
 * **Emotional Wellness**: Mood tracking with journaling and wellness check capabilities
 * **Data-Driven Insights**: Wellbeing Dashboard with trends, breakdowns, and actionable recommendations
-* **Seamless Authentication**: Supabase-powered auth with activation code validation and profile setup
+* **Secure Authentication**: Supabase-powered email/password sign-in for verified Maximum 88 members
 * **Cross-Platform Excellence**: React Native with Expo for iOS/Android parity
 
 **Non‑Goals (Current Version)**
@@ -109,18 +109,18 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 
 ## 3) Personas
 
-* **Health Transformation Seeker (primary):** 30–55, has completed a health assessment and received an activation code from a distributor/coach. Wants personalized guidance and measurable progress. Success = follows 90-day plan, engages with AI Coach, improves Life Score consistently.
+* **Health Transformation Seeker (primary):** 30–55, verified Maximum 88 member with access to personalized health program. Wants personalized guidance and measurable progress. Success = follows 90-day plan, engages with AI Coach, improves Life Score consistently.
 * **Wellness-Conscious Professional:** Busy but health-aware, values data-driven insights and emotional wellness tracking. Uses mood check-ins and AI Coach for stress management and work-life balance.
-* **Accountability Partner User:** Works with a health coach/distributor who provided the activation code. Values progress tracking and sharing insights with their support network.
+* **Accountability Partner User:** Works with a health coach/distributor. Values progress tracking and sharing insights with their support network.
 
 ---
 
 ## 4) User Stories (Current Implementation)
 
 ### Authentication & Onboarding
-1. As a new user, I **enter my activation code** to access my personalized health program
-2. As a user, I **review and confirm my profile** derived from my health assessment data
-3. As a user, I see my **personalized targets** based on my assessment results
+1. As a verified Maximum 88 member, I **sign in with my email** to access my personalized health program
+2. As a user, I see my **personalized targets** automatically loaded from my profile
+3. As a user, I can **review and manage my profile** data anytime
 
 ### Core Health Tracking
 4. As a user, I see **today's steps/hydration/sleep/mood** and a **Life Score** at a glance
@@ -161,7 +161,7 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 * **`WellbeingDashboard`**: Comprehensive modal with battery gauge, contribution bars, insights, and trends
 * **`CoachScreen`**: Full-screen AI chat interface with message bubbles and quick actions
 * **`BottomNavigation`**: Cal AI styled bottom nav with outline icons and white background
-* **`AuthContainer`**: Complete authentication flow with activation code validation
+* **`AuthContainer`**: Secure email/password sign-in flow for verified users
 
 ### MaxPulse Branding
 * **Header**: 34x34px logo + "MaxPulse" title (30.5px, weight 500) + red rewards (#FF0000)
@@ -267,7 +267,7 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 
 **Backend & Authentication**:
 - **Supabase**: PostgreSQL database with Row Level Security (RLS)
-- **Authentication**: Email/password with activation code validation
+- **Authentication**: Email/password sign-in for verified Maximum 88 members
 - **Real-time**: Supabase subscriptions for live data updates
 - **Security**: Environment variables, secure token storage
 
@@ -278,8 +278,8 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 - **Symptom Processing**: Natural language symptom sharing and analysis
 
 **Data Architecture**:
-- **Activation Codes**: Pre-configured user profiles with personalized targets
-- **Dynamic Targets**: 90-day progressive health plans
+- **User Profiles**: Personalized health profiles with individualized targets
+- **Dynamic Targets**: 90-day progressive health plans extracted from user data
 - **Life Score Algorithm**: Multi-factor health scoring with mood integration
 - **Trend Analysis**: Historical data processing and visualization
 
@@ -294,17 +294,12 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 
 ### Core Authentication & Profiles
 
-**`activation_codes`** (Pre-existing from assessment system)
-* `id` (uuid, pk), `code` (unique), `distributor_id`, `session_id`
-* `customer_name`, `customer_email`, `onboarding_data` (jsonb)
-* `status` (pending|activated|expired), `activated_at`, `expires_at`
-* Contains personalized targets, demographics, medical data, and 90-day plans
-
 **`app_user_profiles`** (MaxPulse app users)
 * `user_id` (fk to auth.users), `email`, `name`, `age`, `gender`
 * `height_cm`, `weight_kg`, `bmi`, `medical_conditions[]`, `medical_allergies[]`
-* `mental_health_data` (jsonb), `activation_code_id` (fk)
+* `mental_health_data` (jsonb)
 * `distributor_id`, `session_id`, `plan_type`
+* Contains personalized targets, demographics, medical data, and 90-day plans (for users migrated from activation codes, stored in `onboarding_data` JSONB field)
 
 ### Health Tracking Data
 
@@ -354,7 +349,7 @@ MaxPulse transforms health habits through personalized, data-driven 90-day trans
 ### Security & Access Control
 * **Row Level Security (RLS)** enabled on all user tables
 * Policies ensure `user_id = auth.uid()` for data access
-* Activation codes validate during signup process
+* Email authentication validates user access (Maximum 88 verified members only)
 
 ---
 
@@ -471,17 +466,16 @@ export function generateCoachResponse(
 
 ### Authentication & Onboarding Flow
 
-1. **Signup Screen**: User enters activation code, email, and password
-2. **Code Validation**: Real-time validation against Supabase activation_codes table
-3. **Profile Confirmation**: Display assessment-derived profile data for review/editing
-4. **Account Creation**: Create Supabase auth user and app_user_profiles record
-5. **Target Initialization**: Load personalized targets from activation code data
+1. **Sign-In Screen**: User enters email and password (Maximum 88 verified member)
+2. **Authentication**: Supabase email/password authentication
+3. **Profile Loading**: Load user profile data and personalized targets from database
+4. **Dashboard Display**: Show personalized health dashboard with targets
 
 **Acceptance Criteria:**
-* Activation codes are validated in real-time with visual feedback
-* Invalid/expired/used codes show appropriate error messages
-* Profile data is pre-populated from assessment with editing capabilities
-* Targets are automatically set based on personalized assessment results
+* Only verified Maximum 88 members can sign in
+* Invalid credentials show appropriate error messages
+* Profile data and targets load automatically after authentication
+* Users see their personalized health program immediately after sign-in
 
 ### Daily Health Tracking Loop
 

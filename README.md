@@ -1,6 +1,6 @@
 # MaxPulse - Personalized Health Transformation App
 
-A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations.
+A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach** and **Wellbeing Dashboard** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations. Exclusive to Maximum 88 verified customers and distributors.
 
 ![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-2.0.0-green) ![MVP1](https://img.shields.io/badge/MVP1-Release%20Ready-orange)
 
@@ -60,8 +60,8 @@ A comprehensive React Native health transformation platform that combines **Step
 ## 🚀 Features
 
 ### 🔐 **Authentication & Onboarding**
-- **Activation Code System**: Seamless onboarding with pre-configured personalized targets
-- **Profile Confirmation**: Review and edit assessment-derived profile data
+- **Email Sign-In**: Secure authentication for Maximum 88 verified customers and distributors only
+- **Profile Management**: Access personalized health profiles with individualized targets
 - **Supabase Authentication**: Secure email/password auth with Row Level Security
 
 ### 📊 **Health Tracking**
@@ -221,7 +221,7 @@ maxpulse-app/
 │   ├── types/                 # TypeScript type definitions
 │   │   ├── index.ts           # Core types
 │   │   ├── health.ts          # Health tracking types
-│   │   ├── activation.ts      # Activation code types with V2 Engine
+│   │   ├── activation.ts      # (Deprecated - No longer used in MVP1)
 │   │   ├── sync.ts            # Sync operation types
 │   │   ├── wellbeing.ts       # Wellbeing Dashboard types
 │   │   ├── coach.ts           # AI Coach types
@@ -474,9 +474,8 @@ calAiText = {
 ## 📊 Database Schema
 
 ### Core Tables
-- **`activation_codes`**: Pre-configured user profiles with personalized targets and V2 Engine data
-  - Contains `onboarding_data` JSON with `v2Analysis.personalizedTargets` and `transformationRoadmap`
-- **`app_user_profiles`**: MaxPulse app user profiles and preferences
+- **`app_user_profiles`**: MaxPulse app user profiles and preferences with personalized targets and V2 Engine data
+  - Contains `onboarding_data` JSON with `v2Analysis.personalizedTargets` and `transformationRoadmap` (for existing users migrated from activation codes)
 - **`daily_metrics`**: Daily aggregated health data with auto-calculated `life_score` (generated column)
 - **`mood_checkins`**: Emotional wellness tracking data
 - **`plan_progress`**: 90-day transformation plan tracking with weekly milestone data
@@ -491,9 +490,10 @@ calAiText = {
 ### V2 Engine Integration
 The app uses the **V2 Engine Connector** to extract dynamic weekly targets from the 90-day transformation roadmap:
 
-**Data Source**: The transformation roadmap is created by the MaxPulse Dashboard assessment flow and stored in:
+**Data Source**: The transformation roadmap is created by the MaxPulse Dashboard assessment flow and stored in user profiles:
 ```
-activation_codes.onboarding_data.v2Analysis.transformationRoadmap
+app_user_profiles.onboarding_data.v2Analysis.transformationRoadmap
+(or extracted from user's existing health assessment data)
 ```
 
 **Target Extraction**:
@@ -560,7 +560,7 @@ const lifeScore = ((stepsPct * 0.25) + (waterPct * 0.25) +
 The app includes comprehensive mock data for development:
 - Simulated step tracking for Expo Go compatibility
 - Mock health permissions and sensor data
-- Sample activation codes and user profiles
+- Mock authentication for development testing
 
 ### Testing
 ```bash
@@ -654,7 +654,7 @@ Visit the **[docs/](docs/)** directory for comprehensive documentation:
 - **[Project Status](docs/technical/PROJECT_STATUS.md)** - Current development state
 - **[Cursor AI Rules](docs/technical/CURSOR_AI_RULES.md)** - Development guidelines
 - **[Database Schema](docs/technical/supabase_schema.sql)** - Complete database structure
-- **[Activation System](docs/technical/ACTIVATION_CODE_SYSTEM.md)** - Authentication flow
+- **[Authentication System](docs/technical/AUTH_UI_OVERHAUL.md)** - Sign-in flow (Activation Code System deprecated in MVP1)
 - **[AI Coach System](docs/technical/AI_COACH_WELLBEING_SYSTEM.md)** - AI features
 - **[Rewards UI Updates](docs/technical/ui/REWARDS_UI_UPDATES.md)** - Rewards redesign documentation
 

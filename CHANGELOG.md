@@ -16,6 +16,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - **Exclusive Sign-In Experience**
   - Removed sign-up flow (handled in separate repo)
+  - **Activation Code System Removed** - Replaced with email/password sign-in for verified Maximum 88 members
   - Elegant "Welcome to MaxPulse" branding
   - "Maximum 88 Exclusive" badge with shield icon
   - "Where health meets purpose" tagline
@@ -62,6 +63,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - AuthContainer now defaults to login flow
   - Sign-up handled in separate repository
   - Clean, focused sign-in experience
+  
+- **Activation Code System Deprecated**
+  - Removed activation code validation and sign-up flow
+  - Users now sign in directly with email/password (verified Maximum 88 members only)
+  - Activation code references removed from all documentation
+  - Legacy `activation_codes` table may still exist for historical data migration
 
 - **Text Arrangement on Sign-In Page**
   - Removed redundant "Welcome to MaxPulse" text
