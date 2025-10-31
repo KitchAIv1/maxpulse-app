@@ -22,6 +22,7 @@ import {
 import ComplianceService from './coach/ComplianceService';
 import SymptomAnalysisEngine from './coach/SymptomAnalysisEngine';
 import HealthRecommendationService from './coach/HealthRecommendationService';
+import OpenAIService from './coach/OpenAIService';
 
 class AICoachService {
   private static instance: AICoachService;
@@ -32,7 +33,9 @@ class AICoachService {
   private complianceService: ComplianceService;
   private symptomEngine: SymptomAnalysisEngine;
   private recommendationService: HealthRecommendationService;
+  private openAIService: OpenAIService;
   private useHealthFocusedLogic: boolean = true; // Toggle for new logic
+  private conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
 
   private constructor() {
     this.config = {
@@ -51,6 +54,7 @@ class AICoachService {
     this.complianceService = ComplianceService.getInstance();
     this.symptomEngine = SymptomAnalysisEngine.getInstance();
     this.recommendationService = HealthRecommendationService.getInstance();
+    this.openAIService = OpenAIService.getInstance();
   }
 
   public static getInstance(): AICoachService {
@@ -72,8 +76,11 @@ class AICoachService {
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
 
     if (this.useHealthFocusedLogic) {
+      console.log('💬 Processing message:', userMessage.substring(0, 50) + '...');
+      
       // Check for emergency keywords first
       if (this.complianceService.checkForEmergency(userMessage)) {
+        console.log('🚨 Emergency detected!');
         return {
           message: this.complianceService.getEmergencyResponseMessage('USA'),
           contextData: healthContext,
@@ -84,7 +91,17 @@ class AICoachService {
 
       // Detect if message contains symptoms
       if (this.isSymptomRelated(userMessage)) {
+        console.log('🩺 Symptom-related message detected');
         return await this.handleSymptomMessage(userMessage, healthContext);
+      }
+
+      // For free-form health conversations, use OpenAI if available
+      console.log('🤔 Checking OpenAI availability:', this.openAIService.isAvailable());
+      if (this.openAIService.isAvailable() && userMessage.length > 10) {
+        console.log('🤖 Using OpenAI for free-form conversation');
+        return await this.handleFreeFormConversation(userMessage, healthContext);
+      } else {
+        console.log('📋 Using rule-based response (OpenAI not available or message too short)');
       }
     }
 
@@ -818,7 +835,15 @@ class AICoachService {
     healthContext: HealthContextData
   ): Promise<CoachResponse> => {
     try {
-      // Analyze symptoms using new engine
+      // Add user message to conversation history for context
+      this.conversationHistory.push({ role: 'user', content: userMessage });
+      
+      // Keep only last 10 messages for context
+      if (this.conversationHistory.length > 10) {
+        this.conversationHistory = this.conversationHistory.slice(-10);
+      }
+
+      // Analyze symptoms using new engine with conversation history
       const analysis = await this.symptomEngine.analyzeSymptom({
         symptomDescription: userMessage,
         symptomType: this.detectSymptomType(userMessage),
@@ -827,46 +852,61 @@ class AICoachService {
           hydration_oz: healthContext.hydration?.current,
           steps: healthContext.steps?.current,
         },
+        conversationHistory: this.conversationHistory,
       });
 
+      console.log('📊 Analysis complete. Has AI response:', !!analysis.ai_raw_response);
+
       // Build response message
-      let message = '💙 Thank you for sharing. ';
+      let message = '';
 
-      // Add severity assessment
-      if (analysis.severity_assessment === 'severe' || analysis.severity_assessment === 'critical') {
-        message += 'Based on what you\'ve described, I recommend consulting with a healthcare provider. ';
-      } else {
-        message += 'I hear what you\'re experiencing. ';
-      }
-
-      // Add possible causes
-      if (analysis.possible_causes.length > 0) {
-        message += '\n\n**Possible factors:**\n';
-        analysis.possible_causes.slice(0, 3).forEach(cause => {
-          message += `• ${cause}\n`;
-        });
-      }
-
-      // Add health data correlations
-      if (analysis.correlation_with_health_data) {
-        const correlations = [];
-        if (analysis.correlation_with_health_data.sleep_deficit) {
-          correlations.push('• Your sleep has been below optimal levels');
-        }
-        if (analysis.correlation_with_health_data.hydration_low) {
-          correlations.push('• Your hydration is lower than recommended');
-        }
-        if (analysis.correlation_with_health_data.activity_level_change) {
-          correlations.push('• Your activity level has decreased');
-        }
+      // Use AI response if available, otherwise use rule-based template
+      if (analysis.ai_raw_response) {
+        console.log('✅ Using AI-generated response');
+        message = analysis.ai_raw_response;
         
-        if (correlations.length > 0) {
-          message += '\n\n**Health patterns I noticed:**\n' + correlations.join('\n');
-        }
-      }
+        // Add AI response to conversation history
+        this.conversationHistory.push({ role: 'assistant', content: message });
+      } else {
+        console.log('📋 Using rule-based template response');
+        message = '💙 Thank you for sharing. ';
 
-      // Add disclaimer
-      message += '\n\n' + this.complianceService.getRequiredDisclaimers('lifestyle', ['USA'])[0].text;
+        // Add severity assessment
+        if (analysis.severity_assessment === 'severe' || analysis.severity_assessment === 'critical') {
+          message += 'Based on what you\'ve described, I recommend consulting with a healthcare provider. ';
+        } else {
+          message += 'I hear what you\'re experiencing. ';
+        }
+
+        // Add possible causes
+        if (analysis.possible_causes.length > 0) {
+          message += '\n\n**Possible factors:**\n';
+          analysis.possible_causes.slice(0, 3).forEach(cause => {
+            message += `• ${cause}\n`;
+          });
+        }
+
+        // Add health data correlations
+        if (analysis.correlation_with_health_data) {
+          const correlations = [];
+          if (analysis.correlation_with_health_data.sleep_deficit) {
+            correlations.push('• Your sleep has been below optimal levels');
+          }
+          if (analysis.correlation_with_health_data.hydration_low) {
+            correlations.push('• Your hydration is lower than recommended');
+          }
+          if (analysis.correlation_with_health_data.activity_level_change) {
+            correlations.push('• Your activity level has decreased');
+          }
+          
+          if (correlations.length > 0) {
+            message += '\n\n**Health patterns I noticed:**\n' + correlations.join('\n');
+          }
+        }
+
+        // Add disclaimer
+        message += '\n\n' + this.complianceService.getRequiredDisclaimers('lifestyle', ['USA'])[0].text;
+      }
 
       return {
         message,
@@ -898,6 +938,60 @@ class AICoachService {
     if (lower.includes('breath') || lower.includes('cough')) return 'respiratory';
     if (lower.includes('stress') || lower.includes('anxious') || lower.includes('mood')) return 'mental';
     return 'other';
+  }
+
+  /**
+   * Handle free-form conversation with OpenAI
+   * Used when user deviates from structured options
+   */
+  private async handleFreeFormConversation(
+    userMessage: string,
+    healthContext: HealthContextData
+  ): Promise<CoachResponse> {
+    // Add user message to conversation history
+    this.conversationHistory.push({ role: 'user', content: userMessage });
+
+    // Keep only last 10 messages for context
+    if (this.conversationHistory.length > 10) {
+      this.conversationHistory = this.conversationHistory.slice(-10);
+    }
+
+    try {
+      const aiResponse = await this.openAIService.analyzeHealthSymptom({
+        userMessage,
+        healthData: {
+          sleep_hours: healthContext.sleep?.current,
+          hydration_oz: healthContext.hydration?.current,
+          steps: healthContext.steps?.current,
+          stress_level: healthContext.mood,
+        },
+        conversationHistory: this.conversationHistory,
+      });
+
+      // Add assistant response to history
+      this.conversationHistory.push({ role: 'assistant', content: aiResponse.message });
+
+      return {
+        message: aiResponse.message,
+        contextData: healthContext,
+        messageType: aiResponse.requires_medical_attention ? 'insight' : 'suggestion',
+        quickActions: [
+          { id: 'continue', label: 'Tell me more', action: 'wellness_check', icon: 'chatbubble-outline' },
+          { id: 'new_topic', label: 'Ask something else', action: 'wellness_check', icon: 'help-circle-outline' },
+        ],
+      };
+    } catch (error) {
+      console.error('Free-form conversation error:', error);
+      // Fallback to rule-based response
+      return this.craftResponse(userMessage, healthContext, 'text');
+    }
+  }
+
+  /**
+   * Clear conversation history (e.g., when starting a new session)
+   */
+  public clearConversationHistory(): void {
+    this.conversationHistory = [];
   }
 }
 

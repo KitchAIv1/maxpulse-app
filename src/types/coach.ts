@@ -33,6 +33,12 @@ export interface CoachResponse {
   quickActions?: QuickAction[];
   messageType?: ChatMessage['messageType'];
   followUpSuggestions?: string[];
+  metadata?: {
+    symptomAnalysis?: any;
+    recommendations?: any[];
+    needsDatabaseSave?: boolean;
+    [key: string]: any;
+  };
 }
 
 export interface ChatSession {

@@ -9,6 +9,7 @@ import {
   SymptomType 
 } from '../../types/health';
 import ComplianceService from './ComplianceService';
+import OpenAIService from './OpenAIService';
 
 interface AnalysisInput {
   symptomDescription: string;
@@ -20,11 +21,13 @@ interface AnalysisInput {
     steps?: number;
     stress_level?: string;
   };
+  conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }
 
 class SymptomAnalysisEngine {
   private static instance: SymptomAnalysisEngine;
   private complianceService: ComplianceService;
+  private openAIService: OpenAIService;
 
   // Rule-based severity indicators
   private readonly severityIndicators = {
@@ -36,6 +39,7 @@ class SymptomAnalysisEngine {
 
   private constructor() {
     this.complianceService = ComplianceService.getInstance();
+    this.openAIService = OpenAIService.getInstance();
   }
 
   public static getInstance(): SymptomAnalysisEngine {
@@ -203,21 +207,48 @@ class SymptomAnalysisEngine {
   }
 
   /**
-   * Enhance analysis with AI (OpenAI API integration point)
-   * For MVP, returns rule-based analysis
-   * In production, this would call OpenAI API
+   * Enhance analysis with AI (OpenAI API integration)
+   * Hybrid approach: Use rule-based as fallback, OpenAI for deeper insights
    */
   private async enhanceWithAI(
     input: AnalysisInput,
     ruleBasedAnalysis: AISymptomAnalysis
   ): Promise<AISymptomAnalysis> {
-    // TODO: Integrate OpenAI API for deeper analysis
-    // For MVP, return enhanced rule-based analysis
-    
-    return {
-      ...ruleBasedAnalysis,
-      detected_conditions: this.detectConditions(input.symptomDescription),
-    };
+    // If OpenAI is not available, return rule-based analysis
+    if (!this.openAIService.isAvailable()) {
+      console.log('OpenAI not available, using rule-based analysis');
+      return {
+        ...ruleBasedAnalysis,
+        detected_conditions: this.detectConditions(input.symptomDescription),
+      };
+    }
+
+    try {
+      // Call OpenAI for enhanced analysis with conversation history
+      const aiResponse = await this.openAIService.analyzeHealthSymptom({
+        userMessage: input.symptomDescription,
+        symptomContext: `Symptom type: ${input.symptomType}, Duration: ${input.duration_days || 'unknown'} days`,
+        healthData: input.healthContext,
+        conversationHistory: input.conversationHistory || [],
+      });
+
+      // Merge AI insights with rule-based analysis
+      return {
+        ...ruleBasedAnalysis,
+        confidence: aiResponse.confidence,
+        detected_conditions: this.detectConditions(input.symptomDescription),
+        requires_professional_evaluation: aiResponse.requires_medical_attention,
+        urgency_level: aiResponse.detected_urgency,
+        ai_raw_response: aiResponse.raw_response,
+      };
+    } catch (error) {
+      console.error('OpenAI enhancement failed, falling back to rule-based:', error);
+      // Fallback to rule-based analysis
+      return {
+        ...ruleBasedAnalysis,
+        detected_conditions: this.detectConditions(input.symptomDescription),
+      };
+    }
   }
 
   /**

@@ -6,7 +6,7 @@ import { supabase } from './supabase';
 
 export interface QueuedOperation {
   id: string;
-  type: 'hydration' | 'sleep' | 'mood' | 'steps';
+  type: 'hydration' | 'sleep' | 'mood' | 'steps' | 'conversation';
   operation: 'insert' | 'update' | 'upsert';
   data: any;
   timestamp: string;
@@ -118,6 +118,8 @@ class OfflineQueueService {
           return await this.executeMoodOperation(operation);
         case 'steps':
           return await this.executeStepsOperation(operation);
+        case 'conversation':
+          return await this.executeConversationOperation(operation);
         default:
           console.error(`Unknown operation type: ${operation.type}`);
           return false;
@@ -171,6 +173,34 @@ class OfflineQueueService {
       .insert(operation.data);
     
     return !error;
+  }
+
+  private async executeConversationOperation(operation: QueuedOperation): Promise<boolean> {
+    const { saveType, ...data } = operation.data;
+    
+    try {
+      let error;
+      
+      switch (saveType) {
+        case 'conversation':
+          ({ error } = await supabase.from('health_conversations').insert(data));
+          break;
+        case 'symptom_report':
+          ({ error } = await supabase.from('symptom_reports').insert(data));
+          break;
+        case 'recommendations':
+          ({ error } = await supabase.from('health_recommendations').insert(data));
+          break;
+        default:
+          console.error(`Unknown conversation save type: ${saveType}`);
+          return false;
+      }
+      
+      return !error;
+    } catch (error) {
+      console.error('Failed to execute conversation operation:', error);
+      return false;
+    }
   }
 
   private async getQueue(): Promise<QueuedOperation[]> {
