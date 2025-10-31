@@ -224,6 +224,11 @@ function TriHabitApp() {
     if (assessmentData) {
       dismissAssessment();
     }
+    
+    // Refresh Life Score after assessment is closed
+    const refreshLifeScore = useAppStore.getState().refreshLifeScore;
+    refreshLifeScore();
+    console.log('📊 Triggering Life Score refresh after assessment closure');
   };
 
   const handleProgressionDecision = async (decisionObj: any) => {

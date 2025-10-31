@@ -1,10 +1,17 @@
 // App Store Selectors
 // Custom hooks for computed values from app store
 
+import { useEffect } from 'react';
 import { useAppStore } from '../stores/appStore';
 
 export const useLifeScore = (databaseTargets?: { steps: number; waterOz: number; sleepHr: number }) => {
-  const { currentState, targets, moodCheckInFrequency } = useAppStore();
+  const user = useAppStore(s => s.user);
+  const currentState = useAppStore(s => s.currentState);
+  const targets = useAppStore(s => s.targets);
+  const moodCheckInFrequency = useAppStore(s => s.moodCheckInFrequency);
+  const assessmentBasedLifeScore = useAppStore(s => s.assessmentBasedLifeScore);
+  const lastRefresh = useAppStore(s => s.lastLifeScoreRefresh);
+  const refreshLifeScore = useAppStore(s => s.refreshLifeScore);
   
   // Use database targets if provided, otherwise fall back to app store targets
   const activeTargets = databaseTargets || targets;
@@ -14,16 +21,25 @@ export const useLifeScore = (databaseTargets?: { steps: number; waterOz: number;
   const sleepPct = currentState.sleepHr / activeTargets.sleepHr;
   const moodCheckInPct = moodCheckInFrequency.total_checkins / moodCheckInFrequency.target_checkins;
   
-  // Import computeLifeScore here to avoid circular dependency
+  // Fetch assessment-based Life Score on mount if not cached
+  useEffect(() => {
+    if (user && !assessmentBasedLifeScore && !lastRefresh) {
+      console.log('📊 Initializing Life Score on mount');
+      refreshLifeScore();
+    }
+  }, [user?.id]); // Only when userId changes, NOT on every render
+  
+  // Use assessment-based score if available, otherwise fallback to current calculation
   const clamp01 = (x: number) => Math.max(0, Math.min(1, x));
-  const s = clamp01(stepsPct);
-  const w = clamp01(waterPct);
-  const sl = clamp01(sleepPct);
-  const m = clamp01(moodCheckInPct);
-  const score = s * 0.25 + w * 0.25 + sl * 0.25 + m * 0.25;
+  const fallbackScore = Math.round(
+    (clamp01(stepsPct) * 0.25 + 
+     clamp01(waterPct) * 0.25 + 
+     clamp01(sleepPct) * 0.25 + 
+     clamp01(moodCheckInPct) * 0.25) * 100
+  );
   
   return {
-    score: Math.round(score * 100),
+    score: assessmentBasedLifeScore ?? fallbackScore,
     stepsPct,
     waterPct,
     sleepPct,

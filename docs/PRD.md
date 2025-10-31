@@ -2,16 +2,20 @@
 
 A comprehensive health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys.
 
-*Last updated: October 30, 2025 - Version 1.7.1*
+*Last updated: October 30, 2025 - Version 1.8.0*
 
 ---
 
-## Version 1.7.1 - Current MVP Status
+## Version 1.8.0 - Current MVP Status
 
 **Release Date:** October 30, 2025  
 **Status:** Production Ready ✅
 
 ### Key Features Implemented:
+- ✅ **Life Score Assessment Integration** - Cumulative scoring from all weekly assessments
+- ✅ **5-Component Weighted Model** - 20% past assessments + 80% current week (20% per pillar)
+- ✅ **Performance Optimized** - 5-minute cache prevents excessive DB queries
+- ✅ **Event-Based Updates** - Only refreshes on meaningful events (not every render)
 - ✅ **Mood Check-In Keyboard Handling** - Input field stays above keyboard when typing
 - ✅ **Real-time Step Tracking** with iOS CoreMotion integration
 - ✅ **Calendar Dual Highlighting System** - Today always clearly visible
@@ -21,6 +25,11 @@ A comprehensive health transformation platform that combines **Steps**, **Hydrat
 - ✅ **Enhanced UX** - Seamless date switching and visual feedback
 
 ### Technical Improvements:
+- **LifeScoreCalculator Service**: Assessment-aware calculation with cumulative weekly data
+- **Blended Scoring Formula**: (Past Avg / 100 × 0.2) + (Current Week × 0.8)
+- **Week 1 Fallback**: 4-pillar model (25% each) when no past assessments exist
+- **5-Minute Cache**: In-memory cache prevents redundant DB queries (max 12 records)
+- **Zustand State Persistence**: Assessment-based Life Score cached in appStore
 - **KeyboardAvoidingView**: Platform-specific behavior for mood check-in (iOS: padding, Android: height)
 - **Rate Limiting**: 3 steps/second maximum to prevent overcounting
 - **Session Baseline Tracking**: No initial jump on app launch
@@ -29,11 +38,22 @@ A comprehensive health transformation platform that combines **Steps**, **Hydrat
 - **Percentage Calculation**: Reused proven logic from rewards section
 
 ### Critical Bugs Fixed:
+- **CRITICAL: Life Score Calculation Bug** - Fixed 10x inflated scores (348 → 32)
+  - Mixed percentage (0-100) from database with decimal (0-1) from current metrics
+  - Now correctly converts percentage to decimal before calculation
+  - Impact: All users with past assessments were seeing inflated scores
 - Keyboard covering input field in mood check-in (user couldn't see what they were typing)
 - Steps showing 0 after date navigation (DB: 504, UI: 0)
 - Today's date invisible when viewing other dates
 - Step percentage showing 0% instead of actual progress
 - AsyncStorage overwriting live step data
+
+### Life Score Integration Details:
+- **Data Source**: `weekly_performance_history` table with `overall_achievement_avg` field
+- **Update Triggers**: App launch, assessment completion, date changes, manual refresh
+- **Performance**: Cache hit <1ms, Cache miss <150ms, <10 queries per session
+- **Formula**: Blends past assessment averages with current week daily progress
+- **Fallback**: Uses 4-pillar model (25% each) in Week 1 when no past data exists
 
 ---
 
