@@ -17,11 +17,21 @@ import { ChatMessage } from './ChatMessage';
 import { ChatComposer } from './ChatComposer';
 import { CoachScreenProps, ChatMessage as ChatMessageType, QuickAction, HealthContextData } from '../../types/coach';
 import AICoachService from '../../services/AICoachService';
+import { supabase } from '../../services/supabase';
 import { useAppStore } from '../../stores/appStore';
 import { useLifeScore } from '../../hooks/useAppSelectors';
 import { useStepProgress } from '../../stores/stepTrackingStore';
 import { theme } from '../../utils/theme';
 import { coachTheme } from '../../utils/coachTheme';
+
+// Generate UUID for session ID
+const generateUUID = () => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === 'x' ? r : (r & 0x3 | 0x8);
+    return v.toString(16);
+  });
+};
 
 export const CoachScreen: React.FC<CoachScreenProps> = ({
   initialContext,
@@ -30,9 +40,14 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
 }) => {
   const [messages, setMessages] = useState<ChatMessageType[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
   const scrollViewRef = useRef<ScrollView>(null);
   const coachService = AICoachService.getInstance();
   const keyboardHeight = useRef(new Animated.Value(0)).current;
+  
+  // Session management
+  const sessionId = useRef<string>(generateUUID()).current;
+  const conversationMessages = useRef<Array<{role: 'user' | 'assistant'; content: string; timestamp: string}>>([]);
 
   // Get current health context from stores
   const { currentState, targets } = useAppStore();
@@ -47,6 +62,57 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
     lifeScore,
     date: new Date().toISOString().split('T')[0],
   };
+
+  // Get authenticated user
+  useEffect(() => {
+    const getUser = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (user) {
+          setUserId(user.id);
+          console.log('✅ User authenticated for conversation:', user.id);
+        } else {
+          console.warn('⚠️ No authenticated user found');
+        }
+      } catch (error) {
+        console.error('Failed to get user:', error);
+      }
+    };
+    getUser();
+  }, []);
+
+  // Save conversation on unmount
+  useEffect(() => {
+    return () => {
+      // Save conversation when component unmounts
+      if (userId && conversationMessages.current.length > 0) {
+        console.log('💾 Saving conversation on unmount...');
+        
+        // Dynamic import to avoid module loading issues
+        import('../../services/coach/HealthConversationStorage').then(module => {
+          const HealthConversationStorage = module.default;
+          const storage = HealthConversationStorage.getInstance();
+          
+          storage.saveConversationSession(
+            userId,
+            sessionId,
+            conversationMessages.current,
+            { healthContext, lifeScore }
+          ).then(result => {
+            if (result.success) {
+              console.log('✅ Conversation saved successfully');
+            } else {
+              console.error('❌ Failed to save conversation:', result.error);
+            }
+          }).catch(error => {
+            console.error('❌ Error saving conversation:', error);
+          });
+        }).catch(error => {
+          console.error('❌ Failed to load HealthConversationStorage:', error);
+        });
+      }
+    };
+  }, [userId]);
 
   // Keyboard listeners for smooth animation
   useEffect(() => {
@@ -162,6 +228,14 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
       timestamp: new Date().toISOString(),
     };
     setMessages(prev => [...prev, userMessage]);
+    
+    // Track user message in conversation history
+    conversationMessages.current.push({
+      role: 'user',
+      content: messageText,
+      timestamp: userMessage.timestamp,
+    });
+    
     setIsLoading(true);
 
     try {
@@ -177,6 +251,46 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         messageType: response.messageType,
       };
       setMessages(prev => [...prev, aiMessage]);
+      
+      // Track AI message in conversation history
+      conversationMessages.current.push({
+        role: 'assistant',
+        content: response.message,
+        timestamp: aiMessage.timestamp,
+      });
+      
+      // Save symptom report and recommendations if present
+      if (response.metadata?.needsDatabaseSave && userId) {
+        try {
+          const { default: HealthConversationStorage } = await import('../../services/coach/HealthConversationStorage');
+          const storage = HealthConversationStorage.getInstance();
+          
+          const symptomResult = await storage.saveSymptomReport(
+            userId,
+            sessionId,
+            {
+              symptomDescription: messageText,
+              symptomType: response.metadata.symptomAnalysis.symptom_type,
+              severity: response.metadata.symptomAnalysis.severity_assessment,
+              durationDays: response.metadata.symptomAnalysis.duration_days,
+              affectedAreas: response.metadata.symptomAnalysis.affected_areas,
+              triggers: response.metadata.symptomAnalysis.triggers,
+            },
+            response.metadata.symptomAnalysis
+          );
+          
+          if (symptomResult.success && response.metadata.recommendations?.length > 0) {
+            await storage.saveHealthRecommendations(
+              userId,
+              sessionId,
+              symptomResult.symptomReportId!,
+              response.metadata.recommendations
+            );
+          }
+        } catch (error) {
+          console.error('❌ Failed to save symptom/recommendations:', error);
+        }
+      }
     } catch (error) {
       console.error('Failed to get AI response:', error);
       const errorMessage: ChatMessageType = {
@@ -186,6 +300,13 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         timestamp: new Date().toISOString(),
       };
       setMessages(prev => [...prev, errorMessage]);
+      
+      // Track error message too
+      conversationMessages.current.push({
+        role: 'assistant',
+        content: errorMessage.content,
+        timestamp: errorMessage.timestamp,
+      });
     } finally {
       setIsLoading(false);
     }
