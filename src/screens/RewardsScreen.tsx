@@ -1,24 +1,17 @@
-// Rewards Screen for TriHabit
-// Modern rewards interface with Cal AI design language
+// Rewards Screen for TriHabit - Coming Soon
+// Modern "Coming Soon" interface with Cal AI design language
 
 import React from 'react';
 import {
   StyleSheet,
   Text,
   View,
-  ScrollView,
   TouchableOpacity,
   StatusBar,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Icon from 'react-native-vector-icons/Ionicons';
-import {
-  RewardsHeroCard,
-  TodayEarningsGrid,
-  StarbucksRewardCard,
-} from '../components/rewards';
-import { useAppStore } from '../stores/appStore';
-import { useLifeScore } from '../hooks/useAppSelectors';
+import { LinearGradient } from 'expo-linear-gradient';
 import { theme } from '../utils/theme';
 
 interface RewardsScreenProps {
@@ -26,9 +19,6 @@ interface RewardsScreenProps {
 }
 
 export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
-  const { currentState, targets } = useAppStore();
-  const { stepsPct, waterPct, sleepPct } = useLifeScore();
-
   const handleBackPress = () => {
     try {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -38,81 +28,92 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
     onBack();
   };
 
-  // Mock rewards data (would come from backend in production)
-  const mockRewards = {
-    totalPoints: 1247,
-    todayPoints: 85,
-    weeklyProgress: 0.68, // 68% of weekly goal
-    todayBreakdown: [
-      { type: 'Steps' as const, points: Math.round(stepsPct * 40), max: 40, pct: stepsPct },
-      { type: 'Hydration' as const, points: Math.round(waterPct * 40), max: 40, pct: waterPct },
-      { type: 'Sleep' as const, points: Math.round(sleepPct * 50), max: 50, pct: sleepPct },
-      { type: 'Daily Bonus' as const, points: 0, max: 20, pct: 0 },
-    ],
-  };
-
-  const allTargetsMet = stepsPct >= 1 && waterPct >= 1 && sleepPct >= 1;
-  
-  // Update daily bonus if all targets met
-  if (allTargetsMet) {
-    mockRewards.todayBreakdown[3].points = 20;
-    mockRewards.todayBreakdown[3].pct = 1;
-  }
-
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" backgroundColor={theme.colors.background} translucent={true} />
       
-      <ScrollView 
-        style={styles.scrollView}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Header */}
-        <View style={styles.header}>
-          <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color={theme.colors.textPrimary} />
-          </TouchableOpacity>
-          <Text style={styles.title}>Rewards</Text>
-          <View style={styles.headerSpacer} />
+      {/* Header */}
+      <View style={styles.header}>
+        <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
+          <Icon name="arrow-back" size={24} color={theme.colors.textPrimary} />
+        </TouchableOpacity>
+        <Text style={styles.title}>Rewards</Text>
+        <View style={styles.headerSpacer} />
+      </View>
+
+      {/* Coming Soon Content */}
+      <View style={styles.content}>
+        {/* Icon Container with Gradient */}
+        <View style={styles.iconContainer}>
+          <LinearGradient
+            colors={['rgba(255, 107, 107, 0.15)', 'rgba(255, 107, 107, 0.05)']}
+            style={styles.iconGradient}
+          >
+            <Icon name="gift" size={80} color={theme.colors.primary} />
+          </LinearGradient>
         </View>
 
-        {/* Hero Points Display */}
-        <RewardsHeroCard
-          totalPoints={mockRewards.totalPoints}
-          weeklyProgress={mockRewards.weeklyProgress}
-          todayPoints={mockRewards.todayPoints}
-          animated={true}
-        />
-
-        {/* Today's Earnings Grid */}
-        <TodayEarningsGrid
-          earnings={mockRewards.todayBreakdown}
-          allTargetsMet={allTargetsMet}
-        />
-
-        {/* Partner Rewards Section Header */}
-        <View style={styles.sectionHeader}>
-          <Text style={styles.sectionTitle}>Partner Rewards</Text>
-          <Text style={styles.sectionSubtitle}>Redeem your points</Text>
+        {/* Coming Soon Badge */}
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>COMING SOON</Text>
         </View>
 
-        {/* Starbucks Partnership Reward */}
-        <StarbucksRewardCard
-          pointsRequired={500}
-          currentPoints={mockRewards.totalPoints}
-          onRedeem={() => {
-            try {
-              Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-            } catch (error) {
-              // Haptics not available
-            }
-            console.log('Redeeming Starbucks reward...');
-          }}
-        />
+        {/* Main Title */}
+        <Text style={styles.mainTitle}>Rewards System</Text>
+        <Text style={styles.subtitle}>
+          We're building something exciting
+        </Text>
 
-        <View style={styles.bottomSpacer} />
-      </ScrollView>
+        {/* Feature List */}
+        <View style={styles.featureList}>
+          <View style={styles.featureItem}>
+            <Icon name="trophy" size={24} color={theme.colors.primary} style={styles.featureIcon} />
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureTitle}>Earn Points</Text>
+              <Text style={styles.featureDescription}>
+                Get rewarded for hitting your daily health goals
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.featureItem}>
+            <Icon name="flame" size={24} color="#FF6B35" style={styles.featureIcon} />
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureTitle}>Build Streaks</Text>
+              <Text style={styles.featureDescription}>
+                Maintain consistency and unlock streak bonuses
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.featureItem}>
+            <Icon name="gift" size={24} color="#4ECDC4" style={styles.featureIcon} />
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureTitle}>Partner Rewards</Text>
+              <Text style={styles.featureDescription}>
+                Redeem points for exclusive partner benefits
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.featureItem}>
+            <Icon name="ribbon" size={24} color="#FFB800" style={styles.featureIcon} />
+            <View style={styles.featureTextContainer}>
+              <Text style={styles.featureTitle}>Achievement Badges</Text>
+              <Text style={styles.featureDescription}>
+                Collect badges for milestones and accomplishments
+              </Text>
+            </View>
+          </View>
+        </View>
+
+        {/* Bottom Message */}
+        <View style={styles.bottomMessage}>
+          <Text style={styles.bottomMessageText}>
+            Focus on your health journey—rewards are on the way! 💪
+          </Text>
+        </View>
+      </View>
     </View>
   );
 };
@@ -120,50 +121,109 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: theme.colors.background, // Cal AI beige background
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    paddingHorizontal: theme.spacing.base,
-    paddingTop: 50, // Account for status bar
-    paddingBottom: 100, // Account for bottom navigation
+    backgroundColor: theme.colors.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
+    paddingHorizontal: theme.spacing.base,
+    paddingTop: 50,
     marginBottom: theme.spacing.lg,
-    paddingTop: theme.spacing.sm,
   },
   backButton: {
     padding: theme.spacing.xs,
   },
   title: {
-    fontSize: theme.typography.large, // Reduced from xlarge to large
+    fontSize: theme.typography.large,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },
   headerSpacer: {
-    width: 40, // Match back button width
+    width: 40,
   },
-  sectionHeader: {
-    marginTop: theme.spacing.lg,
+  content: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: theme.spacing.xl,
+    paddingBottom: 120, // Space for bottom navigation
+  },
+  iconContainer: {
+    marginBottom: theme.spacing.lg,
+  },
+  iconGradient: {
+    width: 160,
+    height: 160,
+    borderRadius: 80,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.xs,
+    borderRadius: theme.borderRadius.full,
     marginBottom: theme.spacing.base,
-    paddingHorizontal: theme.spacing.xs,
   },
-  sectionTitle: {
+  badgeText: {
+    fontSize: theme.typography.tiny,
+    fontWeight: theme.typography.weights.bold,
+    color: '#FFFFFF',
+    letterSpacing: 1.5,
+  },
+  mainTitle: {
+    fontSize: 32,
+    fontWeight: theme.typography.weights.bold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs,
+    textAlign: 'center',
+  },
+  subtitle: {
+    fontSize: theme.typography.medium,
+    color: theme.colors.textSecondary,
+    marginBottom: theme.spacing.xl,
+    textAlign: 'center',
+  },
+  featureList: {
+    width: '100%',
+    marginTop: theme.spacing.base,
+  },
+  featureItem: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    backgroundColor: theme.colors.cardBackground,
+    padding: theme.spacing.base,
+    borderRadius: theme.borderRadius.lg,
+    marginBottom: theme.spacing.sm,
+    ...theme.shadows.subtle,
+  },
+  featureIcon: {
+    marginTop: 2,
+  },
+  featureTextContainer: {
+    flex: 1,
+    marginLeft: theme.spacing.base,
+  },
+  featureTitle: {
     fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: 4,
   },
-  sectionSubtitle: {
+  featureDescription: {
     fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
+    lineHeight: 20,
   },
-  bottomSpacer: {
-    height: theme.spacing.xl,
+  bottomMessage: {
+    marginTop: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.base,
+  },
+  bottomMessageText: {
+    fontSize: theme.typography.medium,
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
   },
 });

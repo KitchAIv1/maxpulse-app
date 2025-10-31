@@ -371,14 +371,19 @@ function TriHabitApp() {
                      <Text style={styles.titleText}>MaxPulse</Text>
                    </View>
                    
-                   {/* Rewards - Upper Right */}
-                   <TouchableOpacity 
-                     style={styles.headerRewards}
-                     onPress={() => setCurrentScreen('rewards')}
-                   >
-                     <Text style={styles.headerRewardsPoints}>1,247 pts</Text>
-                     <Text style={styles.headerRewardsLabel}>Rewards</Text>
-                   </TouchableOpacity>
+                 {/* Rewards - Upper Right (Coming Soon) */}
+                 <TouchableOpacity 
+                   style={styles.headerRewards}
+                   onPress={() => setCurrentScreen('rewards')}
+                 >
+                   <View style={styles.comingSoonBadge}>
+                     <Text style={styles.comingSoonText}>SOON</Text>
+                   </View>
+                   <View style={styles.rewardsIconContainer}>
+                     <Icon name="gift" size={20} color={theme.colors.primary} />
+                   </View>
+                   <Text style={styles.headerRewardsLabel}>Rewards</Text>
+                 </TouchableOpacity>
                  </View>
 
           {/* Calendar Bar */}
@@ -578,12 +583,26 @@ const styles = StyleSheet.create({
   headerRewards: {
     alignItems: 'center',
     paddingLeft: theme.spacing.sm,
+    position: 'relative',
   },
-  headerRewardsPoints: {
-    fontSize: theme.typography.small,
-    color: '#FF0000', // Changed from gold (#FFD700) to red
+  comingSoonBadge: {
+    position: 'absolute',
+    top: -8,
+    right: -8,
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 8,
+    zIndex: 10,
+  },
+  comingSoonText: {
+    fontSize: 8,
+    color: '#FFFFFF',
     fontWeight: theme.typography.weights.bold,
-    marginBottom: 2,
+    letterSpacing: 0.5,
+  },
+  rewardsIconContainer: {
+    marginBottom: 4,
   },
   headerRewardsLabel: {
     fontSize: theme.typography.xsmall,
