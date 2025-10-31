@@ -163,12 +163,22 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.small, fontWeight: theme.typography.weights.medium,
     color: theme.colors.textSecondary,
   },
-  badgesGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: theme.spacing.sm },
-  gridItem: { width: '47%' },
+  badgesGrid: { 
+    flexDirection: 'row', 
+    flexWrap: 'wrap', 
+    gap: theme.spacing.sm,
+    justifyContent: 'space-between', // Evenly distribute cards
+  },
+  gridItem: { width: '48%' }, // Adjusted for better spacing
   badgeCard: {
-    padding: theme.spacing.sm, borderRadius: theme.borderRadius.md,
-    backgroundColor: theme.colors.background, borderWidth: 1, borderColor: theme.colors.border,
-    alignItems: 'center', position: 'relative', minHeight: 140,
+    padding: theme.spacing.sm, 
+    borderRadius: theme.borderRadius.md,
+    backgroundColor: theme.colors.background, 
+    borderWidth: 1, 
+    borderColor: theme.colors.border,
+    alignItems: 'center', 
+    position: 'relative', 
+    height: 160, // Fixed height for consistency
   },
   badgeCardEarned: { ...theme.shadows.soft },
   badgeRingContainer: { position: 'relative', marginBottom: theme.spacing.sm },
