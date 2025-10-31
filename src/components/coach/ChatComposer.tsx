@@ -19,7 +19,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
   onSendMessage,
   onQuickAction,
   isLoading = false,
-  placeholder = "Describe how you're feeling, ask questions, or share symptoms...",
+  placeholder = "Tell me about your symptoms, health concerns, or how you're feeling...",
 }) => {
   const [message, setMessage] = useState('');
 
@@ -30,7 +30,7 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
     }
   };
 
-  // Default quick actions always available (using Ionicons matching dashboard style)
+  // Health-focused quick actions for symptom sharing and health concerns
   const defaultQuickActions: QuickAction[] = [
     {
       id: 'wellness_check',
@@ -39,29 +39,32 @@ export const ChatComposer: React.FC<ChatComposerProps> = ({
       icon: 'medical-outline'
     },
     {
-      id: 'check_score',
-      label: 'Check my Life Score',
-      action: 'check_score',
-      icon: 'battery-charging-outline'
+      id: 'describe_symptoms',
+      label: 'Describe symptoms',
+      action: 'symptom_log',
+      params: { type: 'general' },
+      icon: 'fitness-outline'
     },
     {
-      id: 'boost_score',
-      label: 'Boost my score',
-      action: 'boost_score',
-      icon: 'flash-outline'
+      id: 'physical_discomfort',
+      label: 'Physical discomfort',
+      action: 'symptom_log',
+      params: { type: 'physical' },
+      icon: 'body-outline'
     },
     {
-      id: 'plan_week',
-      label: 'Plan week',
-      action: 'plan_tomorrow',
-      icon: 'calendar-outline'
+      id: 'mood_energy',
+      label: 'Mood & energy',
+      action: 'symptom_log',
+      params: { type: 'mood' },
+      icon: 'happy-outline'
     },
     {
-      id: 'log_water',
-      label: 'Log hydration',
-      action: 'log_hydration',
-      params: { amount: 8 },
-      icon: 'water-outline'
+      id: 'sleep_issues',
+      label: 'Sleep issues',
+      action: 'symptom_log',
+      params: { type: 'sleep' },
+      icon: 'moon-outline'
     },
   ];
 

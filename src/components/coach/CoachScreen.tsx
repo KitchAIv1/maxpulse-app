@@ -106,7 +106,7 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
           };
           setMessages(prev => [...prev, aiMessage]);
         } else {
-          // Generate greeting
+          // Generate health-focused greeting
           const greeting = coachService.generateGreeting(healthContext);
           initialMessage = {
             id: 'greeting',
@@ -121,12 +121,17 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
         }
       } catch (error) {
         console.error('Failed to initialize chat:', error);
-        // Fallback greeting
+        // Fallback health-focused greeting
         const fallbackMessage: ChatMessageType = {
           id: 'fallback',
-          content: "Hi! I'm your wellness coach 🌟 How can I help you today?",
+          content: "Hi! I'm Max, your health companion 💙\n\nI'm here to listen to your health concerns, help you understand symptoms, and provide personalized wellness guidance. Feel free to share anything you're experiencing - physical symptoms, mood changes, sleep issues, or general health questions.\n\nWhat would you like to talk about today?",
           sender: 'coach',
           timestamp: new Date().toISOString(),
+          quickActions: [
+            { id: 'wellness_check', label: 'Wellness Check', action: 'wellness_check', icon: 'medical-outline' },
+            { id: 'describe_symptoms', label: 'Describe symptoms', action: 'symptom_log', params: { type: 'general' }, icon: 'fitness-outline' },
+            { id: 'mood_energy', label: 'Mood & energy', action: 'symptom_log', params: { type: 'mood' }, icon: 'happy-outline' },
+          ],
         };
         setMessages([fallbackMessage]);
       } finally {
@@ -281,10 +286,10 @@ export const CoachScreen: React.FC<CoachScreenProps> = ({
           >
             {messages.length === 0 && (
               <View style={styles.emptyState}>
-                <Text style={styles.emptyStateIcon}>🤖</Text>
-                <Text style={styles.emptyStateTitle}>Welcome to Coach!</Text>
+                <Text style={styles.emptyStateIcon}>💙</Text>
+                <Text style={styles.emptyStateTitle}>Welcome to Max Health Coach</Text>
                 <Text style={styles.emptyStateText}>
-                  I'm here to help you stay healthy and motivated. Ask me anything about your wellness journey!
+                  I'm here to listen to your health concerns and provide personalized wellness guidance. Share your symptoms, ask questions, or tell me how you're feeling.
                 </Text>
               </View>
             )}
