@@ -88,9 +88,11 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             />
             <Text style={styles.appName}>MaxPulse</Text>
           </View>
-          <Text style={styles.welcomeTitle}>Welcome</Text>
           <Text style={styles.tagline}>Where health meets purpose.</Text>
-          
+        </View>
+
+        {/* Exclusive Badge Section */}
+        <View style={styles.exclusiveSection}>
           <View style={styles.exclusiveBadge}>
             <Icon name="shield-checkmark" size={14} color={theme.colors.primary} />
             <Text style={styles.exclusiveBadgeText}>Maximum 88 Exclusive</Text>
@@ -211,12 +213,12 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.base,
+    marginBottom: theme.spacing.xs,
   },
   logo: {
     width: 36,
@@ -229,21 +231,16 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
     letterSpacing: -0.5,
   },
-  welcomeTitle: {
-    fontSize: theme.typography.xlarge, // 32px - prominent but elegant
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginTop: theme.spacing.base,
-    marginBottom: theme.spacing.xs,
-    textAlign: 'center',
-    letterSpacing: -0.5,
-  },
   tagline: {
     fontSize: theme.typography.regular,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     fontWeight: theme.typography.weights.regular,
-    marginBottom: theme.spacing.base,
+    marginTop: 2,
+  },
+  exclusiveSection: {
+    alignItems: 'center',
+    marginBottom: theme.spacing.lg,
   },
   exclusiveBadge: {
     flexDirection: 'row',
@@ -252,7 +249,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.base,
     paddingVertical: 6,
     borderRadius: theme.borderRadius.full,
-    marginTop: theme.spacing.sm,
     marginBottom: theme.spacing.xs,
     gap: 6,
   },
