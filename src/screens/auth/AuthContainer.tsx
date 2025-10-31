@@ -15,7 +15,7 @@ interface AuthContainerProps {
 type AuthFlow = 'login' | 'signup' | 'profile-confirmation';
 
 export const AuthContainer: React.FC<AuthContainerProps> = ({ onAuthComplete }) => {
-  const [currentFlow, setCurrentFlow] = useState<AuthFlow>('signup');
+  const [currentFlow, setCurrentFlow] = useState<AuthFlow>('login');
   const [authData, setAuthData] = useState<{
     user: any;
     activationCode?: ActivationCode;

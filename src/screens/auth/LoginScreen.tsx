@@ -21,12 +21,11 @@ import { theme } from '../../utils/theme';
 
 interface LoginScreenProps {
   onLoginSuccess: (user: any) => void;
-  onSwitchToSignup: () => void;
+  onSwitchToSignup?: () => void; // Made optional for backwards compatibility
 }
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({
   onLoginSuccess,
-  onSwitchToSignup,
 }) => {
   const [formData, setFormData] = useState({
     email: '',
@@ -89,12 +88,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             />
             <Text style={styles.appName}>MaxPulse</Text>
           </View>
-          <Text style={styles.tagline}>Live your best life, every day</Text>
+          <Text style={styles.welcomeTitle}>Welcome to MaxPulse</Text>
+          <Text style={styles.tagline}>Where health meets purpose.</Text>
+          <View style={styles.exclusiveContainer}>
+            <Text style={styles.exclusiveText}>
+              Access is exclusive to our Maximum 88 family — verified customers and distributors only.
+            </Text>
+          </View>
         </View>
 
         {/* Form Section */}
         <View style={styles.form}>
-          <Text style={styles.formTitle}>Welcome back</Text>
 
           {/* Email Input */}
           <View style={styles.inputWrapper}>
@@ -178,20 +182,6 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
               </>
             )}
           </TouchableOpacity>
-
-          {/* Switch to Signup */}
-          <View style={styles.switchContainer}>
-            <Text style={styles.switchText}>Don't have an account?</Text>
-            <TouchableOpacity 
-              onPress={() => {
-                try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-                onSwitchToSignup();
-              }}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.switchLink}>Sign up</Text>
-            </TouchableOpacity>
-          </View>
         </View>
 
         {/* Footer */}
@@ -217,41 +207,54 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.base, // Reduced from lg to base
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.xs,
+    marginBottom: theme.spacing.sm, // Increased spacing after logo
   },
   logo: {
-    width: 36,
-    height: 36,
+    width: 32, // Reduced from 36 to 32
+    height: 32, // Reduced from 36 to 32
     marginRight: theme.spacing.sm,
   },
   appName: {
-    fontSize: 30.5, // Exact match with dashboard titleText
-    fontWeight: '500', // Exact match with dashboard (medium)
+    fontSize: 26, // Reduced from 30.5 to match elegant branding
+    fontWeight: '500',
     color: theme.colors.textPrimary,
     letterSpacing: -0.5,
   },
+  welcomeTitle: {
+    fontSize: 20, // Reduced, elegant size like rewards page
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginBottom: theme.spacing.xs, // Compact spacing
+    textAlign: 'center',
+    letterSpacing: -0.3,
+  },
   tagline: {
-    fontSize: theme.typography.small,
+    fontSize: theme.typography.regular, // Reduced from small
     color: theme.colors.textSecondary,
     textAlign: 'center',
+    fontWeight: theme.typography.weights.regular,
+    marginBottom: theme.spacing.sm, // Compact spacing
+  },
+  exclusiveContainer: {
+    paddingHorizontal: theme.spacing.base,
+    marginTop: theme.spacing.xs,
+  },
+  exclusiveText: {
+    fontSize: theme.typography.small, // Compact size
+    color: theme.colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 18,
     fontWeight: theme.typography.weights.regular,
   },
   form: {
     flex: 1,
     justifyContent: 'center',
     gap: theme.spacing.base,
-  },
-  formTitle: {
-    fontSize: theme.typography.xlarge, // 32px - larger but not overwhelming
-    fontWeight: theme.typography.weights.semibold,
-    color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
-    letterSpacing: -0.5,
   },
   inputWrapper: {
     position: 'relative',
@@ -302,22 +305,6 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.semibold,
     letterSpacing: 0.3,
-  },
-  switchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: theme.spacing.xs,
-    marginTop: theme.spacing.sm,
-  },
-  switchText: {
-    fontSize: theme.typography.regular,
-    color: theme.colors.textSecondary,
-  },
-  switchLink: {
-    fontSize: theme.typography.regular,
-    color: theme.colors.textPrimary,
-    fontWeight: theme.typography.weights.semibold,
   },
   footer: {
     fontSize: theme.typography.tiny,
