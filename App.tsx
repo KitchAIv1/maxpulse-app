@@ -376,13 +376,13 @@ function TriHabitApp() {
                    style={styles.headerRewards}
                    onPress={() => setCurrentScreen('rewards')}
                  >
-                   <View style={styles.comingSoonBadge}>
-                     <Text style={styles.comingSoonText}>SOON</Text>
-                   </View>
                    <View style={styles.rewardsIconContainer}>
                      <Icon name="gift" size={20} color={theme.colors.primary} />
                    </View>
                    <Text style={styles.headerRewardsLabel}>Rewards</Text>
+                   <View style={styles.comingSoonBadge}>
+                     <Text style={styles.comingSoonText}>SOON</Text>
+                   </View>
                  </TouchableOpacity>
                  </View>
 
@@ -583,23 +583,6 @@ const styles = StyleSheet.create({
   headerRewards: {
     alignItems: 'center',
     paddingLeft: theme.spacing.sm,
-    position: 'relative',
-  },
-  comingSoonBadge: {
-    position: 'absolute',
-    top: -8,
-    right: -8,
-    backgroundColor: theme.colors.primary,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-    borderRadius: 8,
-    zIndex: 10,
-  },
-  comingSoonText: {
-    fontSize: 8,
-    color: '#FFFFFF',
-    fontWeight: theme.typography.weights.bold,
-    letterSpacing: 0.5,
   },
   rewardsIconContainer: {
     marginBottom: 4,
@@ -608,6 +591,19 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.xsmall,
     color: theme.colors.textSecondary,
     fontWeight: theme.typography.weights.medium,
+    marginBottom: 4,
+  },
+  comingSoonBadge: {
+    backgroundColor: theme.colors.primary,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+  },
+  comingSoonText: {
+    fontSize: 8,
+    color: '#FFFFFF',
+    fontWeight: theme.typography.weights.bold,
+    letterSpacing: 0.5,
   },
   dateText: {
     fontSize: theme.typography.xsmall,
