@@ -20,7 +20,10 @@
         "NSMotionUsageDescription": "MaxPulse tracks your daily steps to help you achieve your health goals.",
         "NSHealthShareUsageDescription": "MaxPulse reads your health data to provide personalized wellness insights and track your progress.",
         "NSHealthUpdateUsageDescription": "MaxPulse updates your health data to keep your wellness metrics synchronized.",
-        "UIBackgroundModes": ["fetch", "remote-notification"]
+        "UIBackgroundModes": [
+          "fetch",
+          "remote-notification"
+        ]
       }
     },
     "android": {
@@ -43,6 +46,9 @@
       "expo-notifications",
       "expo-secure-store",
       "expo-dev-client"
-    ]
+    ],
+    "extra": {
+      "eas": {}
+    }
   }
 }
