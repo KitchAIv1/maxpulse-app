@@ -113,7 +113,7 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
           {/* Battery icon indicator - compact spacing */}
           <Icon 
             name={progress >= 0.9 ? 'battery-full' : progress >= 0.5 ? 'battery-half' : 'battery-dead'} 
-            size={18} 
+            size={28} 
             color={colors.primary} 
             style={styles.batteryIcon}
           />
@@ -165,8 +165,7 @@ const styles = StyleSheet.create({
   scoreText: {
     fontSize: 56,
     fontWeight: '700',
-    lineHeight: 52, // Tight line height for compact layout
-    marginBottom: -2, // Pull battery icon closer
+    lineHeight: 56,
   },
   belowRingContent: {
     marginTop: 8,
@@ -179,7 +178,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   batteryIcon: {
-    marginTop: 0, // Zero margin for very compact spacing
+    marginTop: 6, // Push down from score number
   },
   chargingEffect: {
     position: 'absolute',
