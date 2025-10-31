@@ -676,7 +676,7 @@ export const useAppStore = create<AppStore>((set, get) => ({
     if (!user) return;
 
     try {
-      const { LifeScoreCalculator } = await import('./LifeScoreCalculator');
+      const { LifeScoreCalculator } = await import('../services/LifeScoreCalculator');
       
       // Calculate current week metrics percentages
       const currentWeekMetrics = {
