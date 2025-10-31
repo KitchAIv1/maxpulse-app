@@ -110,13 +110,13 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
             {Math.round(score)}
           </Text>
           
-          {/* Battery icon indicator - compact spacing */}
-          <Icon 
+          {/* Battery icon indicator - REMOVED */}
+          {/* <Icon 
             name={progress >= 0.9 ? 'battery-full' : progress >= 0.5 ? 'battery-half' : 'battery-dead'} 
             size={28} 
             color={colors.primary} 
             style={styles.batteryIcon}
-          />
+          /> */}
         </View>
 
         {/* Charging animation effect */}
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     zIndex: 1,
     position: 'absolute',
-    top: '55%', // Push down from center
+    top: '52%', // Push down from center
     transform: [{ translateY: -30 }], // Adjust vertical alignment
   },
   scoreText: {
