@@ -91,20 +91,20 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
           <Text style={styles.tagline}>Where health meets purpose.</Text>
         </View>
 
-        {/* Exclusive Badge Section */}
-        <View style={styles.exclusiveSection}>
-          <View style={styles.exclusiveBadge}>
-            <Icon name="shield-checkmark" size={14} color={theme.colors.primary} />
-            <Text style={styles.exclusiveBadgeText}>Maximum 88 Exclusive</Text>
-          </View>
-          
-          <Text style={styles.accessNote}>
-            Verified customers and distributors only
-          </Text>
-        </View>
-
         {/* Form Section */}
         <View style={styles.form}>
+          {/* Exclusive Badge Section */}
+          <View style={styles.exclusiveSection}>
+            <View style={styles.exclusiveBadge}>
+              <Icon name="shield-checkmark" size={14} color={theme.colors.primary} />
+              <Text style={styles.exclusiveBadgeText}>Maximum 88 Exclusive</Text>
+            </View>
+            
+            <Text style={styles.accessNote}>
+              Verified customers and distributors only
+            </Text>
+          </View>
+
 
           {/* Email Input */}
           <View style={styles.inputWrapper}>
@@ -207,13 +207,12 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
     paddingHorizontal: theme.spacing.xl,
-    paddingTop: 140,
+    paddingTop: 100,
     paddingBottom: theme.spacing.lg,
-    justifyContent: 'space-between',
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.xxl,
   },
   brandRow: {
     flexDirection: 'row',
@@ -240,7 +239,7 @@ const styles = StyleSheet.create({
   },
   exclusiveSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.xl,
   },
   exclusiveBadge: {
     flexDirection: 'row',
@@ -266,8 +265,6 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   form: {
-    flex: 1,
-    justifyContent: 'center',
     gap: theme.spacing.base,
   },
   inputWrapper: {
@@ -325,6 +322,7 @@ const styles = StyleSheet.create({
     color: theme.colors.textTertiary,
     textAlign: 'center',
     lineHeight: 16,
-    marginTop: theme.spacing.lg,
+    marginTop: 'auto', // Push to bottom
+    paddingTop: theme.spacing.xl,
   },
 });
