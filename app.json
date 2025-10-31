@@ -62,8 +62,8 @@
         "expo-build-properties",
         {
           "ios": {
-            "extraPods": [],
-            "deploymentTarget": "13.4"
+            "deploymentTarget": "13.4",
+            "useFrameworks": "static"
           }
         }
       ]
