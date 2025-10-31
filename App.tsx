@@ -56,14 +56,14 @@ function TriHabitApp() {
     dismissAssessment,
   } = useWeeklyAssessment(userId);
 
-  // Real-time assessment hook (fetches actual data)
+  // Real-time assessment hook (fetches actual data only when needed, not on mount)
   const {
     assessmentData: realAssessmentData,
     isLoading: realDataLoading,
     error: realDataError,
     refreshAssessment,
     hasData: hasRealData,
-  } = useRealTimeAssessment(userId);
+  } = useRealTimeAssessment(userId, undefined, { autoFetch: false });
 
   const {
     executeDecision,

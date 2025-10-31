@@ -2,9 +2,11 @@
 // Handles all authentication logic, user data loading, and service initialization
 
 import { useState, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { authService, supabase } from '../services/supabase';
 import { useAppStore } from '../stores/appStore';
 import { UserProfileFromActivation } from '../types';
+import { getTodayDate } from '../utils';
 import SyncManager from '../services/SyncManager';
 import TargetManager from '../services/TargetManager';
 import DailyMetricsUpdater from '../services/DailyMetricsUpdater';
@@ -78,22 +80,33 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
         display_name: currentUser.user_metadata?.name || currentUser.email,
       });
 
-      await loadUserTargets(currentUser.id);
+      // Parallelize independent operations for faster load time
+      await Promise.all([
+        loadUserTargets(currentUser.id),
+        loadTodayData(),
+      ]);
       
-      // Fix any existing daily_metrics rows with wrong targets
+      // Fix any existing daily_metrics rows with wrong targets (run once per day, deferred)
       setTimeout(async () => {
         try {
-          console.log('🔧 Running daily_metrics audit and fix...');
-          const result = await DailyMetricsUpdater.auditAndFix(currentUser.id);
-          if (result.success) {
-            console.log(`✅ Daily metrics fixed: ${result.rowsUpdated} updated, ${result.rowsCreated} ensured`);
+          const today = getTodayDate();
+          const lastAuditDate = await AsyncStorage.getItem('@last_metrics_audit_date');
+          
+          // Only run audit once per day
+          if (lastAuditDate !== today) {
+            console.log('🔧 Running daily_metrics audit and fix...');
+            const result = await DailyMetricsUpdater.auditAndFix(currentUser.id);
+            if (result.success) {
+              console.log(`✅ Daily metrics fixed: ${result.rowsUpdated} updated, ${result.rowsCreated} ensured`);
+              await AsyncStorage.setItem('@last_metrics_audit_date', today);
+            }
+          } else {
+            console.log('✅ Daily metrics audit already completed today, skipping');
           }
         } catch (error) {
           console.warn('⚠️ Daily metrics fix failed (non-critical):', error);
         }
-      }, 2000);
-      
-      await loadTodayData();
+      }, 5000); // Increased delay to 5s to ensure app is fully loaded
       
       if (alwaysShowWelcome) {
         console.log('🎬 Setting showWelcome to true (checkAuthStatus)');
@@ -177,8 +190,11 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
             display_name: session.user.user_metadata?.name || session.user.email,
           });
           
-          await loadUserTargets(session.user.id);
-          await loadTodayData();
+          // Parallelize independent operations for faster load time
+          await Promise.all([
+            loadUserTargets(session.user.id),
+            loadTodayData(),
+          ]);
           
           // Only show welcome if not already authenticated (prevents multiple triggers)
           if (alwaysShowWelcome && !isAuthenticated) {

@@ -2,6 +2,7 @@
 // Custom hooks for computed values from app store
 
 import { useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAppStore } from '../stores/appStore';
 
 export const useLifeScore = (databaseTargets?: { steps: number; waterOz: number; sleepHr: number }) => {
@@ -23,10 +24,45 @@ export const useLifeScore = (databaseTargets?: { steps: number; waterOz: number;
   
   // Fetch assessment-based Life Score on mount if not cached
   useEffect(() => {
-    if (user && !assessmentBasedLifeScore && !lastRefresh) {
-      console.log('📊 Initializing Life Score on mount');
-      refreshLifeScore();
-    }
+    if (!user?.id) return;
+    
+    const initializeLifeScore = async () => {
+      // Try to load from AsyncStorage first (instant)
+      try {
+        const cached = await AsyncStorage.getItem('@cached_life_score');
+        if (cached) {
+          const { score, timestamp, userId } = JSON.parse(cached);
+          const age = Date.now() - timestamp;
+          const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+          
+          // Use cached score if it's recent and for the same user
+          if (age < CACHE_TTL && userId === user.id) {
+            console.log(`📊 Using cached Life Score: ${score} (age: ${Math.round(age / 1000)}s)`);
+            useAppStore.setState({ 
+              assessmentBasedLifeScore: score,
+              lastLifeScoreRefresh: timestamp 
+            });
+            
+            // Refresh in background if cache is older than 2 minutes
+            if (age > 2 * 60 * 1000) {
+              console.log('🔄 Refreshing Life Score in background...');
+              refreshLifeScore();
+            }
+            return;
+          }
+        }
+      } catch (cacheError) {
+        console.warn('Failed to load cached Life Score:', cacheError);
+      }
+      
+      // No valid cache, fetch fresh data
+      if (!assessmentBasedLifeScore && !lastRefresh) {
+        console.log('📊 Initializing Life Score from database');
+        refreshLifeScore();
+      }
+    };
+    
+    initializeLifeScore();
   }, [user?.id]); // Only when userId changes, NOT on every render
   
   // Use assessment-based score if available, otherwise fallback to current calculation

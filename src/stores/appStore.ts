@@ -693,10 +693,22 @@ export const useAppStore = create<AppStore>((set, get) => ({
         true
       );
 
+      const now = Date.now();
+      
       set({
         assessmentBasedLifeScore: score,
-        lastLifeScoreRefresh: Date.now(),
+        lastLifeScoreRefresh: now,
       });
+
+      // Cache in AsyncStorage for fast subsequent loads
+      try {
+        await AsyncStorage.setItem(
+          '@cached_life_score',
+          JSON.stringify({ score, timestamp: now, userId: user.id })
+        );
+      } catch (cacheError) {
+        console.warn('Failed to cache Life Score:', cacheError);
+      }
 
       console.log(`✅ Life Score refreshed: ${score}`);
     } catch (error) {

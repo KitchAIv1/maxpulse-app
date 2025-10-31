@@ -13,9 +13,14 @@ interface UseRealTimeAssessmentReturn {
   hasData: boolean;
 }
 
+interface UseRealTimeAssessmentOptions {
+  autoFetch?: boolean;
+}
+
 export const useRealTimeAssessment = (
   userId?: string,
-  weekNumber?: number
+  weekNumber?: number,
+  options: UseRealTimeAssessmentOptions = { autoFetch: true }
 ): UseRealTimeAssessmentReturn => {
   const [assessmentData, setAssessmentData] = useState<WeeklyAssessmentData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -58,12 +63,12 @@ export const useRealTimeAssessment = (
     }
   }, [userId, weekNumber]);
 
-  // Auto-fetch on mount and when dependencies change
+  // Auto-fetch on mount and when dependencies change (only if autoFetch is enabled)
   useEffect(() => {
-    if (userId) {
+    if (userId && options.autoFetch !== false) {
       fetchAssessment();
     }
-  }, [userId, weekNumber, fetchAssessment]);
+  }, [userId, weekNumber, fetchAssessment, options.autoFetch]);
 
   return {
     assessmentData,
