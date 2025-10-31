@@ -160,11 +160,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 1,
+    position: 'absolute',
   },
   scoreText: {
     fontSize: 56,
     fontWeight: '700',
-    lineHeight: 60,
+    lineHeight: 56, // Reduced from 60 to 56 for tighter spacing
   },
   belowRingContent: {
     marginTop: 8,
@@ -177,7 +178,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   batteryIcon: {
-    marginTop: 4, // Reduced from 8 to 4 for tighter spacing
+    marginTop: 2, // Compact spacing between score and battery
   },
   chargingEffect: {
     position: 'absolute',
