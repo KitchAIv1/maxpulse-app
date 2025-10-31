@@ -45,15 +45,7 @@
       "expo-sensors",
       "expo-notifications",
       "expo-secure-store",
-      "expo-dev-client",
-      [
-        "expo-build-properties",
-        {
-          "ios": {
-            "deploymentTarget": "15.1"
-          }
-        }
-      ]
+      "expo-dev-client"
     ],
     "extra": {
       "eas": {
