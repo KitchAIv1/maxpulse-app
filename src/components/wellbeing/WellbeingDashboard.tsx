@@ -55,7 +55,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
               <Text style={styles.headerSubtitle}>Your wellness overview</Text>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
-              <Icon name="close" size={24} color={theme.colors.textPrimary} />
+              <Icon name="close" size={20} color={theme.colors.textPrimary} />
             </TouchableOpacity>
           </View>
 
@@ -75,7 +75,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
               <View style={styles.rightColumn}>
                 {/* Day Streak Card */}
                 <View style={styles.dayStreakCard}>
-                  <Icon name="flame" size={28} color="#FF6B35" style={styles.streakIcon} />
+                  <Icon name="flame" size={24} color="#FF6B35" style={styles.streakIcon} />
                   <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>DAY STREAK</Text>
                   <Text style={styles.streakValue}>{mockStreakData.currentStreak}</Text>
                   <Text style={styles.streakLabel} numberOfLines={1}>days in a row</Text>
@@ -83,7 +83,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
 
                 {/* Personal Best Card */}
                 <View style={styles.personalBestCard}>
-                  <Icon name="trophy" size={28} color="#FFD700" style={styles.streakIcon} />
+                  <Icon name="trophy" size={24} color="#FFD700" style={styles.streakIcon} />
                   <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>BEST</Text>
                   <Text style={styles.streakValue}>{mockStreakData.longestStreak}</Text>
                   <Text style={styles.streakLabel} numberOfLines={1}>days total</Text>
@@ -95,7 +95,7 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
             <View style={styles.milestoneSection}>
               <View style={styles.milestoneCard}>
                 <View style={styles.milestoneHeader}>
-                  <Icon name="flag" size={16} color={theme.colors.ringMood} />
+                  <Icon name="flag" size={14} color={theme.colors.ringMood} />
                   <Text style={styles.milestoneText}>
                     {mockStreakData.nextMilestone - mockStreakData.currentStreak} days until next milestone
                   </Text>
@@ -120,27 +120,27 @@ const styles = StyleSheet.create({
   background: { flex: 1, backgroundColor: theme.colors.background },
   header: {
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
-    paddingHorizontal: theme.spacing.lg, paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.base, paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1, borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.cardBackground,
   },
   headerTitle: {
-    fontSize: theme.typography.large, fontWeight: theme.typography.weights.bold,
+    fontSize: theme.typography.medium, fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: theme.typography.small, color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
+    fontSize: theme.typography.xsmall, color: theme.colors.textSecondary,
+    marginTop: 2,
   },
   closeButton: {
-    width: 40, height: 40, borderRadius: theme.borderRadius.full,
+    width: 36, height: 36, borderRadius: theme.borderRadius.full,
     backgroundColor: theme.colors.background, alignItems: 'center',
     justifyContent: 'center', ...theme.shadows.subtle,
   },
   scrollView: { flex: 1 },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg, paddingTop: theme.spacing.xl,
-    paddingBottom: theme.spacing.xl,
+    paddingHorizontal: theme.spacing.base, paddingTop: theme.spacing.base,
+    paddingBottom: theme.spacing.base,
   },
   // Two-column layout
   twoColumnLayout: {
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
   lifeScoreContainer: {
     flex: 1.5, // Further decreased width for more compact design
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.lg,
+    borderRadius: theme.borderRadius.md,
     padding: theme.spacing.base,
     alignItems: 'center',
     justifyContent: 'center',
