@@ -51,14 +51,14 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.email}>{email}</Text>
           <View style={styles.planBadge}>
-            <Icon name="diamond" size={12} color={theme.colors.primary} />
+            <Icon name="diamond" size={10} color={theme.colors.primary} />
             <Text style={styles.planText}>{planType}</Text>
           </View>
         </View>
 
         {onEditProfile && (
           <TouchableOpacity style={styles.editButton} onPress={onEditProfile}>
-            <Icon name="pencil" size={16} color={theme.colors.textSecondary} />
+            <Icon name="pencil" size={14} color={theme.colors.textSecondary} />
           </TouchableOpacity>
         )}
       </View>
@@ -75,8 +75,8 @@ export const UserProfileCard: React.FC<UserProfileCardProps> = ({
 const styles = StyleSheet.create({
   container: {
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
     marginBottom: theme.spacing.base,
     ...theme.shadows.subtle,
   },
@@ -86,16 +86,16 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.base,
   },
   avatarContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
+    width: 54,
+    height: 54,
+    borderRadius: 27,
     backgroundColor: theme.colors.primary + '20',
     justifyContent: 'center',
     alignItems: 'center',
-    marginRight: theme.spacing.base,
+    marginRight: theme.spacing.sm,
   },
   avatarText: {
-    fontSize: theme.typography.large,
+    fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.primary,
   },
@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   name: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,

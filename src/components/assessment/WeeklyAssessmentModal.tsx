@@ -192,9 +192,9 @@ const styles = StyleSheet.create({
     color: theme.colors.textPrimary,
   },
   headerSubtitle: {
-    fontSize: theme.typography.small,
+    fontSize: theme.typography.xsmall,
     color: theme.colors.textSecondary,
-    marginTop: theme.spacing.xs,
+    marginTop: 2,
   },
   closeButton: {
     width: 36,

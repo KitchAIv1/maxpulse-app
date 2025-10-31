@@ -350,7 +350,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
         {/* Header */}
         <View style={styles.header}>
           <TouchableOpacity onPress={handleBackPress} style={styles.backButton}>
-            <Icon name="arrow-back" size={24} color={theme.colors.textPrimary} />
+            <Icon name="arrow-back" size={20} color={theme.colors.textPrimary} />
           </TouchableOpacity>
           <Text style={styles.title}>Profile</Text>
           <View style={styles.headerSpacer} />
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     padding: theme.spacing.xs,
   },
   title: {
-    fontSize: theme.typography.large,
+    fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },
