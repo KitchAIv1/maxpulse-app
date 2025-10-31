@@ -108,7 +108,7 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
           await SyncManager.getInstance().initialize();
           console.log('✅ Background sync initialized');
           
-          await NetworkService.initialize();
+          await NetworkService.getInstance().initialize();
           console.log('✅ Network service initialized');
           
           await HealthDataService.processQueuedOperations();
