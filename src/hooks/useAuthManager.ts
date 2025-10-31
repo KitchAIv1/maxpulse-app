@@ -105,7 +105,7 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
       // Initialize services
       setTimeout(async () => {
         try {
-          await SyncManager.initialize();
+          await SyncManager.getInstance().initialize();
           console.log('✅ Background sync initialized');
           
           await NetworkService.initialize();

@@ -1,5 +1,6 @@
 // AI Coach Service
 // Handles chat logic, AI responses, and health context analysis
+// UPDATED: Now integrates new health-focused services for MVP1
 
 import { 
   ChatMessage, 
@@ -18,11 +19,20 @@ import {
   StressLevel,
   Symptom
 } from '../types/coach';
+import ComplianceService from './coach/ComplianceService';
+import SymptomAnalysisEngine from './coach/SymptomAnalysisEngine';
+import HealthRecommendationService from './coach/HealthRecommendationService';
 
 class AICoachService {
   private static instance: AICoachService;
   private config: CoachConfig;
   private messageHistory: ChatMessage[] = [];
+  
+  // New health-focused services (MVP1)
+  private complianceService: ComplianceService;
+  private symptomEngine: SymptomAnalysisEngine;
+  private recommendationService: HealthRecommendationService;
+  private useHealthFocusedLogic: boolean = true; // Toggle for new logic
 
   private constructor() {
     this.config = {
@@ -36,6 +46,11 @@ class AICoachService {
       autoSuggestActions: true,
       celebrationThreshold: 5, // 5 point improvement
     };
+    
+    // Initialize new health services
+    this.complianceService = ComplianceService.getInstance();
+    this.symptomEngine = SymptomAnalysisEngine.getInstance();
+    this.recommendationService = HealthRecommendationService.getInstance();
   }
 
   public static getInstance(): AICoachService {
@@ -47,6 +62,7 @@ class AICoachService {
 
   /**
    * Generate AI coach response based on user message and health context
+   * UPDATED: Now uses health-focused logic with symptom analysis
    */
   async generateResponse(
     userMessage: string, 
@@ -55,6 +71,24 @@ class AICoachService {
     // Simulate AI processing delay
     await new Promise(resolve => setTimeout(resolve, 1000 + Math.random() * 1500));
 
+    if (this.useHealthFocusedLogic) {
+      // Check for emergency keywords first
+      if (this.complianceService.checkForEmergency(userMessage)) {
+        return {
+          message: this.complianceService.getEmergencyResponseMessage('USA'),
+          contextData: healthContext,
+          messageType: 'insight',
+          quickActions: [],
+        };
+      }
+
+      // Detect if message contains symptoms
+      if (this.isSymptomRelated(userMessage)) {
+        return await this.handleSymptomMessage(userMessage, healthContext);
+      }
+    }
+
+    // Legacy logic or non-symptom messages
     const messageType = this.determineMessageType(userMessage, healthContext);
     const response = this.craftResponse(userMessage, healthContext, messageType);
     
@@ -63,8 +97,29 @@ class AICoachService {
 
   /**
    * Generate contextual greeting message
+   * UPDATED: Health-focused greeting for MVP1
    */
   generateGreeting(healthContext: HealthContextData): CoachResponse {
+    if (this.useHealthFocusedLogic) {
+      // New health-focused greeting
+      const message = "Hi! I'm Max, your health companion 💙\n\nI'm here to listen to your health concerns, help you understand symptoms, and provide personalized wellness guidance. Feel free to share anything you're experiencing - physical symptoms, mood changes, sleep issues, or general health questions.\n\nWhat would you like to talk about today?";
+      
+      const quickActions: QuickAction[] = [
+        { id: 'wellness_check', label: 'Wellness Check', action: 'wellness_check', icon: 'medical-outline' },
+        { id: 'describe_symptoms', label: 'Describe symptoms', action: 'symptom_log', params: { type: 'general' }, icon: 'fitness-outline' },
+        { id: 'mood_energy', label: 'Mood & energy', action: 'symptom_log', params: { type: 'mood' }, icon: 'happy-outline' },
+        { id: 'sleep_issues', label: 'Sleep issues', action: 'symptom_log', params: { type: 'sleep' }, icon: 'moon-outline' },
+      ];
+
+      return {
+        message,
+        contextData: healthContext,
+        quickActions,
+        messageType: 'text',
+      };
+    }
+    
+    // Legacy fitness-focused greeting (fallback)
     const { steps, hydration, sleep, lifeScore } = healthContext;
     
     let message = "Hi! I'm your wellness coach 🌟 ";
@@ -569,6 +624,26 @@ class AICoachService {
    * Handle symptom logging (from quick actions)
    */
   private handleSymptomLog(healthContext: HealthContextData): CoachResponse {
+    if (this.useHealthFocusedLogic) {
+      // New health-focused symptom logging
+      const message = "I'm here to listen 💙\n\nPlease describe what you're experiencing - any physical symptoms, mood changes, energy levels, or health concerns. The more details you share, the better I can help.\n\nYou can type freely or use the quick options below.";
+      
+      const quickActions: QuickAction[] = [
+        { id: 'feeling_tired', label: "I'm feeling tired", action: 'symptom_log', params: { type: 'energy', level: 'low' }, icon: 'moon-outline' },
+        { id: 'feeling_stressed', label: "I'm stressed", action: 'symptom_log', params: { type: 'stress', level: 'high' }, icon: 'alert-circle-outline' },
+        { id: 'feeling_low', label: "Mood is low", action: 'symptom_log', params: { type: 'mood', level: 'low' }, icon: 'sad-outline' },
+        { id: 'physical_symptoms', label: "Physical symptoms", action: 'symptom_log', params: { type: 'physical' }, icon: 'medical-outline' },
+      ];
+
+      return {
+        message,
+        contextData: healthContext,
+        quickActions,
+        messageType: 'suggestion',
+      };
+    }
+    
+    // Legacy symptom logging
     const logType = 'general'; // This would be determined by params in real implementation
     
     let message = "Thanks for sharing how you're feeling! 💙\n\n";
@@ -715,6 +790,114 @@ class AICoachService {
     );
 
     return actions;
+  }
+
+  // ============================================
+  // NEW HEALTH-FOCUSED METHODS (MVP1)
+  // ============================================
+
+  /**
+   * Check if message is symptom-related
+   */
+  private isSymptomRelated = (message: string): boolean => {
+    const symptomKeywords = [
+      'pain', 'hurt', 'ache', 'tired', 'fatigue', 'sick', 'feel', 'symptom',
+      'headache', 'nausea', 'dizzy', 'weak', 'sore', 'uncomfortable',
+      'sleep', 'insomnia', 'stress', 'anxious', 'worried', 'depressed'
+    ];
+    
+    const lower = message.toLowerCase();
+    return symptomKeywords.some(keyword => lower.includes(keyword));
+  };
+
+  /**
+   * Handle symptom-related messages with new health services
+   */
+  private handleSymptomMessage = async (
+    userMessage: string,
+    healthContext: HealthContextData
+  ): Promise<CoachResponse> => {
+    try {
+      // Analyze symptoms using new engine
+      const analysis = await this.symptomEngine.analyzeSymptom({
+        symptomDescription: userMessage,
+        symptomType: this.detectSymptomType(userMessage),
+        healthContext: {
+          sleep_hours: healthContext.sleep?.current,
+          hydration_oz: healthContext.hydration?.current,
+          steps: healthContext.steps?.current,
+        },
+      });
+
+      // Build response message
+      let message = '💙 Thank you for sharing. ';
+
+      // Add severity assessment
+      if (analysis.severity_assessment === 'severe' || analysis.severity_assessment === 'critical') {
+        message += 'Based on what you\'ve described, I recommend consulting with a healthcare provider. ';
+      } else {
+        message += 'I hear what you\'re experiencing. ';
+      }
+
+      // Add possible causes
+      if (analysis.possible_causes.length > 0) {
+        message += '\n\n**Possible factors:**\n';
+        analysis.possible_causes.slice(0, 3).forEach(cause => {
+          message += `• ${cause}\n`;
+        });
+      }
+
+      // Add health data correlations
+      if (analysis.correlation_with_health_data) {
+        const correlations = [];
+        if (analysis.correlation_with_health_data.sleep_deficit) {
+          correlations.push('• Your sleep has been below optimal levels');
+        }
+        if (analysis.correlation_with_health_data.hydration_low) {
+          correlations.push('• Your hydration is lower than recommended');
+        }
+        if (analysis.correlation_with_health_data.activity_level_change) {
+          correlations.push('• Your activity level has decreased');
+        }
+        
+        if (correlations.length > 0) {
+          message += '\n\n**Health patterns I noticed:**\n' + correlations.join('\n');
+        }
+      }
+
+      // Add disclaimer
+      message += '\n\n' + this.complianceService.getRequiredDisclaimers('lifestyle', ['USA'])[0].text;
+
+      return {
+        message,
+        contextData: healthContext,
+        messageType: analysis.urgency_level === 'high' || analysis.urgency_level === 'emergency' 
+          ? 'insight' 
+          : 'suggestion',
+        quickActions: [
+          { id: 'more_details', label: 'Tell me more', action: 'wellness_check', icon: 'chatbubble-outline' },
+          { id: 'track_symptoms', label: 'Track this', action: 'symptom_log', icon: 'bookmark-outline' },
+        ],
+      };
+    } catch (error) {
+      console.error('Error handling symptom message:', error);
+      // Fallback to legacy logic
+      return this.craftResponse(userMessage, healthContext, 'text');
+    }
+  };
+
+  /**
+   * Detect symptom type from message
+   */
+  private detectSymptomType(message: string): any {
+    const lower = message.toLowerCase();
+    if (lower.includes('pain') || lower.includes('hurt') || lower.includes('ache')) return 'pain';
+    if (lower.includes('tired') || lower.includes('fatigue') || lower.includes('energy')) return 'energy';
+    if (lower.includes('sleep') || lower.includes('insomnia')) return 'sleep';
+    if (lower.includes('stomach') || lower.includes('nausea') || lower.includes('digestive')) return 'digestive';
+    if (lower.includes('breath') || lower.includes('cough')) return 'respiratory';
+    if (lower.includes('stress') || lower.includes('anxious') || lower.includes('mood')) return 'mental';
+    return 'other';
   }
 }
 
