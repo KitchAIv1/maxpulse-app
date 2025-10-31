@@ -2,7 +2,7 @@
   "expo": {
     "name": "MaxPulse",
     "slug": "maxpulse",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
@@ -10,14 +10,17 @@
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#047857"
+      "backgroundColor": "#F5F5DC"
     },
     "ios": {
       "bundleIdentifier": "com.maxpulse.app",
       "supportsTablet": true,
+      "buildNumber": "1",
       "infoPlist": {
-        "NSMotionUsageDescription": "MaxPulse uses motion data to automatically track your daily steps and activity levels.",
-        "NSHealthShareUsageDescription": "MaxPulse reads your health data to track sleep patterns and hydration levels for personalized health insights."
+        "NSMotionUsageDescription": "MaxPulse tracks your daily steps to help you achieve your health goals.",
+        "NSHealthShareUsageDescription": "MaxPulse reads your health data to provide personalized wellness insights and track your progress.",
+        "NSHealthUpdateUsageDescription": "MaxPulse updates your health data to keep your wellness metrics synchronized.",
+        "UIBackgroundModes": ["fetch", "remote-notification"]
       }
     },
     "android": {

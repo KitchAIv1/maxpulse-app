@@ -1,0 +1,25 @@
+# MaxPulse Production Environment Variables Template
+# Copy this content to .env.production and fill in your actual values
+# DO NOT COMMIT .env.production TO GIT
+
+# Supabase (Production Project)
+EXPO_PUBLIC_SUPABASE_URL=https://YOUR_PROJECT.supabase.co
+EXPO_PUBLIC_SUPABASE_ANON_KEY=your_production_anon_key_here
+
+# OpenAI
+OPENAI_API_KEY=your_openai_api_key_here
+OPENAI_MODEL=gpt-4o-mini
+OPENAI_MAX_TOKENS=1000
+OPENAI_TEMPERATURE=0.7
+
+# IMPORTANT SECURITY NOTES:
+# 1. Use separate Supabase project for production
+# 2. Set OpenAI spending limit: $50/month
+# 3. Use EAS Secrets for production builds (recommended)
+# 4. Never commit .env.production to git
+
+# EAS Secrets Setup (Recommended for Production):
+# eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_URL --value "your_value" --type string
+# eas secret:create --scope project --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "your_value" --type string
+# eas secret:create --scope project --name OPENAI_API_KEY --value "your_value" --type string
+
