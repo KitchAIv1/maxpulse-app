@@ -57,7 +57,16 @@
       "expo-sensors",
       "expo-notifications",
       "expo-secure-store",
-      "expo-dev-client"
+      "expo-dev-client",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "extraPods": [],
+            "deploymentTarget": "13.4"
+          }
+        }
+      ]
     ],
     "extra": {
       "eas": {

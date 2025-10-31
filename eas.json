@@ -21,6 +21,9 @@
       "ios": {
         "resourceClass": "m-medium"
       },
+      "hooks": {
+        "postInstall": "./eas-hooks/eas-build-post-install.sh"
+      },
       "env": {
         "EXPO_PUBLIC_SUPABASE_URL": "$(EXPO_PUBLIC_SUPABASE_URL)",
         "EXPO_PUBLIC_SUPABASE_ANON_KEY": "$(EXPO_PUBLIC_SUPABASE_ANON_KEY)",
