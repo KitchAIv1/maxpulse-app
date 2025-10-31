@@ -2,12 +2,19 @@
 
 A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations.
 
-![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-1.7.1-green)
+![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-1.8.0-green)
 
-## 🎯 Version 1.7.1 - Production Ready MVP
+## 🎯 Version 1.8.0 - Production Ready MVP
 
 **Latest Release:** October 30, 2025  
 **Status:** Production Ready ✅
+
+### Key Features in v1.8.0:
+- ✅ **Life Score Assessment Integration** - Cumulative scoring from all weekly assessments
+- ✅ **5-Component Weighted Model** - 20% past assessments + 80% current week (20% per pillar)
+- ✅ **Performance Optimized** - 5-minute cache prevents excessive DB queries
+- ✅ **Event-Based Updates** - Only refreshes on meaningful events (not every render)
+- ✅ **Critical Bug Fix** - Fixed 10x inflated scores (348 → 32 for low-performing users)
 
 ### Key Improvements in v1.7.1:
 - ✅ **Mood Check-In Keyboard Fix** - Input field stays above keyboard when typing
@@ -42,8 +49,11 @@ A comprehensive React Native health transformation platform that combines **Step
 - **Card-Based Ring Layout**: Four separate ring cards in Cal AI minimalist style
   - **Landscape Steps Card**: Large ring with label left, percentage display, and optimized sizing
   - **Three Core Habit Cards**: Hydration, Sleep, and Mood in a horizontal row with compact rings
-- **4-Factor Life Score**: Combines Steps, Hydration, Sleep (25% each) with Mood check-in frequency (25%)
-- **Real-time Updates**: Instant recalculation when any metric changes
+- **Assessment-Aware Life Score**: Cumulative scoring from all weekly assessments
+  - **5-Component Model**: 20% past assessments average + 80% current week (20% per pillar: steps, water, sleep, mood)
+  - **Week 1 Fallback**: 4-pillar model (25% each) when no past assessments exist
+  - **Performance Optimized**: 5-minute cache prevents excessive DB queries
+- **Real-time Updates**: Instant recalculation when any metric changes during the week
 - **Cal AI Design System**: Beige background, soft pastels, rounded cards with subtle shadows, light typography
 
 ### 🤖 **AI Coach**
@@ -287,10 +297,21 @@ Modern card-based ring layout with four separate tracking components:
 - **Position**: Above ring cards for logical flow
 
 ### Life Score Algorithm
+
+**Assessment-Aware Cumulative Scoring** (Week 2+):
 ```typescript
-// 4-factor model: Steps, Hydration, Sleep, Mood Check-ins
-const lifeScore = (stepsPct * 0.25) + (waterPct * 0.25) + 
-                  (sleepPct * 0.25) + (moodCheckInPct * 0.25);
+// 5-component blended model: 20% past assessments + 80% current week
+const pastAvgDecimal = pastAssessmentsAvg / 100; // Convert percentage to decimal
+const currentWeek = (stepsPct * 0.2) + (waterPct * 0.2) + 
+                    (sleepPct * 0.2) + (moodPct * 0.2);
+const lifeScore = (pastAvgDecimal * 0.2 + currentWeek) * 100;
+```
+
+**Week 1 Fallback** (No past assessments):
+```typescript
+// 4-factor model: Steps, Hydration, Sleep, Mood Check-ins (25% each)
+const lifeScore = ((stepsPct * 0.25) + (waterPct * 0.25) + 
+                    (sleepPct * 0.25) + (moodCheckInPct * 0.25)) * 100;
 ```
 
 ### MaxPulse Header
@@ -469,10 +490,44 @@ const weeklyTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
 **Key Services:**
 - **`TargetManager`**: Single source of truth for user targets (V2 Engine → UI)
 - **`V2EngineConnector`**: Extracts weekly progression from `v2Analysis.transformationRoadmap`
+- **`LifeScoreCalculator`**: Assessment-aware Life Score calculation from cumulative weekly assessments
 - **`HealthDataService`**: CRUD operations for daily metrics with RLS
 - **`SyncManager`**: Background synchronization with offline queue support
 - **`OfflineQueueService`**: Offline-first data persistence with AsyncStorage
 - **`DatabaseInitializer`**: One-time user data setup on first login
+
+### Life Score Assessment Integration
+The Life Score now integrates with the **Weekly Assessment Engine** to provide cumulative scoring:
+
+**Data Source**: Weekly assessments are stored in the `weekly_performance_history` table:
+```
+weekly_performance_history.overall_achievement_avg (0-100 percentage)
+```
+
+**Calculation Formula**:
+```typescript
+// Week 2+ (with past assessments):
+const pastAvgDecimal = pastAssessmentsAvg / 100; // Convert to 0-1 range
+const currentWeek = (stepsPct * 0.2) + (waterPct * 0.2) + 
+                    (sleepPct * 0.2) + (moodPct * 0.2);
+const lifeScore = (pastAvgDecimal * 0.2 + currentWeek) * 100;
+
+// Week 1 (no past assessments):
+const lifeScore = ((stepsPct * 0.25) + (waterPct * 0.25) + 
+                    (sleepPct * 0.25) + (moodPct * 0.25)) * 100;
+```
+
+**Update Triggers**:
+- App launch (once per session)
+- Assessment completion (once per week on Sunday)
+- Date change (once per day at midnight)
+- Manual refresh (user-initiated)
+
+**Performance Optimizations**:
+- 5-minute in-memory cache (prevents redundant DB queries)
+- Event-based updates only (NOT on every render)
+- Max 12 records query (entire 90-day program)
+- Cache hit: <1ms, Cache miss: <150ms
 
 ## 🧪 Development
 

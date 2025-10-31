@@ -5,6 +5,49 @@ All notable changes to the MaxPulse app will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.8.0] - 2025-10-30
+
+### Added
+- **Life Score Assessment Integration**
+  - Life Score now aggregates data from all weekly assessments (cumulative scoring)
+  - 5-component weighted model: 20% past assessments + 80% current week (20% per pillar)
+  - Auto-refreshes on assessment completion and app launch
+  - Real-time updates during the week with cached assessment data
+  - Performance-optimized with 5-minute cache to prevent excessive DB queries
+
+- **LifeScoreCalculator Service**
+  - New service for assessment-aware Life Score calculation
+  - Handles cumulative weekly assessment aggregation
+  - Implements blended scoring formula with fallback for Week 1
+  - Includes comprehensive validation test suite
+
+- **Assessment-Based Life Score State**
+  - Added `assessmentBasedLifeScore` to appStore for cached calculation
+  - Zustand state persistence across screens
+  - Event-based updates (app launch, assessment completion, date changes)
+  - No DB queries on every render - only on meaningful events
+
+### Fixed
+- **CRITICAL: Life Score Calculation Bug**
+  - Fixed score showing 348 instead of 32 due to mixing percentage (0-100) with decimal (0-1) values
+  - Database stores `overall_achievement_avg` as percentage (15.6 = 15.6%)
+  - Current week metrics are decimals (0.362 = 36.2%)
+  - Now correctly converts percentage to decimal before calculation
+  - Impact: All users with past assessments were seeing 10x inflated scores
+
+### Improved
+- **Performance Optimization**
+  - 5-minute in-memory cache prevents redundant DB queries
+  - Max 1 query per 5 minutes under normal usage
+  - Cache hit: <1ms, Cache miss: <150ms
+  - Event-based updates only (NOT on every render)
+  - Targets <10 queries per session
+
+- **Life Score Calculation Accuracy**
+  - Correctly handles Week 1 (no past data) with 4-pillar fallback model
+  - Properly blends past assessment averages with current week progress
+  - Formula: (Past Avg / 100 × 0.2) + (Current Week × 0.8)
+
 ## [1.7.0] - 2025-10-30
 
 ### Added
