@@ -110,13 +110,13 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
             {Math.round(score)}
           </Text>
           
-          {/* Battery icon indicator - using Ionicons for clarity */}
-          <Icon 
+          {/* Battery icon indicator - TEMPORARILY REMOVED FOR TESTING */}
+          {/* <Icon 
             name={progress >= 0.9 ? 'battery-full' : progress >= 0.5 ? 'battery-half' : 'battery-dead'} 
             size={24} 
             color={colors.primary} 
             style={styles.batteryIcon}
-          />
+          /> */}
         </View>
 
         {/* Charging animation effect */}
