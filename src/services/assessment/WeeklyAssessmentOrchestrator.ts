@@ -80,6 +80,11 @@ export class WeeklyAssessmentOrchestrator {
       // Store results for future reference (optional - fails gracefully if table doesn't exist)
       try {
         await this.storeAssessmentResults(userId, assessmentData);
+        
+        // Clear Life Score cache and trigger refresh
+        const { LifeScoreCalculator } = await import('../LifeScoreCalculator');
+        LifeScoreCalculator.clearCache();
+        console.log('✅ Life Score cache cleared after assessment completion');
       } catch (storageError) {
         console.warn('⚠️ Could not store assessment history (table may not exist yet):', storageError);
         // Continue anyway - assessment data is still valid

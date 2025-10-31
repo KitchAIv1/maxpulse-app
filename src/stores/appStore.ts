@@ -19,6 +19,10 @@ interface AppStore extends AppState {
     moodCheckInFrequency: AppState['moodCheckInFrequency'];
   } | null;
   
+  // Life Score state (assessment-aware)
+  assessmentBasedLifeScore: number | null;
+  lastLifeScoreRefresh: number | null;
+  
   // Actions
   setUser: (user: User | null) => void;
   setDailyMetrics: (metrics: DailyMetrics | null) => void;
@@ -31,6 +35,7 @@ interface AppStore extends AppState {
   setError: (error: string | null) => void;
   initializeTargets: (customTargets?: any) => Promise<void>;
   loadTodayData: () => Promise<void>;
+  refreshLifeScore: () => Promise<void>;
   
   // Date navigation actions
   setSelectedDate: (date: string) => Promise<void>;
@@ -70,6 +75,8 @@ export const useAppStore = create<AppStore>((set, get) => ({
   selectedDate: getTodayDate(),
   isViewingPastDate: false,
   todayStateCache: null,
+  assessmentBasedLifeScore: null,
+  lastLifeScoreRefresh: null,
 
   setUser: (user) => set({ user }),
 
@@ -662,6 +669,39 @@ export const useAppStore = create<AppStore>((set, get) => ({
     
     pendingRequests.set(date, requestPromise);
     return requestPromise;
+  },
+
+  refreshLifeScore: async () => {
+    const { user, currentState, targets, moodCheckInFrequency } = get();
+    if (!user) return;
+
+    try {
+      const { LifeScoreCalculator } = await import('./LifeScoreCalculator');
+      
+      // Calculate current week metrics percentages
+      const currentWeekMetrics = {
+        stepsPct: currentState.steps / targets.steps,
+        waterPct: currentState.waterOz / targets.waterOz,
+        sleepPct: currentState.sleepHr / targets.sleepHr,
+        moodPct: moodCheckInFrequency.total_checkins / moodCheckInFrequency.target_checkins,
+      };
+
+      // Force refresh to bypass cache
+      const score = await LifeScoreCalculator.calculateLifeScore(
+        user.id,
+        currentWeekMetrics,
+        true
+      );
+
+      set({
+        assessmentBasedLifeScore: score,
+        lastLifeScoreRefresh: Date.now(),
+      });
+
+      console.log(`✅ Life Score refreshed: ${score}`);
+    } catch (error) {
+      console.error('❌ Failed to refresh Life Score:', error);
+    }
   },
 
   reset: () => set({ ...initialState, selectedDate: getTodayDate(), isViewingPastDate: false }),
