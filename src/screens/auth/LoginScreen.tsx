@@ -88,13 +88,17 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({
             />
             <Text style={styles.appName}>MaxPulse</Text>
           </View>
-          <Text style={styles.welcomeTitle}>Welcome to MaxPulse</Text>
+          <Text style={styles.welcomeTitle}>Welcome</Text>
           <Text style={styles.tagline}>Where health meets purpose.</Text>
-          <View style={styles.exclusiveContainer}>
-            <Text style={styles.exclusiveText}>
-              Access is exclusive to our Maximum 88 family — verified customers and distributors only.
-            </Text>
+          
+          <View style={styles.exclusiveBadge}>
+            <Icon name="shield-checkmark" size={14} color={theme.colors.primary} />
+            <Text style={styles.exclusiveBadgeText}>Maximum 88 Exclusive</Text>
           </View>
+          
+          <Text style={styles.accessNote}>
+            Verified customers and distributors only
+          </Text>
         </View>
 
         {/* Form Section */}
@@ -207,49 +211,63 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: theme.spacing.base, // Reduced from lg to base
+    marginBottom: theme.spacing.lg,
   },
   brandRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: theme.spacing.sm, // Increased spacing after logo
+    marginBottom: theme.spacing.base,
   },
   logo: {
-    width: 32, // Reduced from 36 to 32
-    height: 32, // Reduced from 36 to 32
+    width: 36,
+    height: 36,
     marginRight: theme.spacing.sm,
   },
   appName: {
-    fontSize: 26, // Reduced from 30.5 to match elegant branding
-    fontWeight: '500',
+    fontSize: 28,
+    fontWeight: '600',
     color: theme.colors.textPrimary,
     letterSpacing: -0.5,
   },
   welcomeTitle: {
-    fontSize: 20, // Reduced, elegant size like rewards page
+    fontSize: theme.typography.xlarge, // 32px - prominent but elegant
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs, // Compact spacing
+    marginTop: theme.spacing.base,
+    marginBottom: theme.spacing.xs,
     textAlign: 'center',
-    letterSpacing: -0.3,
+    letterSpacing: -0.5,
   },
   tagline: {
-    fontSize: theme.typography.regular, // Reduced from small
+    fontSize: theme.typography.regular,
     color: theme.colors.textSecondary,
     textAlign: 'center',
     fontWeight: theme.typography.weights.regular,
-    marginBottom: theme.spacing.sm, // Compact spacing
+    marginBottom: theme.spacing.base,
   },
-  exclusiveContainer: {
+  exclusiveBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F5F8FF', // Subtle blue tint
     paddingHorizontal: theme.spacing.base,
-    marginTop: theme.spacing.xs,
+    paddingVertical: 6,
+    borderRadius: theme.borderRadius.full,
+    marginTop: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
+    gap: 6,
   },
-  exclusiveText: {
-    fontSize: theme.typography.small, // Compact size
-    color: theme.colors.textSecondary,
+  exclusiveBadgeText: {
+    fontSize: theme.typography.small,
+    color: theme.colors.primary,
+    fontWeight: theme.typography.weights.semibold,
+    letterSpacing: 0.3,
+  },
+  accessNote: {
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textTertiary,
     textAlign: 'center',
-    lineHeight: 18,
     fontWeight: theme.typography.weights.regular,
+    marginTop: 2,
   },
   form: {
     flex: 1,
