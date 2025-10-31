@@ -22,8 +22,11 @@
         "NSHealthUpdateUsageDescription": "MaxPulse updates your health data to keep your wellness metrics synchronized.",
         "UIBackgroundModes": [
           "fetch",
+          "remote-notification",
+          "fetch",
           "remote-notification"
-        ]
+        ],
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
