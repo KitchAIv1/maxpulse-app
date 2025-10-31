@@ -93,9 +93,10 @@ export class LifeScoreCalculator {
     pastAssessments: WeeklyPerformanceHistory[],
     currentWeek: CurrentWeekMetrics
   ): number {
-    // Calculate average of all past assessments (20% weight)
-    const pastAverage = this.calculatePastAverage(pastAssessments);
-    const pastContribution = pastAverage * 0.2;
+    // Calculate average of all past assessments (stored as percentage 0-100, convert to decimal 0-1)
+    const pastAveragePercent = this.calculatePastAverage(pastAssessments);
+    const pastAverageDecimal = pastAveragePercent / 100; // Convert to 0-1 range
+    const pastContribution = pastAverageDecimal * 0.2;
 
     // Calculate current week (80% weight, 20% per pillar)
     const currentContribution = 
@@ -106,7 +107,7 @@ export class LifeScoreCalculator {
 
     const finalScore = (pastContribution + currentContribution) * 100;
     
-    console.log(`📊 Blended Score: Past (${pastAverage.toFixed(1)}%) * 0.2 + Current (${(currentContribution * 100).toFixed(1)}%) * 0.8 = ${finalScore.toFixed(0)}`);
+    console.log(`📊 Blended Score: Past (${pastAveragePercent.toFixed(1)}% → ${pastAverageDecimal.toFixed(3)}) * 0.2 + Current (${(currentContribution * 100).toFixed(1)}%) * 0.8 = ${finalScore.toFixed(0)}`);
     
     return Math.round(finalScore);
   }
