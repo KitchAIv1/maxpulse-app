@@ -79,7 +79,7 @@ export const ProgressionChoices: React.FC<ProgressionChoicesProps> = ({
             <Icon 
               name={recommendation === 'advance' ? 'checkmark-circle' : 
                    recommendation === 'extend' ? 'refresh' : 'arrow-back'} 
-              size={20} 
+              size={18} 
               color="white" 
             />
           </View>
@@ -114,7 +114,7 @@ export const ProgressionChoices: React.FC<ProgressionChoicesProps> = ({
         >
           <View style={styles.choiceHeader}>
             <View style={[styles.choiceIcon, styles.secondaryIcon]}>
-              <Icon name="arrow-forward" size={20} color={theme.colors.warning} />
+              <Icon name="arrow-forward" size={18} color={theme.colors.warning} />
             </View>
             <View style={styles.choiceContent}>
               <Text style={styles.choiceTitle}>
@@ -144,7 +144,7 @@ export const ProgressionChoices: React.FC<ProgressionChoicesProps> = ({
       >
         <View style={styles.choiceHeader}>
           <View style={[styles.choiceIcon, styles.tertiaryIcon]}>
-            <Icon name="chatbubble-ellipses" size={20} color={theme.colors.accent} />
+            <Icon name="chatbubble-ellipses" size={18} color={theme.colors.accent} />
           </View>
           <View style={styles.choiceContent}>
             <Text style={styles.choiceTitle}>
@@ -159,7 +159,7 @@ export const ProgressionChoices: React.FC<ProgressionChoicesProps> = ({
           )}
         </View>
         <View style={styles.premiumBadge}>
-          <Icon name="star" size={12} color="#FFD700" />
+          <Icon name="star" size={10} color="#FFD700" />
           <Text style={styles.premiumText}>Premium</Text>
         </View>
       </TouchableOpacity>
@@ -176,7 +176,7 @@ export const ProgressionChoices: React.FC<ProgressionChoicesProps> = ({
 
       {/* Help Text */}
       <View style={styles.helpSection}>
-        <Icon name="information-circle" size={16} color={theme.colors.textTertiary} />
+        <Icon name="information-circle" size={14} color={theme.colors.textTertiary} />
         <Text style={styles.helpText}>
           You can always adjust your plan later in Settings. Your health journey is unique to you.
         </Text>
@@ -190,7 +190,7 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
@@ -198,14 +198,14 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.base,
     lineHeight: theme.typography.small * 1.3,
   },
   choiceCard: {
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
-    marginBottom: theme.spacing.base,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
+    marginBottom: theme.spacing.sm,
     borderWidth: 2,
     borderColor: 'transparent',
     ...theme.shadows.subtle,
@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   choiceIcon: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: theme.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.base,
+    marginRight: theme.spacing.sm,
   },
   primaryIcon: {
     backgroundColor: theme.colors.primary,
@@ -251,10 +251,10 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   choiceTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.xs,
+    marginBottom: 2,
   },
   choiceDescription: {
     fontSize: theme.typography.small,

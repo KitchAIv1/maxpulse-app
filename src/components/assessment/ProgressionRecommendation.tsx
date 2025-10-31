@@ -100,7 +100,7 @@ export const ProgressionRecommendation: React.FC<ProgressionRecommendationProps>
           <View style={[styles.iconContainer, { backgroundColor: recommendationColor }]}>
             <Icon 
               name={getRecommendationIcon(assessment.recommendation)} 
-              size={24} 
+              size={20} 
               color="white" 
             />
           </View>
@@ -148,7 +148,7 @@ export const ProgressionRecommendation: React.FC<ProgressionRecommendationProps>
       {assessment.recommendation === 'extend' && assessment.modifications && (
         <View style={styles.modificationsCard}>
           <View style={styles.modificationsHeader}>
-            <Icon name="settings" size={16} color={theme.colors.warning} />
+            <Icon name="settings" size={14} color={theme.colors.warning} />
             <Text style={styles.modificationsTitle}>Adjusted Focus</Text>
           </View>
           <Text style={styles.modificationsText}>
@@ -181,15 +181,15 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.base,
+    marginBottom: theme.spacing.sm,
   },
   recommendationCard: {
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
     marginBottom: theme.spacing.base,
     borderLeftWidth: 4,
     ...theme.shadows.subtle,
@@ -200,18 +200,18 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.base,
   },
   iconContainer: {
-    width: 48,
-    height: 48,
+    width: 40,
+    height: 40,
     borderRadius: theme.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: theme.spacing.base,
+    marginRight: theme.spacing.sm,
   },
   recommendationInfo: {
     flex: 1,
   },
   recommendationTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
@@ -219,7 +219,7 @@ const styles = StyleSheet.create({
   recommendationDescription: {
     fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
-    lineHeight: theme.typography.small * 1.4,
+    lineHeight: theme.typography.small * 1.3,
   },
   confidenceContainer: {
     marginTop: theme.spacing.base,

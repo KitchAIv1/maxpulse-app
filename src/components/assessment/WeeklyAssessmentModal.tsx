@@ -134,7 +134,7 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
             onPress={onClose}
             disabled={isExecuting}
           >
-            <Icon name="close" size={24} color={theme.colors.textPrimary} />
+            <Icon name="close" size={20} color={theme.colors.textPrimary} />
           </TouchableOpacity>
         </View>
 
@@ -180,14 +180,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    paddingHorizontal: theme.spacing.lg,
-    paddingVertical: theme.spacing.base,
+    paddingHorizontal: theme.spacing.base,
+    paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.cardBackground,
   },
   headerTitle: {
-    fontSize: theme.typography.large,
+    fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },
@@ -197,8 +197,8 @@ const styles = StyleSheet.create({
     marginTop: theme.spacing.xs,
   },
   closeButton: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: theme.borderRadius.full,
     backgroundColor: theme.colors.background,
     alignItems: 'center',
@@ -209,8 +209,8 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollContent: {
-    paddingHorizontal: theme.spacing.lg,
-    paddingTop: theme.spacing.lg,
+    paddingHorizontal: theme.spacing.base,
+    paddingTop: theme.spacing.base,
   },
   bottomSpacer: {
     height: theme.spacing.xl,

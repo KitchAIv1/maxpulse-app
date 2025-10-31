@@ -71,7 +71,7 @@ export const PerformanceBreakdown: React.FC<PerformanceBreakdownProps> = ({
           <View style={[styles.gradeContainer, { backgroundColor: getGradeColor(performance.overallGrade) }]}>
             <Icon 
               name={getGradeIcon(performance.overallGrade)} 
-              size={20} 
+              size={18} 
               color="white" 
             />
           </View>
@@ -91,7 +91,7 @@ export const PerformanceBreakdown: React.FC<PerformanceBreakdownProps> = ({
               <View style={styles.pillarHeader}>
                 <Icon 
                   name={getPillarIcon(pillar.pillar)} 
-                  size={16} 
+                  size={14} 
                   color={theme.colors.textSecondary} 
                 />
                 <Text style={styles.pillarName}>{getPillarName(pillar.pillar)}</Text>
@@ -147,8 +147,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     backgroundColor: theme.colors.cardBackground,
-    borderRadius: theme.borderRadius.lg,
-    padding: theme.spacing.lg,
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
     marginBottom: theme.spacing.base,
     ...theme.shadows.subtle,
   },
@@ -156,7 +156,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
   },
   scoreValue: {
-    fontSize: theme.typography.xxlarge,
+    fontSize: 36,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
   },
@@ -169,12 +169,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   gradeContainer: {
-    width: 40,
-    height: 40,
+    width: 36,
+    height: 36,
     borderRadius: theme.borderRadius.full,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   gradeText: {
     fontSize: theme.typography.small,
@@ -184,10 +184,10 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing.lg,
   },
   sectionTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.base,
+    marginBottom: theme.spacing.sm,
   },
   pillarGrid: {
     flexDirection: 'row',
@@ -211,10 +211,10 @@ const styles = StyleSheet.create({
     marginLeft: theme.spacing.xs,
   },
   pillarScore: {
-    fontSize: theme.typography.large,
+    fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
-    marginBottom: theme.spacing.sm,
+    marginBottom: theme.spacing.xs,
   },
   progressBar: {
     height: 4,
