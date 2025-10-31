@@ -24,14 +24,28 @@ export interface AuthActions {
   setShowWelcome: (show: boolean) => void;
 }
 
+// Deduplication tracking for target loading (prevents duplicate loads during auth)
+let lastTargetLoadTimestamp = 0;
+let lastTargetLoadUserId = '';
+const TARGET_LOAD_DEBOUNCE_MS = 3000; // 3 second window
+
 export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [user, setUser] = useState<any>(null);
   const [showWelcome, setShowWelcome] = useState(false);
   const { setUser: setStoreUser, initializeTargets, loadTodayData } = useAppStore();
 
-  // Load user targets from their plan
+  // Load user targets from their plan (with deduplication)
   const loadUserTargets = async (userId: string) => {
+    // Deduplication: Skip if same user loaded recently
+    const now = Date.now();
+    if (userId === lastTargetLoadUserId && (now - lastTargetLoadTimestamp) < TARGET_LOAD_DEBOUNCE_MS) {
+      console.log('✅ Skipping duplicate target load (debounced)');
+      return;
+    }
+    
+    lastTargetLoadTimestamp = now;
+    lastTargetLoadUserId = userId;
     try {
       console.log('🎯 V2 Engine: Loading current week targets for user:', userId);
       const targets = await TargetManager.getCurrentWeekTargets(userId);
@@ -45,13 +59,22 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
       });
       console.log('🎯 Dashboard now shows V2 Engine targets:', targets);
 
-      // ✅ CRITICAL FIX: Backfill mood check-in counts for historical data
+      // ✅ CRITICAL FIX: Backfill mood check-in counts for historical data (once per day)
       try {
-        const { default: HealthDataService } = await import('../services/HealthDataService');
-        const healthService = HealthDataService.getInstance();
-        const updatedCount = await healthService.backfillMoodCheckInCounts(userId);
-        if (updatedCount > 0) {
-          console.log(`🔄 Backfilled mood check-in counts for ${updatedCount} dates`);
+        const today = getTodayDate();
+        const lastBackfillDate = await AsyncStorage.getItem('@last_mood_backfill_date');
+        
+        // Only run backfill once per day
+        if (lastBackfillDate !== today) {
+          const { default: HealthDataService } = await import('../services/HealthDataService');
+          const healthService = HealthDataService.getInstance();
+          const updatedCount = await healthService.backfillMoodCheckInCounts(userId);
+          if (updatedCount > 0) {
+            console.log(`🔄 Backfilled mood check-in counts for ${updatedCount} dates`);
+            await AsyncStorage.setItem('@last_mood_backfill_date', today);
+          }
+        } else {
+          console.log('✅ Mood backfill already completed today, skipping');
         }
       } catch (backfillError) {
         console.warn('⚠️ Failed to backfill mood check-in counts:', backfillError);

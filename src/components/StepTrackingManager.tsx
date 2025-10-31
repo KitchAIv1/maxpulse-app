@@ -111,10 +111,10 @@ export const StepTrackingManager: React.FC<StepTrackingManagerProps> = ({ childr
       }
     };
 
-    // Start tracking automatically after a short delay (to avoid overwhelming on first launch)
-    const timer = setTimeout(autoInitializeTracking, 1500);
+    // Start tracking automatically after a delay (deferred to not block sign-in)
+    const timer = setTimeout(autoInitializeTracking, 3000);
     return () => clearTimeout(timer);
-  }, [user?.id, permissions, canStart, isTracking, handleRequestPermissions, startTracking]);
+  }, [user?.id]); // Only re-run when user changes, not on permission/status changes
 
   // Handle daily reset when date changes
   useEffect(() => {
