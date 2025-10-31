@@ -11,7 +11,8 @@ interface EarningsRingCardProps {
   type: 'Steps' | 'Hydration' | 'Sleep' | 'Daily Bonus';
   points: number;
   maxPoints: number;
-  progress: number; // 0-1
+  progress: number; // 0-1 (for ring display)
+  actualPercentage?: number; // 0-1 (actual metric percentage for display)
   isCompleted?: boolean;
 }
 
@@ -38,12 +39,15 @@ const EARNINGS_CONFIG = {
   },
 } as const;
 
-export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({ type, points, maxPoints, progress, isCompleted = false }) => {
+export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({ type, points, maxPoints, progress, actualPercentage, isCompleted = false }) => {
   const config = EARNINGS_CONFIG[type];
   const progressValue = Math.min(progress, 1); // Cap at 100%
   
   // Show minimum visual progress for better UX
   const displayProgress = progressValue > 0 ? Math.max(progressValue, 0.05) : 0;
+  
+  // Use actual percentage if provided, otherwise calculate from progress
+  const percentageToDisplay = actualPercentage !== undefined ? actualPercentage : progressValue;
   
   return (
     <View style={[
@@ -77,7 +81,7 @@ export const EarningsRingCard: React.FC<EarningsRingCardProps> = ({ type, points
           {points}/{maxPoints} pts
         </Text>
         <Text style={styles.progressText}>
-          {progressValue > 0 ? Math.max(Math.round(progressValue * 100), 1) : 0}%
+          {percentageToDisplay > 0 ? Math.max(Math.round(percentageToDisplay * 100), 1) : 0}%
         </Text>
       </View>
       

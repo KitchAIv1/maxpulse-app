@@ -42,6 +42,7 @@ export const TodayEarningsGrid: React.FC<TodayEarningsGridProps> = ({
               points={item.points}
               maxPoints={item.max}
               progress={item.points / item.max}
+              actualPercentage={item.pct}
               isCompleted={item.pct >= 1 || (item.type === 'Daily Bonus' && allTargetsMet)}
             />
           </View>

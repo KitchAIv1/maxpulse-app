@@ -4,6 +4,7 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, Animated } from 'react-native';
 import Svg, { Circle, Defs, LinearGradient, Stop } from 'react-native-svg';
+import Icon from 'react-native-vector-icons/Ionicons';
 import { BatteryGaugeProps, LifeScoreColor } from '../../types/wellbeing';
 
 export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
@@ -109,19 +110,13 @@ export const BatteryGauge: React.FC<BatteryGaugeProps> = ({
             {Math.round(score)}
           </Text>
           
-          {/* Battery icon indicator */}
-          <View style={[styles.batteryIcon, { borderColor: colors.primary }]}>
-            <View 
-              style={[
-                styles.batteryFill, 
-                { 
-                  backgroundColor: colors.primary,
-                  height: `${progress * 100}%`
-                }
-              ]} 
-            />
-            <View style={[styles.batteryTip, { backgroundColor: colors.primary }]} />
-          </View>
+          {/* Battery icon indicator - using Ionicons for clarity */}
+          <Icon 
+            name={progress >= 0.9 ? 'battery-full' : progress >= 0.5 ? 'battery-half' : 'battery-dead'} 
+            size={24} 
+            color={colors.primary} 
+            style={styles.batteryIcon}
+          />
         </View>
 
         {/* Charging animation effect */}
@@ -182,28 +177,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   batteryIcon: {
-    width: 20,
-    height: 12,
-    borderWidth: 1.5,
-    borderRadius: 2,
-    marginTop: 8,
-    position: 'relative',
-    overflow: 'hidden',
-  },
-  batteryFill: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    borderRadius: 1,
-  },
-  batteryTip: {
-    position: 'absolute',
-    top: 3,
-    right: -3,
-    width: 2,
-    height: 6,
-    borderRadius: 1,
+    marginTop: 4, // Reduced from 8 to 4 for tighter spacing
   },
   chargingEffect: {
     position: 'absolute',
