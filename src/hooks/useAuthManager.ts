@@ -111,7 +111,7 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
           await NetworkService.getInstance().initialize();
           console.log('✅ Network service initialized');
           
-          await HealthDataService.processQueuedOperations();
+          await HealthDataService.getInstance().syncPendingData();
           console.log('✅ Processed queued operations');
         } catch (error) {
           console.warn('⚠️ Service initialization failed (non-critical):', error);
