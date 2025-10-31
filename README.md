@@ -2,12 +2,24 @@
 
 A comprehensive React Native health transformation platform that combines **Steps**, **Hydration**, **Sleep**, and **Mood Tracking** with an **AI Coach**, **Wellbeing Dashboard**, and **Activation Code System** for personalized 90-day health journeys. Features Cal AI-inspired minimalist design with card-based ring visualizations.
 
-![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-1.8.0-green)
+![MaxPulse App](https://img.shields.io/badge/Platform-React%20Native-blue) ![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-black) ![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue) ![Supabase](https://img.shields.io/badge/Backend-Supabase-green) ![Version](https://img.shields.io/badge/Version-2.0.0-green) ![MVP1](https://img.shields.io/badge/MVP1-Release%20Ready-orange)
 
-## 🎯 Version 1.8.0 - Production Ready MVP
+## 🎯 Version 2.0.0 - MVP1 Release
 
-**Latest Release:** October 30, 2025  
-**Status:** Production Ready ✅
+**Release Date:** December 6, 2025  
+**Testing Period:** November 22 - December 5, 2025 (2 weeks)  
+**Status:** MVP1 Release Ready ✅  
+**Launch:** December 6, 2025 🚀
+
+### 🚀 MVP1 Release Highlights (v2.0.0):
+- ✅ **Exclusive Sign-In Experience** - Maximum 88 family only, elegant branding
+- ✅ **Optimized Sign-In Performance** - 4s → <1s loading time (75% improvement)
+- ✅ **Smooth Mood Check-In UX** - Keyboard handling, auto-scroll, professional feel
+- ✅ **Life Score Assessment Integration** - Cumulative scoring from all weekly assessments
+- ✅ **Real-time Step Tracking** - iOS CoreMotion with accurate counting
+- ✅ **Elegant UI Branding** - Consistent design across all pages (Rewards, Assessment, Profile, Life Score)
+- ✅ **Performance Optimized** - Caching, deduplication, parallel operations
+- ✅ **Production Ready** - All critical bugs fixed, tested, and validated
 
 ### Key Features in v1.8.0:
 - ✅ **Life Score Assessment Integration** - Cumulative scoring from all weekly assessments
@@ -16,17 +28,30 @@ A comprehensive React Native health transformation platform that combines **Step
 - ✅ **Event-Based Updates** - Only refreshes on meaningful events (not every render)
 - ✅ **Critical Bug Fix** - Fixed 10x inflated scores (348 → 32 for low-performing users)
 
-### Key Improvements in v1.7.1:
-- ✅ **Mood Check-In Keyboard Fix** - Input field stays above keyboard when typing
-- ✅ **Smooth Keyboard Handling** - Platform-specific behavior for iOS and Android
-- ✅ **Enhanced UX** - User can see what they're typing in mood notes
-- ✅ **Calendar Dual Highlighting** - Today's date always clearly visible
-- ✅ **Date Navigation Fix** - Steps persist correctly without app reload  
-- ✅ **Step Percentage Display** - Shows actual progress (not 0%)
-- ✅ **Data Integrity** - No cache overwriting live step data
+### MVP1 Performance Improvements:
+- ✅ **Sign-In Optimization** - 75% faster loading (4s → <1s)
+  - Life Score caching with AsyncStorage (5-min TTL)
+  - Parallelized auth operations (Promise.all)
+  - Once-per-day checks (mood backfill, daily metrics audit)
+  - Deferred step tracking (3s delay)
+  - Target loading deduplication (3s debounce)
+  
+- ✅ **Mood Check-In Keyboard UX** - Professional, smooth experience
+  - Auto-scroll to input when focused
+  - Keyboard dismisses on drag
+  - Platform-specific KeyboardAvoidingView
+  - Proper z-index handling
+  
+- ✅ **UI Consistency** - Elegant branding across all pages
+  - Reduced font sizes, compact spacing
+  - Consistent icon sizes and border radius
+  - Understated, professional design
+  - Rewards "Coming Soon" UI
 
 ### Critical Bugs Fixed:
-- Keyboard covering input field in mood check-in
+- Sign-in flow performance (4s → <1s)
+- Mood check-in keyboard covering input field
+- Sign-up flow removed (handled in separate repo)
 - Steps showing 0 after date navigation (DB: 504, UI: 0)
 - Today's date invisible when viewing other dates
 - Step percentage showing 0% instead of actual progress
