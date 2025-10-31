@@ -1,7 +1,7 @@
 // Mood Check-In Modal Component
 // Modern bottom sheet modal for emotional wellness check-ins
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Modal,
   View,
@@ -13,6 +13,7 @@ import {
   Dimensions,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import Icon from 'react-native-vector-icons/Ionicons';
@@ -33,6 +34,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
 }) => {
   const [selectedMood, setSelectedMood] = useState<MoodLevel | null>(null);
   const [notes, setNotes] = useState('');
+  const scrollViewRef = useRef<ScrollView>(null);
 
   const handleSubmit = () => {
     if (!selectedMood) return;
@@ -61,7 +63,15 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
   const handleClose = () => {
     setSelectedMood(null);
     setNotes('');
+    Keyboard.dismiss();
     onClose();
+  };
+
+  const handleNoteInputFocus = () => {
+    // Scroll to bottom when note input is focused
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
   };
 
   return (
@@ -85,7 +95,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
         <KeyboardAvoidingView 
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.bottomSheet}
-          keyboardVerticalOffset={0}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? -50 : 0}
         >
           {/* Handle */}
           <View style={styles.handle} />
@@ -99,10 +109,12 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
           </View>
 
           <ScrollView
+            ref={scrollViewRef}
             style={styles.scrollView}
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             keyboardShouldPersistTaps="handled"
+            keyboardDismissMode="on-drag"
           >
             {/* Health Context Cards */}
             <HealthContextCards healthContext={healthContext} />
@@ -117,6 +129,7 @@ export const MoodCheckInModal: React.FC<MoodCheckInModalProps> = ({
             <QuickNoteInput
               value={notes}
               onChangeText={setNotes}
+              onFocus={handleNoteInputFocus}
             />
 
             {/* Submit Button */}

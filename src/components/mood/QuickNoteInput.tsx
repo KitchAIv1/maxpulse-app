@@ -9,12 +9,14 @@ interface QuickNoteInputProps {
   value: string;
   onChangeText: (text: string) => void;
   placeholder?: string;
+  onFocus?: () => void;
 }
 
 export const QuickNoteInput: React.FC<QuickNoteInputProps> = ({
   value,
   onChangeText,
   placeholder = "What's contributing to this feeling?",
+  onFocus,
 }) => {
   return (
     <View style={styles.container}>
@@ -23,11 +25,14 @@ export const QuickNoteInput: React.FC<QuickNoteInputProps> = ({
         style={styles.input}
         value={value}
         onChangeText={onChangeText}
+        onFocus={onFocus}
         placeholder={placeholder}
         placeholderTextColor={theme.colors.textTertiary}
         multiline
         numberOfLines={3}
         textAlignVertical="top"
+        returnKeyType="done"
+        blurOnSubmit={true}
       />
     </View>
   );
