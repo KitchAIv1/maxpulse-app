@@ -49,7 +49,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
             colors={['rgba(255, 107, 107, 0.15)', 'rgba(255, 107, 107, 0.05)']}
             style={styles.iconGradient}
           >
-            <Icon name="gift" size={80} color={theme.colors.primary} />
+            <Icon name="gift" size={48} color={theme.colors.primary} />
           </LinearGradient>
         </View>
 
@@ -67,7 +67,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
         {/* Feature List */}
         <View style={styles.featureList}>
           <View style={styles.featureItem}>
-            <Icon name="trophy" size={24} color={theme.colors.primary} style={styles.featureIcon} />
+            <Icon name="trophy" size={20} color={theme.colors.primary} style={styles.featureIcon} />
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Earn Points</Text>
               <Text style={styles.featureDescription}>
@@ -77,7 +77,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
           </View>
 
           <View style={styles.featureItem}>
-            <Icon name="flame" size={24} color="#FF6B35" style={styles.featureIcon} />
+            <Icon name="flame" size={20} color="#FF6B35" style={styles.featureIcon} />
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Build Streaks</Text>
               <Text style={styles.featureDescription}>
@@ -87,7 +87,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
           </View>
 
           <View style={styles.featureItem}>
-            <Icon name="gift" size={24} color="#4ECDC4" style={styles.featureIcon} />
+            <Icon name="gift" size={20} color="#4ECDC4" style={styles.featureIcon} />
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Partner Rewards</Text>
               <Text style={styles.featureDescription}>
@@ -97,7 +97,7 @@ export const RewardsScreen: React.FC<RewardsScreenProps> = ({ onBack }) => {
           </View>
 
           <View style={styles.featureItem}>
-            <Icon name="ribbon" size={24} color="#FFB800" style={styles.featureIcon} />
+            <Icon name="ribbon" size={20} color="#FFB800" style={styles.featureIcon} />
             <View style={styles.featureTextContainer}>
               <Text style={styles.featureTitle}>Achievement Badges</Text>
               <Text style={styles.featureDescription}>
@@ -150,80 +150,80 @@ const styles = StyleSheet.create({
     paddingBottom: 120, // Space for bottom navigation
   },
   iconContainer: {
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.base,
   },
   iconGradient: {
-    width: 160,
-    height: 160,
-    borderRadius: 80,
+    width: 100,
+    height: 100,
+    borderRadius: 50,
     alignItems: 'center',
     justifyContent: 'center',
   },
   badge: {
     backgroundColor: theme.colors.primary,
-    paddingHorizontal: theme.spacing.base,
-    paddingVertical: theme.spacing.xs,
+    paddingHorizontal: theme.spacing.sm,
+    paddingVertical: 3,
     borderRadius: theme.borderRadius.full,
-    marginBottom: theme.spacing.base,
+    marginBottom: theme.spacing.sm,
   },
   badgeText: {
     fontSize: theme.typography.tiny,
     fontWeight: theme.typography.weights.bold,
     color: '#FFFFFF',
-    letterSpacing: 1.5,
+    letterSpacing: 1.2,
   },
   mainTitle: {
-    fontSize: 32,
+    fontSize: 24,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
     marginBottom: theme.spacing.xs,
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     color: theme.colors.textSecondary,
-    marginBottom: theme.spacing.xl,
+    marginBottom: theme.spacing.lg,
     textAlign: 'center',
   },
   featureList: {
     width: '100%',
-    marginTop: theme.spacing.base,
+    marginTop: theme.spacing.sm,
   },
   featureItem: {
     flexDirection: 'row',
     alignItems: 'flex-start',
     backgroundColor: theme.colors.cardBackground,
-    padding: theme.spacing.base,
-    borderRadius: theme.borderRadius.lg,
+    padding: theme.spacing.md,
+    borderRadius: theme.borderRadius.md,
     marginBottom: theme.spacing.sm,
     ...theme.shadows.subtle,
   },
   featureIcon: {
-    marginTop: 2,
+    marginTop: 1,
   },
   featureTextContainer: {
     flex: 1,
-    marginLeft: theme.spacing.base,
+    marginLeft: theme.spacing.sm,
   },
   featureTitle: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.regular,
     fontWeight: theme.typography.weights.semibold,
     color: theme.colors.textPrimary,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   featureDescription: {
     fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
-    lineHeight: 20,
+    lineHeight: 18,
   },
   bottomMessage: {
-    marginTop: theme.spacing.xl,
+    marginTop: theme.spacing.lg,
     paddingHorizontal: theme.spacing.base,
   },
   bottomMessageText: {
-    fontSize: theme.typography.medium,
+    fontSize: theme.typography.small,
     color: theme.colors.textSecondary,
     textAlign: 'center',
-    lineHeight: 24,
+    lineHeight: 20,
   },
 });
