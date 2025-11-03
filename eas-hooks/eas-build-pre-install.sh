@@ -1,13 +1,11 @@
-#!/usr/bin/env bash
+#!/bin/bash
 
 # EAS Build Pre-Install Hook
-# This script runs before dependencies are installed
-# Used to fix duplicate PrivacyInfo.xcprivacy files
+# This runs BEFORE installing dependencies
 
-set -e
+echo "🔧 Running pre-install hook..."
 
-echo "🔧 EAS Pre-Install Hook: Preparing build environment..."
+# This hook will run after expo prebuild generates the ios folder
+# We'll handle the duplicate PrivacyInfo.xcprivacy issue in post-install instead
 
-# This hook will help prevent duplicate privacy manifest issues
-echo "✅ Pre-install hook completed"
-
+echo "✅ Pre-install hook complete"

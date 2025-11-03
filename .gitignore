@@ -10,15 +10,8 @@ web-build/
 expo-env.d.ts
 
 # Native
+ios/
 android/
-
-# iOS - Track config, ignore build artifacts
-ios/build/
-ios/Pods/
-ios/*.xcworkspace/xcuserdata/
-ios/*.xcodeproj/xcuserdata/
-ios/*.xcworkspace/xcshareddata/swiftpm/
-ios/DerivedData/
 .kotlin/
 *.orig.*
 *.jks
