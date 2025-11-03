@@ -48,7 +48,8 @@
       "expo-sensors",
       "expo-notifications",
       "expo-secure-store",
-      "expo-dev-client"
+      "expo-dev-client",
+      "./plugins/withRemoveDuplicatePrivacyInfo"
     ],
     "extra": {
       "eas": {
