@@ -28,13 +28,15 @@ eas env:create --name EXPO_PUBLIC_SUPABASE_URL --value "https://pdgpktwmqxrljtdb
 
 ### 3b. Create Supabase Anon Key
 ```bash
-eas env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBkZ3BrdHdtcXhybGp0ZGJudnl1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTg5MDI0ODEsImV4cCI6MjA3NDQ3ODQ4MX0.3O7t2WpOvZxvU2r1eH0K2KPSDjIUhfg-XpxU7KQRuX8" --environment production --visibility sensitive
+eas env:create --name EXPO_PUBLIC_SUPABASE_ANON_KEY --value "YOUR_SUPABASE_ANON_KEY_HERE" --environment production --visibility sensitive
 ```
+**Replace `YOUR_SUPABASE_ANON_KEY_HERE` with your actual key from `.env` file**
 
 ### 3c. Create OpenAI API Key
 ```bash
-eas env:create --name OPENAI_API_KEY --value "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" --environment production --visibility sensitive
+eas env:create --name OPENAI_API_KEY --value "YOUR_OPENAI_API_KEY_HERE" --environment production --visibility sensitive
 ```
+**Replace `YOUR_OPENAI_API_KEY_HERE` with your actual key from `.env` file**
 
 ---
 
