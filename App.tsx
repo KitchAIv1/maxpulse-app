@@ -606,7 +606,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-start',
-    marginBottom: theme.spacing.lg,
+    marginBottom: theme.spacing.sm,
     paddingTop: theme.spacing.sm,
   },
   headerLeft: {
