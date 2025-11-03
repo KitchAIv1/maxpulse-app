@@ -30,8 +30,7 @@
         "OPENAI_MODEL": "gpt-4o-mini",
         "OPENAI_MAX_TOKENS": "1000",
         "OPENAI_TEMPERATURE": "0.7"
-      },
-      "postinstall": "./eas-hooks/eas-build-post-install.sh"
+      }
     }
   }
 }
