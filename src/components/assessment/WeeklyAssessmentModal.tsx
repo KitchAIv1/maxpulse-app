@@ -23,7 +23,7 @@ import { theme } from '../../utils/theme';
 interface WeeklyAssessmentModalProps {
   visible: boolean;
   onClose: () => void;
-  assessmentData: WeeklyAssessmentData;
+  assessmentData: WeeklyAssessmentData | null;
   onDecision: (decision: ProgressionDecision) => void;
   isExecuting?: boolean;
   isHistorical?: boolean; // True if showing last completed assessment (not current week)
@@ -39,6 +39,24 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
   isHistorical = false,
   currentWeek,
 }) => {
+  // Show loading state if no data yet
+  if (!assessmentData) {
+    return (
+      <Modal
+        visible={visible}
+        animationType="slide"
+        transparent={false}
+        onRequestClose={onClose}
+      >
+        <StatusBar barStyle="light-content" backgroundColor={theme.colors.primary} />
+        <View style={styles.loadingContainer}>
+          <Icon name="hourglass-outline" size={48} color={theme.colors.primary} />
+          <Text style={styles.loadingText}>Loading assessment...</Text>
+        </View>
+      </Modal>
+    );
+  }
+
   const { performance, assessment } = assessmentData;
   
   // Calculate next assessment date (next Sunday at 8 PM)
@@ -314,5 +332,18 @@ const styles = StyleSheet.create({
     fontSize: theme.typography.xsmall,
     color: theme.colors.textSecondary,
     fontStyle: 'italic',
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: theme.colors.background,
+    padding: theme.spacing.xl,
+  },
+  loadingText: {
+    fontSize: theme.typography.base,
+    color: theme.colors.textPrimary,
+    marginTop: theme.spacing.base,
+    fontWeight: theme.typography.weights.medium,
   },
 });

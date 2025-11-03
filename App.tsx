@@ -571,7 +571,7 @@ function TriHabitApp() {
       <WeeklyAssessmentModal
         visible={weeklyAssessmentVisible}
         onClose={handleWeeklyAssessmentClose}
-        assessmentData={realAssessmentData || assessmentData || mockAssessmentData}
+        assessmentData={realAssessmentData || assessmentData || (realDataLoading ? null : mockAssessmentData)}
         onDecision={handleProgressionDecision}
         isExecuting={isExecuting}
         isHistorical={
