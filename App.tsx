@@ -74,6 +74,31 @@ function TriHabitApp() {
 
   // Weekly assessment modal state
   const [weeklyAssessmentVisible, setWeeklyAssessmentVisible] = useState(false);
+  const [currentWeek, setCurrentWeek] = useState<number | null>(null);
+  
+  // Fetch current week from plan_progress
+  useEffect(() => {
+    const fetchCurrentWeek = async () => {
+      if (!userId) return;
+      
+      try {
+        const { supabase } = await import('./src/services/supabase');
+        const { data, error } = await supabase
+          .from('plan_progress')
+          .select('current_week')
+          .eq('user_id', userId)
+          .single();
+        
+        if (!error && data) {
+          setCurrentWeek(data.current_week);
+        }
+      } catch (error) {
+        console.warn('Could not fetch current week:', error);
+      }
+    };
+    
+    fetchCurrentWeek();
+  }, [userId]);
   
   // Track screen changes
   useEffect(() => {
@@ -549,6 +574,12 @@ function TriHabitApp() {
         assessmentData={realAssessmentData || assessmentData || mockAssessmentData}
         onDecision={handleProgressionDecision}
         isExecuting={isExecuting}
+        isHistorical={
+          currentWeek !== null && 
+          (realAssessmentData || assessmentData) && 
+          (realAssessmentData?.performance.week || assessmentData?.performance.week || 0) < currentWeek
+        }
+        currentWeek={currentWeek || undefined}
       />
     </View>
   );

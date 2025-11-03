@@ -26,6 +26,8 @@ interface WeeklyAssessmentModalProps {
   assessmentData: WeeklyAssessmentData;
   onDecision: (decision: ProgressionDecision) => void;
   isExecuting?: boolean;
+  isHistorical?: boolean; // True if showing last completed assessment (not current week)
+  currentWeek?: number; // Current active week number from database
 }
 
 export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
@@ -34,8 +36,32 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
   assessmentData,
   onDecision,
   isExecuting = false,
+  isHistorical = false,
+  currentWeek,
 }) => {
   const { performance, assessment } = assessmentData;
+  
+  // Calculate next assessment date (next Sunday at 8 PM)
+  const getNextAssessmentDate = () => {
+    if (!currentWeek) return null;
+    
+    const today = new Date();
+    const daysUntilSunday = (7 - today.getDay()) % 7 || 7;
+    const nextSunday = new Date(today);
+    nextSunday.setDate(today.getDate() + daysUntilSunday);
+    nextSunday.setHours(20, 0, 0, 0); // 8 PM
+    
+    const options: Intl.DateTimeFormatOptions = { 
+      weekday: 'long', 
+      month: 'short', 
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true 
+    };
+    
+    return nextSunday.toLocaleDateString('en-US', options);
+  };
 
   const getDecisionActionText = (decisionType: 'accepted' | 'override_advance' | 'coach_consultation'): string => {
     if (decisionType === 'coach_consultation') {
@@ -123,8 +149,14 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
         
         {/* Header */}
         <View style={styles.header}>
-          <View>
+          <View style={styles.headerContent}>
             <Text style={styles.headerTitle}>Week {performance.week} Assessment</Text>
+            {isHistorical && (
+              <View style={styles.historicalBadge}>
+                <Icon name="checkmark-circle" size={14} color={theme.colors.success} />
+                <Text style={styles.historicalBadgeText}>Last Completed</Text>
+              </View>
+            )}
             <Text style={styles.headerSubtitle}>
               Phase {performance.phase} • {performance.startDate} to {performance.endDate}
             </Text>
@@ -156,13 +188,31 @@ export const WeeklyAssessmentModal: React.FC<WeeklyAssessmentModalProps> = ({
             currentPhase={performance.phase}
           />
 
-          {/* Progression Choices */}
-          <ProgressionChoices
-            recommendation={assessment.recommendation}
-            onChoice={handleDecision}
-            isExecuting={isExecuting}
-            weekNumber={performance.week}
-          />
+          {/* Info Box for Historical Assessment */}
+          {isHistorical && currentWeek && (
+            <View style={styles.infoBox}>
+              <View style={styles.infoHeader}>
+                <Icon name="information-circle" size={20} color={theme.colors.info} />
+                <Text style={styles.infoTitle}>Week {currentWeek} In Progress</Text>
+              </View>
+              <Text style={styles.infoText}>
+                Your next assessment will be available on {getNextAssessmentDate()}.
+              </Text>
+              <Text style={styles.infoSubtext}>
+                Keep tracking your daily habits!
+              </Text>
+            </View>
+          )}
+
+          {/* Progression Choices - Only show if not historical */}
+          {!isHistorical && (
+            <ProgressionChoices
+              recommendation={assessment.recommendation}
+              onChoice={handleDecision}
+              isExecuting={isExecuting}
+              weekNumber={performance.week}
+            />
+          )}
 
           <View style={styles.bottomSpacer} />
         </ScrollView>
@@ -186,10 +236,30 @@ const styles = StyleSheet.create({
     borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.cardBackground,
   },
+  headerContent: {
+    flex: 1,
+  },
   headerTitle: {
     fontSize: theme.typography.medium,
     fontWeight: theme.typography.weights.bold,
     color: theme.colors.textPrimary,
+  },
+  historicalBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+    marginBottom: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    backgroundColor: '#E8F5E9',
+    borderRadius: theme.borderRadius.sm,
+    alignSelf: 'flex-start',
+  },
+  historicalBadgeText: {
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.success,
+    fontWeight: theme.typography.weights.medium,
+    marginLeft: 4,
   },
   headerSubtitle: {
     fontSize: theme.typography.xsmall,
@@ -214,5 +284,35 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: theme.spacing.xl,
+  },
+  infoBox: {
+    backgroundColor: '#E3F2FD',
+    borderRadius: theme.borderRadius.md,
+    padding: theme.spacing.base,
+    marginTop: theme.spacing.base,
+    borderLeftWidth: 4,
+    borderLeftColor: theme.colors.info,
+  },
+  infoHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: theme.spacing.xs,
+  },
+  infoTitle: {
+    fontSize: theme.typography.small,
+    fontWeight: theme.typography.weights.semibold,
+    color: theme.colors.textPrimary,
+    marginLeft: theme.spacing.xs,
+  },
+  infoText: {
+    fontSize: theme.typography.small,
+    color: theme.colors.textPrimary,
+    lineHeight: 20,
+    marginBottom: theme.spacing.xs,
+  },
+  infoSubtext: {
+    fontSize: theme.typography.xsmall,
+    color: theme.colors.textSecondary,
+    fontStyle: 'italic',
   },
 });

@@ -44,7 +44,16 @@ export class WeeklyAssessmentOrchestrator {
       );
 
       if (!performance) {
-        console.error('Could not calculate weekly performance');
+        console.warn(`⚠️ Could not calculate performance for week ${weekNumber} - no tracking data yet`);
+        
+        // Fallback: Try to load last completed assessment from history
+        const lastCompletedAssessment = await this.getLastCompletedAssessment(userId, weekNumber);
+        if (lastCompletedAssessment) {
+          console.log(`✅ Loaded last completed assessment (Week ${lastCompletedAssessment.performance.week}) as fallback`);
+          return lastCompletedAssessment;
+        }
+        
+        console.error('No assessment data available - neither current week nor historical');
         return null;
       }
 
@@ -123,6 +132,41 @@ export class WeeklyAssessmentOrchestrator {
     } catch (error) {
       // Table might not exist yet - that's okay
       console.warn('⚠️ Could not check existing assessment (table may not exist yet)');
+      return null;
+    }
+  }
+
+  /**
+   * Get the last completed assessment (highest week number less than current week)
+   * Used as fallback when current week has no tracking data yet
+   */
+  private static async getLastCompletedAssessment(
+    userId: string,
+    currentWeek: number
+  ): Promise<WeeklyAssessmentData | null> {
+    try {
+      const { data, error } = await supabase
+        .from('weekly_performance_history')
+        .select('*')
+        .eq('user_id', userId)
+        .lt('week_number', currentWeek)
+        .order('week_number', { ascending: false })
+        .limit(1)
+        .single();
+
+      if (error || !data) {
+        console.log(`No completed assessments found before week ${currentWeek}`);
+        return null;
+      }
+
+      console.log(`📚 Found last completed assessment: Week ${data.week_number}`);
+
+      // Reconstruct and mark as historical
+      const assessment = this.reconstructAssessmentFromHistory(data);
+      
+      return assessment;
+    } catch (error) {
+      console.warn('⚠️ Could not load last completed assessment:', error);
       return null;
     }
   }
