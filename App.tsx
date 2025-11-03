@@ -24,7 +24,8 @@ import { useStepProgress, useStepTrackingStatus } from './src/stores/stepTrackin
 import { useWeeklyAssessment } from './src/hooks/assessment/useWeeklyAssessment';
 import { useProgressionDecision } from './src/hooks/assessment/useProgressionDecision';
 import { useRealTimeAssessment } from './src/hooks/assessment/useRealTimeAssessment';
-import { formatSleepDuration } from './src/utils';
+import { useMidnightRefresh } from './src/hooks/useMidnightRefresh';
+import { formatSleepDuration, getTodayDate } from './src/utils';
 import { theme } from './src/utils/theme';
 import { calAiCard, calAiContainer, calAiText } from './src/utils/calAiStyles';
 import { RewardsScreen } from './src/screens/RewardsScreen';
@@ -121,6 +122,13 @@ function TriHabitApp() {
     setSelectedDate,
     initializeTargets,
   } = useAppStore();
+
+  // Auto-refresh at midnight for seamless date transitions
+  useMidnightRefresh(() => {
+    const today = getTodayDate();
+    console.log(`🌅 Midnight refresh triggered: transitioning to ${today}`);
+    setSelectedDate(today);
+  });
 
   // Always use database values - no fallbacks or mock data
   // Step tracking service will update database when pedometer is available (dev/prod build)
