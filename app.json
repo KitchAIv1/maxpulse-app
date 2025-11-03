@@ -16,6 +16,7 @@
       "bundleIdentifier": "com.maxpulse.app",
       "supportsTablet": true,
       "buildNumber": "1",
+      "privacyManifestAggregationEnabled": false,
       "infoPlist": {
         "NSMotionUsageDescription": "MaxPulse tracks your daily steps to help you achieve your health goals.",
         "NSHealthShareUsageDescription": "MaxPulse reads your health data to provide personalized wellness insights and track your progress.",
