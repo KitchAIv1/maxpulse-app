@@ -46,6 +46,7 @@ export const PreferencesCard: React.FC<PreferencesCardProps> = ({
             <Switch
               value={item.value as boolean}
               onValueChange={item.onToggle}
+              disabled={item.id === 'notifications' && item.value === undefined} // Disable if loading
               trackColor={{ 
                 false: theme.colors.border, 
                 true: theme.colors.primary + '40' 

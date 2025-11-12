@@ -17,7 +17,6 @@ import Icon from 'react-native-vector-icons/Ionicons';
 import {
   UserProfileCard,
   HealthSummaryCard,
-  SubscriptionCard,
   PreferencesCard,
   SupportCard,
   AccountActionsCard,
@@ -26,6 +25,7 @@ import { useAppStore } from '../stores/appStore';
 import { useLifeScore } from '../hooks/useAppSelectors';
 import { authService } from '../services/supabase';
 import { theme } from '../utils/theme';
+import { useNotifications } from '../hooks/notifications/useNotifications';
 
 interface ProfileScreenProps {
   onBack?: () => void;
@@ -35,8 +35,17 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
   const { user, targets, currentState, moodCheckInFrequency } = useAppStore();
   const { stepsPct, waterPct, sleepPct, score: lifeScore } = useLifeScore();
   const [refreshing, setRefreshing] = useState(false);
+  
+  // Notification permissions hook - syncs with iOS Settings
+  // Hook already handles AppState listener for refreshing on return from Settings
+  const {
+    isEnabled: notificationsEnabled,
+    isLoading: notificationsLoading,
+    requestPermission: requestNotificationPermission,
+    openSettings: openNotificationSettings,
+  } = useNotifications();
+
   const [preferences, setPreferences] = useState({
-    notifications: true,
     weeklyReports: true,
     dataSharing: false,
     units: 'imperial' as 'metric' | 'imperial',
@@ -87,15 +96,57 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
     },
   ], [currentState, targets, moodCheckInFrequency, stepsPct, waterPct, sleepPct]);
 
-  // Subscription features
-  const subscriptionFeatures = useMemo(() => [
-    'Unlimited health tracking',
-    'AI-powered insights & coaching',
-    'Advanced analytics & trends',
-    'Priority customer support',
-    'Export your health data',
-    'Sync with wearable devices',
-  ], []);
+
+  // Handle notification toggle
+  // Note: Switch is controlled by notificationsEnabled state, so it will automatically
+  // reflect the actual permission status after async operations complete
+  const handleNotificationToggle = useCallback(async (value: boolean) => {
+    // Prevent action if already in the desired state
+    if (value === notificationsEnabled) {
+      return;
+    }
+
+    if (value) {
+      // User wants to enable notifications - request permission
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        // Permission denied or user dismissed - check if we can ask again
+        // The hook will have already refreshed the state, so toggle will reflect actual status
+        Alert.alert(
+          'Notifications Disabled',
+          'To enable notifications, please allow them in the permission prompt or go to Settings > MaxPulse > Notifications.',
+          [
+            { text: 'Cancel', style: 'cancel' },
+            {
+              text: 'Open Settings',
+              onPress: () => {
+                // Open Settings - hook will refresh when app returns to foreground
+                openNotificationSettings();
+              },
+            },
+          ],
+        );
+      }
+      // If granted, the hook's refreshPermission will update notificationsEnabled automatically
+    } else {
+      // User wants to disable notifications - guide to Settings
+      // Note: We can't disable programmatically, so toggle will stay ON until user disables in Settings
+      Alert.alert(
+        'Disable Notifications',
+        'To disable notifications, please go to Settings > MaxPulse > Notifications and turn off Allow Notifications.',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Open Settings',
+            onPress: () => {
+              // Open Settings - hook will refresh when app returns to foreground
+              openNotificationSettings();
+            },
+          },
+        ],
+      );
+    }
+  }, [notificationsEnabled, requestNotificationPermission, openNotificationSettings]);
 
   // User preferences
   const preferenceItems = useMemo(() => [
@@ -103,10 +154,14 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
       id: 'notifications',
       icon: 'notifications-outline',
       label: 'Push Notifications',
-      description: 'Reminders and goal celebrations',
+      description: notificationsLoading 
+        ? 'Checking permissions...' 
+        : notificationsEnabled 
+          ? 'Enabled in Settings' 
+          : 'Tap to enable notifications',
       type: 'toggle' as const,
-      value: preferences.notifications,
-      onToggle: (value: boolean) => setPreferences(prev => ({ ...prev, notifications: value })),
+      value: notificationsEnabled,
+      onToggle: handleNotificationToggle,
     },
     {
       id: 'reports',
@@ -180,7 +235,7 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
       value: preferences.dataSharing,
       onToggle: (value: boolean) => setPreferences(prev => ({ ...prev, dataSharing: value })),
     },
-  ], [preferences]);
+  ], [preferences, notificationsEnabled, notificationsLoading, handleNotificationToggle]);
 
   // Support options
   const supportOptions = useMemo(() => [
@@ -313,23 +368,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
     }
   }
 
-  const handleManageBilling = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (error) {
-      // Haptics not available
-    }
-    Alert.alert('Manage Billing', 'Redirecting to billing portal...');
-  }, []);
-
-  const handleUpgrade = useCallback(() => {
-    try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    } catch (error) {
-      // Haptics not available
-    }
-    Alert.alert('Upgrade Plan', 'Upgrade options coming soon!');
-  }, []);
 
   return (
     <View style={styles.container}>
@@ -369,17 +407,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = React.memo(({ onBack 
         <HealthSummaryCard
           lifeScore={Math.round(lifeScore)}
           metrics={healthMetrics}
-        />
-
-        {/* Subscription & Billing */}
-        <SubscriptionCard
-          planName="MaxPulse Premium"
-          planPrice="$9.99"
-          billingCycle="monthly"
-          nextBillingDate={profileData.nextBillingDate}
-          features={subscriptionFeatures}
-          onManageBilling={handleManageBilling}
-          onUpgrade={handleUpgrade}
         />
 
         {/* Preferences */}
