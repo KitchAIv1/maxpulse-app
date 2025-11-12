@@ -16,7 +16,13 @@ import { WellbeingDashboardProps } from '../../types/wellbeing';
 import { BatteryGauge } from './BatteryGauge';
 import { StreakVisualization } from '../rewards/StreakVisualization';
 import { AchievementBadges } from '../rewards/AchievementBadges';
+import { LifeScoreBreakdown } from './LifeScoreBreakdown';
 import { theme } from '../../utils/theme';
+import { useAppStore } from '../../stores/appStore';
+import { useAchievements } from '../../hooks/achievements/useAchievements';
+import { useStreakData } from '../../hooks/streaks/useStreakData';
+import { StreakInfoModal } from './StreakInfoModal';
+import { LifeScoreInfoModal } from './LifeScoreInfoModal';
 
 export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
   visible,
@@ -25,17 +31,36 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
   breakdown,
   onNavigateToModule,
 }) => {
+  const { user } = useAppStore();
+  const { badges, isLoading: achievementsLoading, error: achievementsError } = useAchievements(user?.id);
+  const { streakData, isLoading: streakLoading, error: streakError } = useStreakData(user?.id);
+  const [streakInfoVisible, setStreakInfoVisible] = React.useState(false);
+  const [lifeScoreInfoVisible, setLifeScoreInfoVisible] = React.useState(false);
+  const [currentWeek, setCurrentWeek] = React.useState<number>(1);
 
-  // Mock data
-  const mockStreakData = { currentStreak: 5, longestStreak: 12, nextMilestone: 7, nextMilestoneBonus: 50 };
-  const mockBadges = [
-    { id: 'hydration_week', name: 'Hydration Hero', description: 'Hit hydration target 7 days in a row', icon: 'water', earned: true, category: 'hydration' as const, progress: undefined },
-    { id: 'early_bird', name: 'Early Bird', description: 'Get 8+ hours of sleep for 5 nights', icon: 'moon', earned: false, progress: 0.6, category: 'sleep' as const },
-    { id: 'step_master', name: 'Step Master', description: 'Reach 10,000 steps in a single day', icon: 'footsteps', earned: true, category: 'steps' as const, progress: undefined },
-    { id: 'balanced_life', name: 'Balanced Life', description: 'Hit all targets in one day', icon: 'checkmark-circle', earned: false, progress: 0.8, category: 'balanced' as const },
-    { id: 'consistency_king', name: 'Consistency King', description: 'Maintain 80%+ Life Score for 14 days', icon: 'trophy', earned: false, progress: 0, category: 'balanced' as const },
-    { id: 'wellness_warrior', name: 'Wellness Warrior', description: 'Complete 30 days of tracking', icon: 'shield', earned: false, progress: 0.3, category: 'balanced' as const },
-  ];
+  // Fetch current week for Life Score info modal
+  React.useEffect(() => {
+    const fetchCurrentWeek = async () => {
+      if (!user?.id) return;
+      
+      try {
+        const { supabase } = await import('../../services/supabase');
+        const { data, error } = await supabase
+          .from('plan_progress')
+          .select('current_week')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (!error && data) {
+          setCurrentWeek(data.current_week || 1);
+        }
+      } catch (error) {
+        console.warn('Could not fetch current week:', error);
+      }
+    };
+    
+    fetchCurrentWeek();
+  }, [user?.id]);
 
 
   return (
@@ -50,9 +75,20 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
         <View style={styles.background}>
           {/* Header */}
           <View style={styles.header}>
-            <View>
-              <Text style={styles.headerTitle}>Life Score</Text>
-              <Text style={styles.headerSubtitle}>Your wellness overview</Text>
+            <View style={styles.headerLeft}>
+              <View>
+                <View style={styles.headerTitleRow}>
+                  <Text style={styles.headerTitle}>Life Score</Text>
+                  <TouchableOpacity 
+                    style={styles.infoIconButton}
+                    onPress={() => setLifeScoreInfoVisible(true)}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Icon name="information-circle" size={18} color={theme.colors.textTertiary} />
+                  </TouchableOpacity>
+                </View>
+                <Text style={styles.headerSubtitle}>Your wellness overview</Text>
+              </View>
             </View>
             <TouchableOpacity style={styles.closeButton} onPress={onClose}>
               <Icon name="close" size={20} color={theme.colors.textPrimary} />
@@ -69,48 +105,104 @@ export const WellbeingDashboard: React.FC<WellbeingDashboardProps> = ({
               {/* Left Column - Life Score */}
               <View style={styles.lifeScoreContainer}>
                 <BatteryGauge score={currentScore} size={160} animated />
+                <LifeScoreBreakdown breakdown={breakdown} />
               </View>
 
               {/* Right Column - Streak Info */}
               <View style={styles.rightColumn}>
                 {/* Day Streak Card */}
                 <View style={styles.dayStreakCard}>
-                  <Icon name="flame" size={24} color="#FF6B35" style={styles.streakIcon} />
+                  <View style={styles.streakCardHeader}>
+                    <Icon name="flame" size={24} color="#FF6B35" style={styles.streakIcon} />
+                    <TouchableOpacity 
+                      style={styles.infoIconButton}
+                      onPress={() => setStreakInfoVisible(true)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon name="information-circle" size={16} color={theme.colors.textTertiary} />
+                    </TouchableOpacity>
+                  </View>
                   <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>DAY STREAK</Text>
-                  <Text style={styles.streakValue}>{mockStreakData.currentStreak}</Text>
-                  <Text style={styles.streakLabel} numberOfLines={1}>days in a row</Text>
+                  {streakLoading ? (
+                    <Text style={styles.streakValue}>...</Text>
+                  ) : (
+                    <>
+                      <Text style={styles.streakValue}>{streakData.currentStreak}</Text>
+                      <Text style={styles.streakLabel} numberOfLines={1}>days in a row</Text>
+                    </>
+                  )}
                 </View>
 
                 {/* Personal Best Card */}
                 <View style={styles.personalBestCard}>
-                  <Icon name="trophy" size={24} color="#FFD700" style={styles.streakIcon} />
+                  <View style={styles.streakCardHeader}>
+                    <Icon name="trophy" size={24} color="#FFD700" style={styles.streakIcon} />
+                    <TouchableOpacity 
+                      style={styles.infoIconButton}
+                      onPress={() => setStreakInfoVisible(true)}
+                      hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                    >
+                      <Icon name="information-circle" size={16} color={theme.colors.textTertiary} />
+                    </TouchableOpacity>
+                  </View>
                   <Text style={styles.streakTitle} numberOfLines={1} adjustsFontSizeToFit>BEST</Text>
-                  <Text style={styles.streakValue}>{mockStreakData.longestStreak}</Text>
-                  <Text style={styles.streakLabel} numberOfLines={1}>days total</Text>
+                  {streakLoading ? (
+                    <Text style={styles.streakValue}>...</Text>
+                  ) : (
+                    <>
+                      <Text style={styles.streakValue}>{streakData.longestStreak}</Text>
+                      <Text style={styles.streakLabel} numberOfLines={1}>days total</Text>
+                    </>
+                  )}
                 </View>
               </View>
             </View>
 
             {/* Days to Next Milestone - Simplified without progress bar */}
-            <View style={styles.milestoneSection}>
-              <View style={styles.milestoneCard}>
-                <View style={styles.milestoneHeader}>
-                  <Icon name="flag" size={14} color={theme.colors.ringMood} />
-                  <Text style={styles.milestoneText}>
-                    {mockStreakData.nextMilestone - mockStreakData.currentStreak} days until next milestone
-                  </Text>
+            {!streakLoading && streakData.currentStreak > 0 && (
+              <View style={styles.milestoneSection}>
+                <View style={styles.milestoneCard}>
+                  <View style={styles.milestoneHeader}>
+                    <Icon name="flag" size={14} color={theme.colors.ringMood} />
+                    {streakData.daysUntilMilestone === 0 ? (
+                      <Text style={styles.milestoneText}>
+                        🎉 Milestone reached! Keep going for {streakData.nextMilestone} days
+                      </Text>
+                    ) : (
+                      <Text style={styles.milestoneText}>
+                        {streakData.daysUntilMilestone} {streakData.daysUntilMilestone === 1 ? 'day' : 'days'} until next milestone
+                      </Text>
+                    )}
+                  </View>
+                  <Text style={styles.milestoneBonus}>+{streakData.nextMilestoneBonus} bonus points</Text>
                 </View>
-                <Text style={styles.milestoneBonus}>+{mockStreakData.nextMilestoneBonus} bonus points</Text>
               </View>
-            </View>
+            )}
 
-            {/* Achievements */}
-            <AchievementBadges badges={mockBadges} />
+            {/* Achievements - Live Data */}
+            <AchievementBadges 
+              badges={badges} 
+              isLoading={achievementsLoading}
+              error={achievementsError}
+            />
 
             <View style={styles.bottomSpacer} />
           </ScrollView>
         </View>
       </View>
+
+      {/* Streak Info Modal */}
+      <StreakInfoModal
+        visible={streakInfoVisible}
+        onClose={() => setStreakInfoVisible(false)}
+      />
+
+      {/* Life Score Info Modal */}
+      <LifeScoreInfoModal
+        visible={lifeScoreInfoVisible}
+        onClose={() => setLifeScoreInfoVisible(false)}
+        currentWeek={currentWeek}
+      />
     </Modal>
   );
 };
@@ -123,6 +215,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: theme.spacing.base, paddingVertical: theme.spacing.sm,
     borderBottomWidth: 1, borderBottomColor: theme.colors.border,
     backgroundColor: theme.colors.cardBackground,
+  },
+  headerLeft: {
+    flex: 1,
+  },
+  headerTitleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  infoIconButton: {
+    marginLeft: theme.spacing.xs,
+    padding: 4,
   },
   headerTitle: {
     fontSize: theme.typography.medium, fontWeight: theme.typography.weights.bold,
@@ -156,8 +259,8 @@ const styles = StyleSheet.create({
     borderRadius: theme.borderRadius.md,
     padding: theme.spacing.base,
     alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 180, // Decreased to 180px
+    justifyContent: 'flex-start',
+    minHeight: 280, // Increased to accommodate breakdown
     ...theme.shadows.subtle,
   },
   // Right column - Compact streak cards
@@ -190,8 +293,18 @@ const styles = StyleSheet.create({
     minHeight: 120, // Ensure consistent card height
     ...theme.shadows.subtle,
   },
+  streakCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    width: '100%',
+    marginBottom: theme.spacing.xs,
+  },
   streakIcon: {
     marginBottom: theme.spacing.sm,
+  },
+  infoIconButton: {
+    padding: 4,
   },
   streakTitle: {
     fontSize: theme.typography.tiny, // Reduced from xsmall to tiny

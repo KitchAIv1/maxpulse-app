@@ -1,5 +1,6 @@
 // Daily Metrics Updater Service
 // Updates existing daily_metrics rows with correct V2 Engine targets
+// Uses current week targets for all dates (progression-based achievements)
 
 import { supabase } from './supabase';
 import { V2EngineConnector } from './V2EngineConnector';
@@ -15,15 +16,15 @@ export class DailyMetricsUpdater {
     try {
       console.log('🔄 Updating past daily_metrics with V2 Engine targets...');
 
-      // 1. Get user's plan progress to know current week
-      const { data: progress } = await supabase
-        .from('plan_progress')
-        .select('current_week, current_phase')
-        .eq('user_id', userId)
-        .single();
+      // 1. Get current week targets (used for all dates - progression-based)
+      const currentTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      
+      if (!currentTargets) {
+        console.error('❌ Could not get current week targets');
+        return 0;
+      }
 
-      const currentWeek = progress?.current_week || 1;
-      console.log(`📅 Current week: ${currentWeek}`);
+      console.log(`📅 Using current week targets: ${currentTargets.steps} steps, ${currentTargets.waterOz}oz water, ${currentTargets.sleepHr}hr sleep`);
 
       // 2. Get all daily_metrics rows for this user (past 3 weeks)
       const { data: metrics, error } = await supabase
@@ -40,17 +41,7 @@ export class DailyMetricsUpdater {
 
       console.log(`📊 Found ${metrics.length} daily_metrics rows to check`);
 
-      // 3. Get V2 Engine targets for current week (all dates in same week use same targets)
-      const v2Targets = await V2EngineConnector.getCurrentWeekTargets(userId);
-      
-      if (!v2Targets) {
-        console.error('❌ Failed to get V2 Engine targets');
-        return 0;
-      }
-
-      console.log('✅ V2 Engine targets:', v2Targets);
-
-      // 4. Update rows that have wrong targets
+      // 3. Update rows that have wrong targets (8000, 80, 8) with current week targets
       let updatedCount = 0;
       const wrongTargetRows = metrics.filter(row => 
         row.steps_target === 8000 || 
@@ -64,9 +55,9 @@ export class DailyMetricsUpdater {
         const { error: updateError } = await supabase
           .from('daily_metrics')
           .update({
-            steps_target: v2Targets.steps,
-            water_oz_target: v2Targets.waterOz,
-            sleep_hr_target: v2Targets.sleepHr,
+            steps_target: currentTargets.steps,
+            water_oz_target: currentTargets.waterOz,
+            sleep_hr_target: currentTargets.sleepHr,
           })
           .eq('user_id', userId)
           .eq('date', row.date);
@@ -75,7 +66,7 @@ export class DailyMetricsUpdater {
           console.error(`❌ Failed to update ${row.date}:`, updateError);
         } else {
           updatedCount++;
-          console.log(`✅ Updated ${row.date}: ${v2Targets.steps}, ${v2Targets.waterOz}, ${v2Targets.sleepHr}`);
+          console.log(`✅ Updated ${row.date}: ${currentTargets.steps} steps, ${currentTargets.waterOz}oz water, ${currentTargets.sleepHr}hr sleep`);
         }
       }
 
@@ -126,15 +117,15 @@ export class DailyMetricsUpdater {
   }
 
   /**
-   * Create a new daily_metrics row with V2 Engine targets
+   * Create a new daily_metrics row with current week V2 Engine targets
    */
   private static async createRowWithV2Targets(userId: string, date: string): Promise<boolean> {
     try {
-      // Get V2 Engine targets
-      const v2Targets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      // Get current week targets (used for all dates - progression-based)
+      const currentTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
       
-      if (!v2Targets) {
-        console.error('❌ Failed to get V2 Engine targets for row creation');
+      if (!currentTargets) {
+        console.error(`❌ Failed to get current week targets for ${date}`);
         return false;
       }
 
@@ -143,11 +134,11 @@ export class DailyMetricsUpdater {
         .insert({
           user_id: userId,
           date: date,
-          steps_target: v2Targets.steps,
+          steps_target: currentTargets.steps,
           steps_actual: 0,
-          water_oz_target: v2Targets.waterOz,
+          water_oz_target: currentTargets.waterOz,
           water_oz_actual: 0,
-          sleep_hr_target: v2Targets.sleepHr,
+          sleep_hr_target: currentTargets.sleepHr,
           sleep_hr_actual: 0,
           mood_checkins_target: 7,
           mood_checkins_actual: 0,
@@ -158,7 +149,7 @@ export class DailyMetricsUpdater {
         return false;
       }
 
-      console.log(`✅ Created row for ${date} with V2 targets:`, v2Targets);
+      console.log(`✅ Created row for ${date} with current week targets:`, currentTargets);
       return true;
 
     } catch (error) {
@@ -168,23 +159,24 @@ export class DailyMetricsUpdater {
   }
 
   /**
-   * Update an existing row with V2 Engine targets
+   * Update an existing row with current week V2 Engine targets
    */
   private static async updateRowWithV2Targets(userId: string, date: string): Promise<boolean> {
     try {
-      const v2Targets = await V2EngineConnector.getCurrentWeekTargets(userId);
+      // Get current week targets (used for all dates - progression-based)
+      const currentTargets = await V2EngineConnector.getCurrentWeekTargets(userId);
       
-      if (!v2Targets) {
-        console.error('❌ Failed to get V2 Engine targets for row update');
+      if (!currentTargets) {
+        console.error(`❌ Failed to get current week targets for ${date}`);
         return false;
       }
 
       const { error } = await supabase
         .from('daily_metrics')
         .update({
-          steps_target: v2Targets.steps,
-          water_oz_target: v2Targets.waterOz,
-          sleep_hr_target: v2Targets.sleepHr,
+          steps_target: currentTargets.steps,
+          water_oz_target: currentTargets.waterOz,
+          sleep_hr_target: currentTargets.sleepHr,
         })
         .eq('user_id', userId)
         .eq('date', date);
@@ -194,7 +186,7 @@ export class DailyMetricsUpdater {
         return false;
       }
 
-      console.log(`✅ Updated ${date} with V2 targets:`, v2Targets);
+      console.log(`✅ Updated ${date} with current week targets:`, currentTargets);
       return true;
 
     } catch (error) {

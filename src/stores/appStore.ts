@@ -182,9 +182,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
         if (persistedState) {
           const state = JSON.parse(persistedState);
           if (__DEV__) console.log('✅ Restored today\'s persisted state:', state);
+          
+          // Get live steps from stepTrackingStore (pedometer service)
+          // Steps are LIVE data and should NEVER come from AsyncStorage
+          let liveSteps = 0;
+          try {
+            const { useStepTrackingStore } = await import('./stepTrackingStore');
+            const stepStore = useStepTrackingStore.getState();
+            liveSteps = stepStore.todaySteps || 0;
+            if (__DEV__) console.log(`📊 Syncing live steps from pedometer on loadTodayData: ${liveSteps}`);
+          } catch (error) {
+            console.warn('Failed to get live steps from stepTrackingStore:', error);
+            // Only fallback to current state if stepTrackingStore unavailable
+            liveSteps = get().currentState.steps || 0;
+          }
+          
           set({
             currentState: {
-              steps: get().currentState.steps, // CRITICAL FIX: Don't overwrite steps from AsyncStorage
+              steps: liveSteps, // ALWAYS use live pedometer data
               waterOz: state.waterOz || 0,
               sleepHr: state.sleepHr || 0,
             },
@@ -198,6 +213,24 @@ export const useAppStore = create<AppStore>((set, get) => ({
           hasPersistedState = true;
         } else {
           if (__DEV__) console.log('⚠️ No persisted state found in AsyncStorage for today');
+          
+          // Even with no persisted state, sync steps from pedometer
+          try {
+            const { useStepTrackingStore } = await import('./stepTrackingStore');
+            const stepStore = useStepTrackingStore.getState();
+            const liveSteps = stepStore.todaySteps || 0;
+            if (liveSteps > 0) {
+              set((state) => ({
+                currentState: {
+                  ...state.currentState,
+                  steps: liveSteps,
+                },
+              }));
+              if (__DEV__) console.log(`📊 Synced live steps: ${liveSteps}`);
+            }
+          } catch (error) {
+            console.warn('Failed to sync steps from pedometer:', error);
+          }
         }
       }
     } catch (error) {
@@ -482,35 +515,85 @@ export const useAppStore = create<AppStore>((set, get) => ({
       // Viewing a past date - load from database
       await get().loadDateMetrics(date);
     } else {
-      // Returning to today - restore from AsyncStorage (source of truth!)
+      // Returning to today - restore water/sleep/mood from AsyncStorage, but NOT steps!
+      // Steps are LIVE data from pedometer service and should come from stepTrackingStore
       const cache = get().todayStateCache;
       if (cache) {
-        if (__DEV__) console.log('📤 Restoring today\'s state from AsyncStorage');
+        if (__DEV__) console.log('📤 Restoring today\'s state from AsyncStorage (excluding steps - will sync from pedometer)');
         
-        // Restore from AsyncStorage, NOT from in-memory cache (which might be stale)
+        // Restore from AsyncStorage, but exclude steps (they come from live pedometer)
         try {
           const persistedState = await AsyncStorage.getItem(`@todayState_${date}`);
           if (persistedState) {
             const state = JSON.parse(persistedState);
             if (__DEV__) console.log('✅ Restored from AsyncStorage:', state);
+            
+            // Get current steps from stepTrackingStore (live pedometer data)
+            let liveSteps = 0;
+            try {
+              const { useStepTrackingStore } = await import('./stepTrackingStore');
+              const stepStore = useStepTrackingStore.getState();
+              liveSteps = stepStore.todaySteps || 0;
+              if (__DEV__) console.log(`📊 Syncing live steps from pedometer: ${liveSteps}`);
+            } catch (error) {
+              console.warn('Failed to get live steps from stepTrackingStore:', error);
+              // Fallback to AsyncStorage if stepTrackingStore unavailable
+              liveSteps = state.steps || 0;
+            }
+            
+            // Validate and sanitize values to prevent NaN/undefined corruption
+            const validWaterOz = typeof state.waterOz === 'number' && !isNaN(state.waterOz) && state.waterOz >= 0 ? state.waterOz : 0;
+            const validSleepHr = typeof state.sleepHr === 'number' && !isNaN(state.sleepHr) && state.sleepHr >= 0 ? state.sleepHr : 0;
+            const validMoodFrequency = state.moodCheckInFrequency && 
+              typeof state.moodCheckInFrequency.total_checkins === 'number' ? 
+              state.moodCheckInFrequency : cache.moodCheckInFrequency;
+            
             set({
               currentState: {
-                steps: state.steps || 0, // FIXED: Restore steps from AsyncStorage
-                waterOz: state.waterOz || 0,
-                sleepHr: state.sleepHr || 0,
+                steps: liveSteps, // ALWAYS use live pedometer data, never AsyncStorage
+                waterOz: validWaterOz,
+                sleepHr: validSleepHr,
               },
-              moodCheckInFrequency: state.moodCheckInFrequency || cache.moodCheckInFrequency,
+              moodCheckInFrequency: validMoodFrequency,
               targets: cache.targets, // Keep targets from cache
               todayStateCache: null, // Clear cache after restoring
             });
+            
+            // Trigger step sync to ensure appStore is updated with latest pedometer data
+            setTimeout(async () => {
+              try {
+                const { useStepTrackingStore } = await import('./stepTrackingStore');
+                const stepStore = useStepTrackingStore.getState();
+                if (stepStore.syncSteps) {
+                  await stepStore.syncSteps();
+                }
+              } catch (error) {
+                console.warn('Failed to trigger step sync:', error);
+              }
+            }, 100);
           } else {
-            // No AsyncStorage data, use cache as fallback
-            if (__DEV__) console.log('⚠️ No AsyncStorage data, using cached state');
+            // No AsyncStorage data, use cache as fallback (but still get live steps)
+            if (__DEV__) console.log('⚠️ No AsyncStorage data, using cached state (but syncing live steps)');
+            
+            // Get live steps from stepTrackingStore
+            let liveSteps = 0;
+            try {
+              const { useStepTrackingStore } = await import('./stepTrackingStore');
+              const stepStore = useStepTrackingStore.getState();
+              liveSteps = stepStore.todaySteps || 0;
+            } catch (error) {
+              liveSteps = cache.currentState.steps || 0;
+            }
+            
+            // Validate cache values
+            const validCacheWaterOz = typeof cache.currentState.waterOz === 'number' && !isNaN(cache.currentState.waterOz) ? cache.currentState.waterOz : 0;
+            const validCacheSleepHr = typeof cache.currentState.sleepHr === 'number' && !isNaN(cache.currentState.sleepHr) ? cache.currentState.sleepHr : 0;
+            
             set({
               currentState: {
-                steps: cache.currentState.steps, // FIXED: Restore steps from cache
-                waterOz: cache.currentState.waterOz,
-                sleepHr: cache.currentState.sleepHr,
+                steps: liveSteps, // Use live pedometer data
+                waterOz: validCacheWaterOz,
+                sleepHr: validCacheSleepHr,
               },
               targets: cache.targets,
               moodCheckInFrequency: cache.moodCheckInFrequency,
@@ -519,12 +602,27 @@ export const useAppStore = create<AppStore>((set, get) => ({
           }
         } catch (error) {
           console.warn('Failed to restore from AsyncStorage:', error);
+          
+          // Get live steps even on error
+          let liveSteps = 0;
+          try {
+            const { useStepTrackingStore } = await import('./stepTrackingStore');
+            const stepStore = useStepTrackingStore.getState();
+            liveSteps = stepStore.todaySteps || 0;
+          } catch (stepError) {
+            liveSteps = cache.currentState.steps || 0;
+          }
+          
+          // Validate cache values before fallback
+          const validErrorWaterOz = typeof cache.currentState.waterOz === 'number' && !isNaN(cache.currentState.waterOz) ? cache.currentState.waterOz : 0;
+          const validErrorSleepHr = typeof cache.currentState.sleepHr === 'number' && !isNaN(cache.currentState.sleepHr) ? cache.currentState.sleepHr : 0;
+          
           // Fallback to cache
           set({
             currentState: {
-              steps: cache.currentState.steps, // FIXED: Restore steps from cache
-              waterOz: cache.currentState.waterOz,
-              sleepHr: cache.currentState.sleepHr,
+              steps: liveSteps, // Use live pedometer data
+              waterOz: validErrorWaterOz,
+              sleepHr: validErrorSleepHr,
             },
             targets: cache.targets,
             moodCheckInFrequency: cache.moodCheckInFrequency,
@@ -532,7 +630,113 @@ export const useAppStore = create<AppStore>((set, get) => ({
           });
         }
       } else {
-        if (__DEV__) console.log('⚠️ No cached state found - keeping current state');
+        // No cache - restore water/sleep/mood from AsyncStorage and sync steps from pedometer
+        if (__DEV__) console.log('⚠️ No cached state found - restoring from AsyncStorage and syncing steps from pedometer');
+        
+        // Restore water/sleep/mood from AsyncStorage (if available)
+        try {
+          const persistedState = await AsyncStorage.getItem(`@todayState_${date}`);
+          if (persistedState) {
+            const state = JSON.parse(persistedState);
+            if (__DEV__) console.log('✅ Restored water/sleep/mood from AsyncStorage:', {
+              waterOz: state.waterOz,
+              sleepHr: state.sleepHr,
+              moodCheckIns: state.moodCheckInFrequency?.total_checkins || 0
+            });
+            
+            // Get live steps from stepTrackingStore
+            let liveSteps = 0;
+            try {
+              const { useStepTrackingStore } = await import('./stepTrackingStore');
+              const stepStore = useStepTrackingStore.getState();
+              liveSteps = stepStore.todaySteps || 0;
+              if (__DEV__) console.log(`📊 Syncing live steps from pedometer: ${liveSteps}`);
+            } catch (error) {
+              console.warn('Failed to get live steps from stepTrackingStore:', error);
+              liveSteps = state.steps || 0;
+            }
+            
+            // Validate and sanitize values
+            const validNoCacheWaterOz = typeof state.waterOz === 'number' && !isNaN(state.waterOz) && state.waterOz >= 0 ? state.waterOz : 0;
+            const validNoCacheSleepHr = typeof state.sleepHr === 'number' && !isNaN(state.sleepHr) && state.sleepHr >= 0 ? state.sleepHr : 0;
+            const validNoCacheMood = state.moodCheckInFrequency && 
+              typeof state.moodCheckInFrequency.total_checkins === 'number' ? 
+              state.moodCheckInFrequency : {
+                total_checkins: 0,
+                target_checkins: 7,
+                current_streak: 0,
+                last_checkin: null,
+              };
+            
+            set({
+              currentState: {
+                steps: liveSteps, // Live pedometer data
+                waterOz: validNoCacheWaterOz,
+                sleepHr: validNoCacheSleepHr,
+              },
+              moodCheckInFrequency: validNoCacheMood,
+            });
+            
+            // Trigger step sync to ensure we have latest data
+            setTimeout(async () => {
+              try {
+                const { useStepTrackingStore } = await import('./stepTrackingStore');
+                const stepStore = useStepTrackingStore.getState();
+                if (stepStore.syncSteps) {
+                  await stepStore.syncSteps();
+                }
+              } catch (error) {
+                console.warn('Failed to trigger step sync:', error);
+              }
+            }, 100);
+          } else {
+            // No AsyncStorage data - sync steps only, keep current water/sleep/mood
+            if (__DEV__) console.log('⚠️ No AsyncStorage data found - syncing steps only');
+            
+            try {
+              const { useStepTrackingStore } = await import('./stepTrackingStore');
+              const stepStore = useStepTrackingStore.getState();
+              const liveSteps = stepStore.todaySteps || 0;
+              
+              // Update steps from live pedometer data
+              set((state) => ({
+                currentState: {
+                  ...state.currentState,
+                  steps: liveSteps,
+                },
+              }));
+              
+              // Trigger sync to ensure we have latest data
+              if (stepStore.syncSteps) {
+                setTimeout(() => stepStore.syncSteps(), 100);
+              }
+            } catch (error) {
+              console.warn('Failed to sync steps from pedometer:', error);
+            }
+          }
+        } catch (error) {
+          console.warn('Failed to restore from AsyncStorage:', error);
+          
+          // Fallback: sync steps only
+          try {
+            const { useStepTrackingStore } = await import('./stepTrackingStore');
+            const stepStore = useStepTrackingStore.getState();
+            const liveSteps = stepStore.todaySteps || 0;
+            
+            set((state) => ({
+              currentState: {
+                ...state.currentState,
+                steps: liveSteps,
+              },
+            }));
+            
+            if (stepStore.syncSteps) {
+              setTimeout(() => stepStore.syncSteps(), 100);
+            }
+          } catch (stepError) {
+            console.warn('Failed to sync steps from pedometer:', stepError);
+          }
+        }
       }
     }
   },
@@ -620,21 +824,31 @@ export const useAppStore = create<AppStore>((set, get) => ({
             });
           }
           
+          // Validate all values to prevent NaN/undefined corruption
+          const validSteps = typeof metrics.steps_actual === 'number' && !isNaN(metrics.steps_actual) ? metrics.steps_actual : 0;
+          const validWaterOz = typeof metrics.water_oz_actual === 'number' && !isNaN(metrics.water_oz_actual) ? metrics.water_oz_actual : 0;
+          const validSleepHr = typeof metrics.sleep_hr_actual === 'number' && !isNaN(metrics.sleep_hr_actual) ? metrics.sleep_hr_actual : 0;
+          const validStepsTarget = typeof metrics.steps_target === 'number' && !isNaN(metrics.steps_target) && metrics.steps_target > 0 ? metrics.steps_target : 10000;
+          const validWaterTarget = typeof metrics.water_oz_target === 'number' && !isNaN(metrics.water_oz_target) && metrics.water_oz_target > 0 ? metrics.water_oz_target : 95;
+          const validSleepTarget = typeof metrics.sleep_hr_target === 'number' && !isNaN(metrics.sleep_hr_target) && metrics.sleep_hr_target > 0 ? metrics.sleep_hr_target : 8;
+          const validMoodActual = typeof metrics.mood_checkins_actual === 'number' && !isNaN(metrics.mood_checkins_actual) ? metrics.mood_checkins_actual : 0;
+          const validMoodTarget = typeof metrics.mood_checkins_target === 'number' && !isNaN(metrics.mood_checkins_target) && metrics.mood_checkins_target > 0 ? metrics.mood_checkins_target : 7;
+          
           set({
             dailyMetrics: metrics,
             currentState: {
-              steps: metrics.steps_actual,
-              waterOz: metrics.water_oz_actual,
-              sleepHr: metrics.sleep_hr_actual,
+              steps: validSteps,
+              waterOz: validWaterOz,
+              sleepHr: validSleepHr,
             },
             targets: {
-              steps: metrics.steps_target,
-              waterOz: metrics.water_oz_target,
-              sleepHr: metrics.sleep_hr_target,
+              steps: validStepsTarget,
+              waterOz: validWaterTarget,
+              sleepHr: validSleepTarget,
             },
             moodCheckInFrequency: {
-              total_checkins: metrics.mood_checkins_actual,
-              target_checkins: metrics.mood_checkins_target,
+              total_checkins: validMoodActual,
+              target_checkins: validMoodTarget,
               current_streak: 0,
               last_checkin: null,
             },
@@ -672,19 +886,51 @@ export const useAppStore = create<AppStore>((set, get) => ({
   },
 
   refreshLifeScore: async () => {
-    const { user, currentState, targets, moodCheckInFrequency } = get();
+    const { user } = get();
     if (!user) return;
 
     try {
       const { LifeScoreCalculator } = await import('../services/LifeScoreCalculator');
       
-      // Calculate current week metrics percentages
-      const currentWeekMetrics = {
-        stepsPct: currentState.steps / targets.steps,
-        waterPct: currentState.waterOz / targets.waterOz,
-        sleepPct: currentState.sleepHr / targets.sleepHr,
-        moodPct: moodCheckInFrequency.total_checkins / moodCheckInFrequency.target_checkins,
-      };
+      // Aggregate current week metrics from daily_metrics (not just today's data)
+      const currentWeekMetrics = await LifeScoreCalculator.aggregateCurrentWeekMetrics(user.id);
+      
+      if (!currentWeekMetrics) {
+        console.warn('⚠️ Could not aggregate current week metrics, falling back to today data');
+        // Fallback to today's data if aggregation fails
+        const { currentState, targets, moodCheckInFrequency } = get();
+        const fallbackMetrics = {
+          stepsPct: currentState.steps / targets.steps,
+          waterPct: currentState.waterOz / targets.waterOz,
+          sleepPct: currentState.sleepHr / targets.sleepHr,
+          moodPct: moodCheckInFrequency.total_checkins / moodCheckInFrequency.target_checkins,
+        };
+        
+        const score = await LifeScoreCalculator.calculateLifeScore(
+          user.id,
+          fallbackMetrics,
+          true
+        );
+        
+        const now = Date.now();
+        set({
+          assessmentBasedLifeScore: score,
+          lastLifeScoreRefresh: now,
+        });
+        
+        // Cache in AsyncStorage
+        try {
+          await AsyncStorage.setItem(
+            '@cached_life_score',
+            JSON.stringify({ score, timestamp: now, userId: user.id })
+          );
+        } catch (cacheError) {
+          console.warn('Failed to cache Life Score:', cacheError);
+        }
+        
+        console.log(`✅ Life Score refreshed (fallback): ${score}`);
+        return;
+      }
 
       // Force refresh to bypass cache
       const score = await LifeScoreCalculator.calculateLifeScore(

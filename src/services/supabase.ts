@@ -1,8 +1,9 @@
 // TriHabit Supabase Service
 // Handles all backend interactions with Supabase
 
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { 
   User, 
   DailyMetrics, 
@@ -21,33 +22,180 @@ import {
   PlanProgress
 } from '../types';
 
-// Supabase configuration
-const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL!;
-const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!;
+// SecureStore has a 2048 byte limit - use chunking for large values
+const SECURE_STORE_MAX_SIZE = 2048;
+const CHUNK_PREFIX = 'chunk_';
+const CHUNK_COUNT_KEY = 'chunk_count_';
 
-if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
-  throw new Error('Missing Supabase environment variables. Please check your .env file.');
-}
+/**
+ * Secure storage adapter that handles values >2048 bytes by chunking
+ * Falls back to AsyncStorage for very large values if chunking fails
+ */
+const createSecureStorageAdapter = () => {
+  const getItem = async (key: string): Promise<string | null> => {
+    try {
+      // Try SecureStore first
+      const value = await SecureStore.getItemAsync(key);
+      if (value !== null) {
+        return value;
+      }
 
-// Custom storage adapter for Expo SecureStore
-const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => {
-    return SecureStore.getItemAsync(key);
-  },
-  setItem: (key: string, value: string) => {
-    SecureStore.setItemAsync(key, value);
-  },
-  removeItem: (key: string) => {
-    SecureStore.deleteItemAsync(key);
-  },
+      // Check if it's chunked
+      const chunkCountStr = await SecureStore.getItemAsync(`${CHUNK_COUNT_KEY}${key}`);
+      if (chunkCountStr) {
+        const chunkCount = parseInt(chunkCountStr, 10);
+        const chunks: string[] = [];
+        let allChunksFound = true;
+
+        for (let i = 0; i < chunkCount; i++) {
+          const chunk = await SecureStore.getItemAsync(`${CHUNK_PREFIX}${key}_${i}`);
+          if (chunk === null) {
+            allChunksFound = false;
+            break;
+          }
+          chunks.push(chunk);
+        }
+
+        if (allChunksFound && chunks.length > 0) {
+          return chunks.join('');
+        }
+      }
+
+      // Fallback to AsyncStorage for large values
+      return await AsyncStorage.getItem(key);
+    } catch (error) {
+      console.warn(`Failed to get item from SecureStore (${key}), falling back to AsyncStorage:`, error);
+      try {
+        return await AsyncStorage.getItem(key);
+      } catch (fallbackError) {
+        console.error(`Failed to get item from AsyncStorage (${key}):`, fallbackError);
+        return null;
+      }
+    }
+  };
+
+  const removeItem = async (key: string): Promise<void> => {
+    try {
+      // Remove from SecureStore
+      await SecureStore.deleteItemAsync(key);
+      
+      // Remove chunks if they exist
+      const chunkCountStr = await SecureStore.getItemAsync(`${CHUNK_COUNT_KEY}${key}`);
+      if (chunkCountStr) {
+        const chunkCount = parseInt(chunkCountStr, 10);
+        for (let i = 0; i < chunkCount; i++) {
+          await SecureStore.deleteItemAsync(`${CHUNK_PREFIX}${key}_${i}`);
+        }
+        await SecureStore.deleteItemAsync(`${CHUNK_COUNT_KEY}${key}`);
+      }
+    } catch (error) {
+      console.warn(`Failed to remove item from SecureStore (${key}):`, error);
+    }
+    
+    // Also remove from AsyncStorage
+    try {
+      await AsyncStorage.removeItem(key);
+    } catch (error) {
+      console.warn(`Failed to remove item from AsyncStorage (${key}):`, error);
+    }
+  };
+
+  const setItem = async (key: string, value: string): Promise<void> => {
+    try {
+      // If value fits in SecureStore, use it directly
+      if (value.length <= SECURE_STORE_MAX_SIZE) {
+        await SecureStore.setItemAsync(key, value);
+        // Clean up any old chunks
+        await removeItem(key);
+        return;
+      }
+
+      // Value is too large - try chunking
+      const chunkSize = SECURE_STORE_MAX_SIZE - 100; // Leave buffer for chunk metadata
+      const chunks: string[] = [];
+      
+      for (let i = 0; i < value.length; i += chunkSize) {
+        chunks.push(value.slice(i, i + chunkSize));
+      }
+
+      // Store chunks
+      for (let i = 0; i < chunks.length; i++) {
+        await SecureStore.setItemAsync(`${CHUNK_PREFIX}${key}_${i}`, chunks[i]);
+      }
+      
+      // Store chunk count
+      await SecureStore.setItemAsync(`${CHUNK_COUNT_KEY}${key}`, chunks.length.toString());
+      
+      // Also store in AsyncStorage as backup
+      await AsyncStorage.setItem(key, value);
+    } catch (error) {
+      console.warn(`Failed to set item in SecureStore (${key}), using AsyncStorage fallback:`, error);
+      // Fallback to AsyncStorage
+      try {
+        await AsyncStorage.setItem(key, value);
+      } catch (fallbackError) {
+        console.error(`Failed to set item in AsyncStorage (${key}):`, fallbackError);
+        throw fallbackError;
+      }
+    }
+  };
+
+  return { getItem, setItem, removeItem };
 };
 
-export const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-  auth: {
-    storage: ExpoSecureStoreAdapter,
-    autoRefreshToken: true,
-    persistSession: true,
-    detectSessionInUrl: false,
+// Lazy initialization to prevent module-load crashes
+let supabaseClient: SupabaseClient | null = null;
+let initializationError: Error | null = null;
+
+/**
+ * Get or initialize Supabase client
+ * Throws error only when actually used, not at module load time
+ */
+const getSupabaseClient = (): SupabaseClient => {
+  if (supabaseClient) {
+    return supabaseClient;
+  }
+
+  if (initializationError) {
+    throw initializationError;
+  }
+
+  const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
+  const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY;
+
+  if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
+    const error = new Error(
+      'Missing Supabase environment variables. ' +
+      'Please ensure EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY are set in your build configuration.'
+    );
+    initializationError = error;
+    console.error('❌ Supabase initialization failed:', error.message);
+    throw error;
+  }
+
+  try {
+    const storageAdapter = createSecureStorageAdapter();
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: {
+        storage: storageAdapter,
+        autoRefreshToken: true,
+        persistSession: true,
+        detectSessionInUrl: false,
+      },
+    });
+    console.log('✅ Supabase client initialized successfully');
+    return supabaseClient;
+  } catch (error) {
+    initializationError = error instanceof Error ? error : new Error('Failed to initialize Supabase client');
+    console.error('❌ Supabase initialization error:', initializationError);
+    throw initializationError;
+  }
+};
+
+// Export supabase client getter (maintains backward compatibility)
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(_target, prop) {
+    return getSupabaseClient()[prop as keyof SupabaseClient];
   },
 });
 

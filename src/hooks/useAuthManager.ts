@@ -155,6 +155,16 @@ export const useAuthManager = (alwaysShowWelcome: boolean = false) => {
       }, 100);
     } catch (error) {
       console.error('Error checking auth status:', error);
+      
+      // Check if it's a Supabase initialization error
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('Missing Supabase environment variables') || 
+          errorMessage.includes('Supabase initialization')) {
+        console.error('❌ Critical: Supabase not configured. App cannot function without backend connection.');
+        // Still set authenticated to false so user sees auth screen
+        // The auth screen will show an error when they try to sign in
+      }
+      
       setIsAuthenticated(false);
     }
   };
